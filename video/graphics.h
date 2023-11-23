@@ -26,6 +26,7 @@ bool			legacyModes = false;			// Default legacy modes being false
 bool			rectangularPixels = false;		// Pixels are square by default
 uint8_t			palette[64];					// Storage for the palette
 
+extern int8_t use_otf_mode(int8_t mode);        // Provides access to on-the-fly mode
 
 // Copy the AGON font data from Flash to RAM
 //
@@ -605,6 +606,8 @@ int8_t change_mode(uint8_t mode) {
 		case 18:
 			errVal = change_resolution(2, SVGA_1024x768_60Hz);		// VDP 1.03 Mode 0
 			break;
+		case 30 ... 32:
+			return use_otf_mode(mode);
 		case 129:
 			errVal = change_resolution(4, VGA_640x480_60Hz, true);
 			break;
