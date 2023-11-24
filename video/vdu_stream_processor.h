@@ -37,13 +37,17 @@ class VDUStreamProcessor {
 		void vdu_sys();
 		void vdu_sys_video();
 		void sendGeneralPoll();
-		void vdu_sys_video_kblayout();
 		void sendCursorPosition();
 		void sendScreenChar(uint16_t x, uint16_t y);
 		void sendScreenPixel(uint16_t x, uint16_t y);
 		void sendTime();
 		void vdu_sys_video_time();
+
+	public:
 		void sendKeyboardState();
+		void vdu_sys_video_kblayout();
+
+	private:
 		void vdu_sys_keystate();
 		void vdu_sys_mouse();
 		void vdu_sys_scroll();

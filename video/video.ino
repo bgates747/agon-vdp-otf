@@ -67,6 +67,7 @@ bool			consoleMode = false;			// Serial console mode (0 = off, 1 = console enabl
 #include "vdp_protocol.h"						// VDP Protocol
 #include "vdu_stream_processor.h"
 #include "hexload.h"
+#include "on_the_fly.h"							// Access to On-the-Fly (OTF mode)
 
 fabgl::Terminal			Terminal;				// Used for CP/M mode
 VDUStreamProcessor *	processor;				// VDU Stream Processor
@@ -118,6 +119,21 @@ void loop() {
 			processor->processNext();
 		}
 	}
+}
+
+// Determine whether stream data is available
+bool stream_byte_available() {
+	return processor->byteAvailable();
+}
+
+// Get a byte from the incoming stream
+uint8_t stream_read_byte() {
+	return processor->readByte();
+}
+
+// Send the keyboard state
+void sendKeyboardState() {
+	processor->sendKeyboardState();
 }
 
 // Handle the keyboard: BBC VDU Mode

@@ -31,7 +31,6 @@
 #include "driver/gpio.h"
 #include "soc/io_mux_reg.h"
 #include "fabgl_pieces.h"
-#include "vdu_stream_processor.h"
 
 #include "di_general_line.h"
 #include "di_horiz_line.h"
@@ -54,17 +53,19 @@
 
 // These things are defined in video.ino, already.
 typedef uint8_t byte;
-void send_packet(byte code, byte len, byte data[]);
-void sendTime();
-void sendKeyboardState();
-void sendPlayNote(int channel, int success);
-void vdu_sys_video_kblayout(byte region);
+extern void send_packet(uint8_t code, uint16_t len, uint8_t data[]);
+extern void sendTime();
+extern void sendKeyboardState();
+extern void sendPlayNote(int channel, int success);
+extern void setKeyboardLayout(uint8_t region);
 extern bool initialised;
 extern bool logicalCoords;
 extern bool terminalMode;
 extern bool cursorEnabled;
 extern int videoMode;
-extern VDUStreamProcessor* processor;
+
+extern bool stream_byte_available();
+extern uint8_t stream_read_byte();
 
 extern "C" {
 extern void fcn_copy_words_in_loop(void* dst, void* src, uint32_t num_words);
@@ -767,14 +768,14 @@ void IRAM_ATTR DiManager::loop() {
 
       loop_state = LoopState::WritingActiveLines;
 
-      while (processor->byteAvailable() > 0) {
-        store_character(processor->readByte());
+      while (stream_byte_available() > 0) {
+        store_character(stream_read_byte());
       }
     } else if (loop_state == LoopState::WritingActiveLines) {
       // Timing just moved into the vertical blanking area.
       process_stored_characters();
-      while (processor->byteAvailable() > 0) {
-        process_character(processor->readByte());
+      while (stream_byte_available() > 0) {
+        process_character(stream_read_byte());
       }
       (*m_on_vertical_blank_cb)();
 
@@ -823,15 +824,15 @@ void IRAM_ATTR DiManager::loop() {
         current_buffer_index = 0;
       } else {
         // Keep handling incoming characters
-        if (ESPSerial.available() > 0) {
-          process_character(ESPSerial.read());
+        if (stream_byte_available() > 0) {
+          process_character(stream_read_byte());
         }
       }
     } else {
       // LoopState::NearNewFrameStart
       // Keep storing incoming characters
-      if (ESPSerial.available() > 0) {
-        store_character(ESPSerial.read());
+      if (stream_byte_available() > 0) {
+        store_character(stream_read_byte());
       }
     }
   }
@@ -1135,7 +1136,7 @@ bool DiManager::handle_udg_sys_cmd(uint8_t character) {
       case VDP_KEYCODE: /*0x81*/ {
         if (m_incoming_command.size() == 4) {
           uint8_t region = get_param_8(3);
-          vdu_sys_video_kblayout(region);
+          setKeyboardLayout(region);
           m_incoming_command.clear();
           return true;
         }
