@@ -49,7 +49,7 @@
 #include <HardwareSerial.h>
 #include <fabgl.h>
 
-#define	DEBUG			0						// Serial Debug Mode: 1 = enable
+#define	DEBUG			1						// Serial Debug Mode: 1 = enable
 #define SERIALBAUDRATE	115200
 
 HardwareSerial	DBGSerial(0);
@@ -87,6 +87,7 @@ void setup() {
 	set_mode(1);
 	processor->sendModeInformation();
 	boot_screen();
+	set_mode(30);
 }
 
 // The main loop
@@ -244,6 +245,10 @@ void switchTerminalMode() {
 }
 
 void print(char const * text) {
+	if (is_otf_mode()) {
+		otf_print(text);
+		return;
+	}
 	for (auto i = 0; i < strlen(text); i++) {
 		processor->vdu(text[i]);
 	}
