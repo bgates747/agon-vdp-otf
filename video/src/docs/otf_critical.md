@@ -37,10 +37,10 @@ paint landing on that pixel during frame output. If any pixel is missed, it will
 not be painted, and will be shown multiple times with the last drop of paint
 that it received (most likely from somewhere else on the screen).<br><br>
 There are 2 simple ways to be sure that every pixel is painted by at least 1
-layer of paint. The first alternative is to create a text terminal primitive, or a custom
-tile array, that covers the entire screen. The terminal, if full-screen, implies a tile array of characters in 8x8-pixel cells, totalling 100
+layer of paint. The first alternative is to create a text area primitive, or a custom
+tile array, that covers the entire screen. The text area, if full-screen, implies a tile array of characters in 8x8-pixel cells, totalling 100
 columns across by 75 rows down. Every pixel on the screen is covered by such a
-terminal primitive (at present there is no way to make it smaller; that is
+text area primitive (at present there is no way to make it smaller; that is
 a future enhancement). The second alternative is to create a solid rectangle primitive with the
 X/Y coordinates at (0, 0), a width of 800 pixels, and a height of 600 pixels.
 Such a rectangle can be any of the 64 colors, and would serve as a background

@@ -1,6 +1,6 @@
-// di_terminal.cpp - Function definitions for supporting a character terminal display
+// di_text_area.cpp - Function definitions for supporting a character text_area display
 //
-// A terminal is a specialized tile array, where each tile is a single character
+// A text_area is a specialized tile array, where each tile is a single character
 // cell, and the character codes are used as tile image IDs.
 //
 // Copyright (c) 2023 Curtis Whitley
@@ -24,10 +24,10 @@
 // SOFTWARE.
 // 
 
-#include "di_terminal.h"
+#include "di_text_area.h"
 #include <cstring>
 
-DiTerminal::DiTerminal(uint32_t x, uint32_t y, uint8_t flags,
+DiTextArea::DiTextArea(uint32_t x, uint32_t y, uint8_t flags,
                         uint32_t columns, uint32_t rows, const uint8_t* font) :
   DiTileArray(ACT_PIXELS, ACT_LINES, columns, rows, 8, 8, flags) {
   m_current_column = 0;
@@ -37,10 +37,10 @@ DiTerminal::DiTerminal(uint32_t x, uint32_t y, uint8_t flags,
   m_font = font;
 }
 
-DiTerminal::~DiTerminal() {
+DiTextArea::~DiTextArea() {
 }
 
-void IRAM_ATTR DiTerminal::delete_instructions() {
+void IRAM_ATTR DiTextArea::delete_instructions() {
   DiTileArray::delete_instructions();
   auto cursor = get_first_child();
   if (cursor) {
@@ -48,7 +48,7 @@ void IRAM_ATTR DiTerminal::delete_instructions() {
   }
 }
   
-void IRAM_ATTR DiTerminal::generate_instructions() {
+void IRAM_ATTR DiTextArea::generate_instructions() {
   delete_instructions();
   DiTileArray::generate_instructions();
   auto cursor = get_first_child();
@@ -57,7 +57,7 @@ void IRAM_ATTR DiTerminal::generate_instructions() {
   }
 }
 
-void DiTerminal::define_character_range(uint8_t first_char, uint8_t last_char,
+void DiTextArea::define_character_range(uint8_t first_char, uint8_t last_char,
                             uint8_t fg_color, uint8_t bg_color) {
   auto ch = (uint16_t) first_char;
   auto last = (uint16_t) last_char;
@@ -66,15 +66,15 @@ void DiTerminal::define_character_range(uint8_t first_char, uint8_t last_char,
   }
 }
 
-DiTileBitmapID DiTerminal::get_bitmap_id(uint8_t character) {
+DiTileBitmapID DiTextArea::get_bitmap_id(uint8_t character) {
   return ((DiTileBitmapID)character) | ((DiTileBitmapID)m_bg_color << 24) | ((DiTileBitmapID)m_fg_color << 16);
 }
 
-DiTileBitmapID DiTerminal::get_bitmap_id(uint8_t character, uint8_t fg_color, uint8_t bg_color) {
+DiTileBitmapID DiTextArea::get_bitmap_id(uint8_t character, uint8_t fg_color, uint8_t bg_color) {
   return ((DiTileBitmapID)character) | ((DiTileBitmapID)bg_color << 24) | ((DiTileBitmapID)fg_color << 16);
 }
 
-DiTileBitmapID DiTerminal::define_character(uint8_t character, uint8_t fg_color, uint8_t bg_color) {
+DiTileBitmapID DiTextArea::define_character(uint8_t character, uint8_t fg_color, uint8_t bg_color) {
   auto bm_id = get_bitmap_id(character, fg_color, bg_color);
   if (m_id_to_bitmap_map.find(bm_id) == m_id_to_bitmap_map.end()) {
     create_bitmap(bm_id);
@@ -94,12 +94,12 @@ DiTileBitmapID DiTerminal::define_character(uint8_t character, uint8_t fg_color,
   return bm_id;
 }
 
-void DiTerminal::set_character_position(int32_t column, int32_t row) {
+void DiTextArea::set_character_position(int32_t column, int32_t row) {
   m_current_column = column;
   m_current_row = row;
 }
 
-void DiTerminal::bring_current_position_into_view() {
+void DiTextArea::bring_current_position_into_view() {
   if (m_current_column < 0) {
     // scroll text to the right (insert on the left)
     int32_t move = m_columns + m_current_column;
@@ -134,7 +134,7 @@ void DiTerminal::bring_current_position_into_view() {
   }
 }
 
-void DiTerminal::write_character(uint8_t character) {
+void DiTextArea::write_character(uint8_t character) {
   bring_current_position_into_view();
 
   // Set the tile image ID using the character code.
@@ -148,20 +148,20 @@ void DiTerminal::write_character(uint8_t character) {
   }
 }
 
-void DiTerminal::set_character(int32_t column, int32_t row, uint8_t character) {
+void DiTextArea::set_character(int32_t column, int32_t row, uint8_t character) {
   auto bm_id = define_character(character, m_fg_color, m_bg_color);
   set_tile(column, row, bm_id);
 }
 
-DiTileBitmapID DiTerminal::read_character() {
+DiTileBitmapID DiTextArea::read_character() {
   return read_character(m_current_column, m_current_row);
 }
 
-DiTileBitmapID DiTerminal::read_character(int32_t column, int32_t row) {
+DiTileBitmapID DiTextArea::read_character(int32_t column, int32_t row) {
   return get_tile(column, row);
 }
 
-void DiTerminal::erase_text(int32_t column, int32_t row, int32_t columns, int32_t rows) {
+void DiTextArea::erase_text(int32_t column, int32_t row, int32_t columns, int32_t rows) {
   while (rows-- > 0) {
     int32_t col = column;
     auto bm_id = get_bitmap_id(0x20);
@@ -172,7 +172,7 @@ void DiTerminal::erase_text(int32_t column, int32_t row, int32_t columns, int32_
   }
 }
 
-void DiTerminal::move_text(int32_t column, int32_t row, int32_t columns, int32_t rows,
+void DiTextArea::move_text(int32_t column, int32_t row, int32_t columns, int32_t rows,
                             int32_t delta_horiz, int32_t delta_vert) {
   if (delta_vert > 0) {
     // moving rows down; copy bottom-up
@@ -200,13 +200,13 @@ void DiTerminal::move_text(int32_t column, int32_t row, int32_t columns, int32_t
   }
 }
 
-void DiTerminal::clear_screen() {
+void DiTextArea::clear_screen() {
   erase_text(0, 0, m_columns, m_rows);
   m_current_column = 0;
   m_current_row = 0;
 }
 
-void DiTerminal::move_cursor_left() {
+void DiTextArea::move_cursor_left() {
   bring_current_position_into_view();
   if (m_current_column > 0) {
     m_current_column--;
@@ -216,7 +216,7 @@ void DiTerminal::move_cursor_left() {
   }
 }
 
-void DiTerminal::move_cursor_right() {
+void DiTextArea::move_cursor_right() {
   bring_current_position_into_view();
   if (m_current_column < m_columns - 1) {
     m_current_column++;
@@ -226,30 +226,30 @@ void DiTerminal::move_cursor_right() {
   }
 }
 
-void DiTerminal::move_cursor_down() {
+void DiTextArea::move_cursor_down() {
   bring_current_position_into_view();
   m_current_row++;
 }
 
-void DiTerminal::move_cursor_up() {
+void DiTextArea::move_cursor_up() {
   bring_current_position_into_view();
   if (m_current_row > 0) {
     m_current_row--;
   }
 }
 
-void DiTerminal::move_cursor_home() {
+void DiTextArea::move_cursor_home() {
   bring_current_position_into_view();
   m_current_row = 0;
   m_current_column = 0;
 }
 
-void DiTerminal::move_cursor_boln() {
+void DiTextArea::move_cursor_boln() {
   bring_current_position_into_view();
   m_current_column = 0;
 }
 
-void DiTerminal::do_backspace() {
+void DiTextArea::do_backspace() {
   bring_current_position_into_view();
   if (m_current_column > 0) {
     m_current_column--;
@@ -263,11 +263,11 @@ void DiTerminal::do_backspace() {
   }
 }
 
-void DiTerminal::move_cursor_tab(uint8_t x, uint8_t y) {
+void DiTextArea::move_cursor_tab(uint8_t x, uint8_t y) {
   set_character_position(x, y);
 }
 
-void DiTerminal::get_position(uint16_t& column, uint16_t& row) {
+void DiTextArea::get_position(uint16_t& column, uint16_t& row) {
   column = m_current_column;
   row = m_current_row;
 }

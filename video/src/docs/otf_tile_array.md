@@ -28,7 +28,7 @@ Even though a tile array is fully allocated, each cell is just a pointer
 to the pixel data for some tile bitmap (such bitmaps can be shared), and that pointer can be NULL,
 in which case, nothing is drawn for the corresponding cell. In that
 manner, you can create an array that appears to be sparse. Such is
-the case with random-length text lines in the terminal primitive,
+the case with random-length text lines in the text area primitive,
 which is a tile array.
 
 ## Create Solid Bitmap for Tile Array
@@ -42,8 +42,8 @@ processing speed perspective. Bitmaps with any transparency may be slower, and t
 OTF mode will automatically set the PRIM_FLAGS_ALL_SAME flag
 when this command is used.
 
-If you create a terminal primitive, which is a tile array, and
-use the Define Terminal Character or Define Terminal Character
+If you create a text area primitive, which is a tile array, and
+use the Define Text Area Character or Define Text Area Character
 Range command, then the required solid bitmap(s) is(are)
 created automatically.
 

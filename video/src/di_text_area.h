@@ -1,6 +1,6 @@
-// di_terminal.h - Function declarations for supporting a character terminal display
+// di_text_area.h - Function declarations for supporting a character text_area display
 //
-// A terminal is a specialized tile array, where each tile is a single character
+// A text_area is a specialized tile array, where each tile is a single character
 // cell, and the character codes are used as tile image IDs.
 //
 // Copyright (c) 2023 Curtis Whitley
@@ -27,19 +27,19 @@
 #pragma once
 #include "di_tile_array.h"
 
-class DiTerminal: public DiTileArray {
+class DiTextArea: public DiTileArray {
   public:
 
-  // Construct a terminal. The terminal always shows characters that are 8x8
+  // Construct a text_area. The text_area always shows characters that are 8x8
   // pixels, based on the built-in Agon font.
   //
-  // The given x coordinate must be a multiple of 4, to align the terminal on
+  // The given x coordinate must be a multiple of 4, to align the text_area on
   // a 4-byte boundary, which saves memory and processing time.
   //
-  DiTerminal(uint32_t x, uint32_t y, uint8_t flags, uint32_t columns, uint32_t rows, const uint8_t* font);
+  DiTextArea(uint32_t x, uint32_t y, uint8_t flags, uint32_t columns, uint32_t rows, const uint8_t* font);
 
-  // Destroy a terminal, including its allocated data.
-  virtual ~DiTerminal();
+  // Destroy a text_area, including its allocated data.
+  virtual ~DiTextArea();
 
   // Clear the custom instructions needed to draw the primitive.
   virtual void IRAM_ATTR delete_instructions();
@@ -54,38 +54,38 @@ class DiTerminal: public DiTileArray {
   // Define an individual character using given colors and 8x8 font.
   DiTileBitmapID define_character(uint8_t character, uint8_t fg_color, uint8_t bg_color);
 
-  // Set the current character position. The position given may be within the terminal
+  // Set the current character position. The position given may be within the text_area
   // display, or may be outside of it. If it is within the display, then the next
   // character written by write_character(ch) will appear at the given position. If the
   // position is outside of the display, then writing the next character will cause the
-  // terminal display to scroll far enough to bring the current character position into
+  // text_area display to scroll far enough to bring the current character position into
   // view, and the current position will be updated accordingly.
   void set_character_position(int32_t column, int32_t row);
 
   // Write a character at the current character position. This may cause scrolling
   // BEFORE writing the character (not after), if the current character position is
-  // off the visible terminal area. This function will advance the current character
+  // off the visible text_area area. This function will advance the current character
   // position. The character is treated as part of a tile image ID, and is not
-  // interpreted as a terminal command of any kind.
+  // interpreted as a text_area command of any kind.
   void write_character(uint8_t character);
 
   // Set the image ID to use to draw a character at a specific row and column.
   // This function does not cause scrolling, nor does it change the current
   // character position. The character is treated as part of a tile image ID,
-  // and is not interpreted as a terminal command of any kind.
+  // and is not interpreted as a text_area command of any kind.
   void set_character(int32_t column, int32_t row, uint8_t character);
 
   // Read the character code at the current character position. If the current position
-  // is outside of the terminal display, this function returns zero.
+  // is outside of the text_area display, this function returns zero.
   DiTileBitmapID read_character();
 
   // Read the character code at the given character position.
   DiTileBitmapID read_character(int32_t column, int32_t row);
 
-  // Erase an area of text within the terminal display.
+  // Erase an area of text within the text_area display.
   void erase_text(int32_t column, int32_t row, int32_t columns, int32_t rows);
 
-  // Move an area of text within the terminal display. This may be used to scroll
+  // Move an area of text within the text_area display. This may be used to scroll
   // text at the character level (not at the pixel level).
   void move_text(int32_t column, int32_t row, int32_t columns, int32_t rows,
                   int32_t delta_horiz, int32_t delta_vert);

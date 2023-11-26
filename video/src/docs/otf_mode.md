@@ -46,7 +46,7 @@ been implemented yet, and the sections are subject to change!</b>
 <br>[Point Primitive](otf_point.md)
 <br>[Primitive Flags](otf_flags.md)
 <br>[Rectangle Primitive](otf_rectangle.md)
-<br>[Terminal Primitive](otf_terminal.md)
+<br>[Text Area Primitive](otf_text_area.md)
 <br>[Tile Array Primitive](otf_tile_array.md)
 <br>[Tile Map Primitive](otf_tile_map.md)
 <br>[Triangle Primitive](otf_triangle.md)

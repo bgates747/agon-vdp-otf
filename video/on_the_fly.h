@@ -22,49 +22,29 @@ DiManager* di_manager; // Used for OTF 800x600x64 mode
 void otf(void * pvParameters) {
 	debug_log("OTF task running\r\n");
 	di_manager = new DiManager();
-	debug_log("@%i\n",__LINE__);
 	di_manager->create_root();
-	debug_log("@%i\n",__LINE__);
 
-	auto terminal = di_manager->create_terminal(1, ROOT_PRIMITIVE_ID, PRIM_FLAGS_DEFAULT, 0, 0, 100, 75, fabgl::FONT_AGON_DATA);
-	debug_log("@%i\n",__LINE__);
-	terminal->define_character_range(0x20, 0x7E, PIXEL_ALPHA_100_MASK|0x05, PIXEL_ALPHA_100_MASK|0x00);
-	debug_log("@%i\n",__LINE__);
-	terminal->clear_screen();
-	debug_log("@%i\n",__LINE__);
+	auto text_area = di_manager->create_text_area(1, ROOT_PRIMITIVE_ID, PRIM_FLAGS_DEFAULT, 0, 0, 100, 75, fabgl::FONT_AGON_DATA);
+	text_area->define_character_range(0x20, 0x7E, PIXEL_ALPHA_100_MASK|0x05, PIXEL_ALPHA_100_MASK|0x00);
+	text_area->clear_screen();
 	di_manager->generate_code_for_primitive(1);
-	debug_log("@%i\n",__LINE__);
-	print("\r\n\r\n\r\n\r\n\r\n");
-	print("** Test of OTF 800x600x64 mode **\r\n");
-	debug_log("@%i\n",__LINE__);
 	debug_log("Running OTF manager...\r\n");
-	debug_log("@%i\n",__LINE__);
 	di_manager->run();
 }
 
 int8_t use_otf_mode(int8_t mode) {
-	debug_log("@%i\n",__LINE__);
 	if (_VGAController) {
-	debug_log("@%i\n",__LINE__);
 		_VGAController->end();
-	debug_log("@%i\n",__LINE__);
 		_VGAController.reset();
-	debug_log("@%i\n",__LINE__);
 	}
-	debug_log("@%i\n",__LINE__);
 
     uint8_t oldMode = videoMode;
-	debug_log("@%i\n",__LINE__);
 	videoMode = mode;
-	debug_log("@%i\n",__LINE__);
 
 	TaskHandle_t xHandle = NULL;
 	xTaskCreatePinnedToCore(otf, "OTF-MODE", 8192, NULL,
 							OTF_MANAGER_PRIORITY, &xHandle, 1); // Core #1
-	debug_log("@%i\n",__LINE__);
 	return 0; // success
-
-    //return change_mode(oldMode);
 }
 
 bool is_otf_mode() {

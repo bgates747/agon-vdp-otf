@@ -38,7 +38,7 @@ DiPrimitive::~DiPrimitive() {
 void DiPrimitive::init_root() {
   // The root primitive covers the entire screen, and is not drawn.
   // The application should define what the base layer of the screen
-  // is (e.g., solid rectangle, terminal, tile map, etc.).
+  // is (e.g., solid rectangle, text area, tile map, etc.).
 
   m_flags = PRIM_FLAG_PAINT_KIDS|PRIM_FLAG_CLIP_KIDS;
   m_width = ACT_PIXELS;

@@ -27,7 +27,7 @@
 #include <map>
 #include "rom/lldesc.h"
 #include "di_video_buffer.h"
-#include "di_terminal.h"
+#include "di_text_area.h"
 #include "di_tile_map.h"
 #include "di_render.h"
 #include "di_solid_rectangle.h"
@@ -105,7 +105,7 @@ class DiManager {
                             int32_t screen_width, int32_t screen_height,
                             uint32_t columns, uint32_t rows, uint32_t width, uint32_t height);
 
-    DiTerminal* create_terminal(uint16_t id, uint16_t parent, uint16_t flags,
+    DiTextArea* create_text_area(uint16_t id, uint16_t parent, uint16_t flags,
                             uint32_t x, uint32_t y, uint32_t columns, uint32_t rows, const uint8_t* font);
 
     DiBitmap* create_solid_bitmap(uint16_t id, uint16_t parent, uint16_t flags,
@@ -221,7 +221,7 @@ class DiManager {
     uint32_t                    m_next_buffer_read;
     uint32_t                    m_num_buffer_chars;
     uint32_t                    m_command_data_index;
-    DiTerminal*                 m_terminal;
+    DiTextArea*                 m_text_area;
     DiSolidRectangle*           m_cursor;
     uint8_t                     m_flash_count;
     uint8_t                     m_incoming_data[INCOMING_DATA_BUFFER_SIZE];
@@ -263,7 +263,7 @@ class DiManager {
   void process_stored_characters();
 
   // Process an incoming character, which could be printable data or part of some
-  // VDU command. If the character is printable, it will be written to the terminal
+  // VDU command. If the character is printable, it will be written to the text_area
   // display. If the character is non-printable, or part of a VDU command, it will
   // be treated accordingly. This function returns true if the character was fully
   // processed, and false otherwise.

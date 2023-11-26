@@ -157,10 +157,10 @@ OTFCMD(135,(_id _pid _flags _bmid),_Create_primitive_Reference_Solid_Bitmap)
 OTFCMD(136,(_id _pid _flags _bmid),_Create_primitive_Reference_Masked_Bitmap)
 OTFCMD(137,(_id _pid _flags _bmid),_Create_primitive_Reference_Transparent_Bitmap)
 OTFCMD(140,(_id _pid _flags _x _y _w _h),_Create_primitive_Group)
-OTFCMD(150,(_id _pid _flags _x _y _columns _rows),_Create_primitive_Terminal)
-OTFCMD(151,(_id),_Select_Active_Terminal)
-OTFCMD(152,(_id _char _fgcolor _bgcolor),_Define_Terminal_Character)
-OTFCMD(153,(_id _firstchar _lastchar _fgcolor _bgcolor),_Define_Terminal_Character_Range)
+OTFCMD(150,(_id _pid _flags _x _y _columns _rows),_Create_primitive_Text_Area)
+OTFCMD(151,(_id),_Select_Active_Text_Area)
+OTFCMD(152,(_id _char _fgcolor _bgcolor),_Define_Text_Area_Character)
+OTFCMD(153,(_id _firstchar _lastchar _fgcolor _bgcolor),_Define_Text_Area_Character_Range)
 OTFCMD(200,(_id _pid _flags _x _y _w _h),_Create_primitive_Render_3D_Scene)
 OTFCMD(201,(_id _mid _n _x0 _y0 _z0),_Define_Mesh_Vertices)
 OTFCMD(202,(_id _mid _n _i0),_Set_Mesh_Vertex_Indices)
@@ -248,10 +248,10 @@ typedef union {
     OtfCmd_136_Create_primitive_Reference_Masked_Bitmap m_136_Create_primitive_Reference_Masked_Bitmap;
     OtfCmd_137_Create_primitive_Reference_Transparent_Bitmap m_137_Create_primitive_Reference_Transparent_Bitmap;
     OtfCmd_140_Create_primitive_Group m_140_Create_primitive_Group;
-    OtfCmd_150_Create_primitive_Terminal m_150_Create_primitive_Terminal;
-    OtfCmd_151_Select_Active_Terminal m_151_Select_Active_Terminal;
-    OtfCmd_152_Define_Terminal_Character m_152_Define_Terminal_Character;
-    OtfCmd_153_Define_Terminal_Character_Range m_153_Define_Terminal_Character_Range;
+    OtfCmd_150_Create_primitive_Text_Area m_150_Create_primitive_Text_Area;
+    OtfCmd_151_Select_Active_Text_Area m_151_Select_Active_Text_Area;
+    OtfCmd_152_Define_Text_Area_Character m_152_Define_Text_Area_Character;
+    OtfCmd_153_Define_Text_Area_Character_Range m_153_Define_Text_Area_Character_Range;
     OtfCmd_200_Create_primitive_Render_3D_Scene m_200_Create_primitive_Render_3D_Scene;
     OtfCmd_201_Define_Mesh_Vertices m_201_Define_Mesh_Vertices;
     OtfCmd_202_Set_Mesh_Vertex_Indices m_202_Set_Mesh_Vertex_Indices;

@@ -60,7 +60,6 @@ extern void sendPlayNote(int channel, int success);
 extern void setKeyboardLayout(uint8_t region);
 extern bool initialised;
 extern bool logicalCoords;
-extern bool terminalMode;
 extern bool cursorEnabled;
 extern int videoMode;
 
@@ -84,7 +83,7 @@ DiManager::DiManager() {
   m_next_buffer_write = 0;
   m_next_buffer_read = 0;
   m_num_buffer_chars = 0;
-  m_terminal = NULL;
+  m_text_area = NULL;
   m_cursor = NULL;
   m_flash_count = 0;
   m_on_vertical_blank_cb = &default_on_vertical_blank;
@@ -100,7 +99,7 @@ DiManager::~DiManager() {
 void DiManager::create_root() {
   // The root primitive covers the entire screen, and is not drawn.
   // The application should define what the base layer of the screen
-  // is (e.g., solid rectangle, terminal, tile map, etc.).
+  // is (e.g., solid rectangle, text_area, tile map, etc.).
 
   DiPrimitive* root = new DiPrimitive;
   root->init_root();
@@ -704,21 +703,21 @@ DiTileArray* DiManager::create_tile_array(uint16_t id, uint16_t parent, uint16_t
     return tile_array;
 }
 
-DiTerminal* DiManager::create_terminal(uint16_t id, uint16_t parent, uint16_t flags,
+DiTextArea* DiManager::create_text_area(uint16_t id, uint16_t parent, uint16_t flags,
                             uint32_t x, uint32_t y, uint32_t columns, uint32_t rows, const uint8_t* font) {
     if (!validate_id(id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(parent))) return NULL;
 
     flags |= PRIM_FLAGS_X_SRC|PRIM_FLAGS_ALL_SAME;
-    DiTerminal* terminal = new DiTerminal(x, y, flags, columns, rows, font);
+    DiTextArea* text_area = new DiTextArea(x, y, flags, columns, rows, font);
 
-    finish_create(id, flags, terminal, parent_prim);
-    m_terminal = terminal;
+    finish_create(id, flags, text_area, parent_prim);
+    m_text_area = text_area;
 
     // Create a child rectangle as a text cursor.
     int16_t cx, cy, cx_extent, cy_extent;
     cx = cy = cx_extent = cy_extent = 0;
-    m_terminal->get_tile_coordinates(0, 0, cx, cy, cx_extent, cy_extent);
+    m_text_area->get_tile_coordinates(0, 0, cx, cy, cx_extent, cy_extent);
     auto w = cx_extent - cx;
 
     OtfCmd_41_Create_primitive_Solid_Rectangle cmd;
@@ -732,9 +731,8 @@ DiTerminal* DiManager::create_terminal(uint16_t id, uint16_t parent, uint16_t fl
     cmd.m_color = 0xFF;
     m_cursor = create_solid_rectangle(&cmd);
     cursorEnabled = true;
-    terminalMode = true;
 
-    return terminal;
+    return text_area;
 }
 
 void IRAM_ATTR DiManager::run() {
@@ -779,19 +777,19 @@ void IRAM_ATTR DiManager::loop() {
       }
       (*m_on_vertical_blank_cb)();
 
-      if (terminalMode && cursorEnabled && m_cursor) {
+      if (cursorEnabled && m_cursor) {
         auto flags = m_cursor->get_flags();
         auto cid = m_cursor->get_id();
         if ((flags & PRIM_FLAG_PAINT_THIS) == 0) {
           if (++m_flash_count >= 50) {
             // turn ON cursor
-            m_terminal->bring_current_position_into_view();
+            m_text_area->bring_current_position_into_view();
             int16_t cx, cy, cx_extent, cy_extent;
             cx = cy = cx_extent = cy_extent = 0;
             uint16_t col = 0;
             uint16_t row = 0;
-            m_terminal->get_position(col, row);
-            m_terminal->get_tile_coordinates(col, row, cx, cy, cx_extent, cy_extent);
+            m_text_area->get_position(col, row);
+            m_text_area->get_tile_coordinates(col, row, cx, cy, cx_extent, cy_extent);
             auto w = cx_extent - cx;
             set_primitive_flags(cid, flags | PRIM_FLAG_PAINT_THIS);
             move_primitive_absolute(cid, cx, cy_extent-2);
@@ -1099,7 +1097,7 @@ bool DiManager::handle_udg_sys_cmd(uint8_t character) {
   if (m_incoming_command.size() >= 2 && get_param_8(1) == 1) {
     // VDU 23, 1, enable; 0; 0; 0;: Text Cursor Control
     if (m_incoming_command.size() >= 10) {
-      if (m_terminal) {
+      if (m_text_area) {
         cursorEnabled = (get_param_8(2) != 0);
         auto flags = m_cursor->get_flags();
         if (cursorEnabled) {
@@ -1219,7 +1217,7 @@ bool DiManager::handle_udg_sys_cmd(uint8_t character) {
       // VDU 23, 0, &FF: Switch to terminal mode for CP/M (This will disable keyboard entry in BBC BASIC/MOS)
       case VDP_TERMINALMODE: /*0xFF*/ {
         if (m_incoming_command.size() == 3) {
-          // This command is ignored; this mode is terminal mode.
+          // This command is ignored.
           m_incoming_command.clear();
           return true;
         }
@@ -1970,19 +1968,19 @@ bool DiManager::handle_otf_cmd() {
       } break;
 
       case 150: {
-        auto cmd = &cu->m_150_Create_primitive_Terminal;
+        auto cmd = &cu->m_150_Create_primitive_Text_Area;
       } break;
 
       case 151: {
-        auto cmd = &cu->m_151_Select_Active_Terminal;
+        auto cmd = &cu->m_151_Select_Active_Text_Area;
       } break;
 
       case 152: {
-        auto cmd = &cu->m_152_Define_Terminal_Character;
+        auto cmd = &cu->m_152_Define_Text_Area_Character;
       } break;
 
       case 153: {
-        auto cmd = &cu->m_153_Define_Terminal_Character_Range;
+        auto cmd = &cu->m_153_Define_Text_Area_Character_Range;
       } break;
 
       case 200: {
@@ -2071,60 +2069,60 @@ bool DiManager::handle_otf_cmd() {
 }
 
 void DiManager::clear_screen() {
-  if (m_terminal) {
-    m_terminal->clear_screen();
+  if (m_text_area) {
+    m_text_area->clear_screen();
   }
 }
 
 void DiManager::move_cursor_left() {
-  if (m_terminal) {
-    m_terminal->move_cursor_left();
+  if (m_text_area) {
+    m_text_area->move_cursor_left();
   }
 }
 
 void DiManager::move_cursor_right() {
-  if (m_terminal) {
-    m_terminal->move_cursor_right();
+  if (m_text_area) {
+    m_text_area->move_cursor_right();
   }
 }
 
 void DiManager::move_cursor_down() {
-  if (m_terminal) {
-    m_terminal->move_cursor_down();
+  if (m_text_area) {
+    m_text_area->move_cursor_down();
   }
 }
 
 void DiManager::move_cursor_up() {
-  if (m_terminal) {
-    m_terminal->move_cursor_up();
+  if (m_text_area) {
+    m_text_area->move_cursor_up();
   }
 }
 
 void DiManager::move_cursor_home() {
-  if (m_terminal) {
-    m_terminal->move_cursor_home();
+  if (m_text_area) {
+    m_text_area->move_cursor_home();
   }
 }
 
 void DiManager::move_cursor_boln() {
-  if (m_terminal) {
-    m_terminal->move_cursor_boln();
+  if (m_text_area) {
+    m_text_area->move_cursor_boln();
   }
 }
 
 void DiManager::do_backspace() {
-  if (m_terminal) {
-    m_terminal->do_backspace();
+  if (m_text_area) {
+    m_text_area->do_backspace();
   }
 }
 
 bool DiManager::move_cursor_tab(uint8_t character) {
   m_incoming_command.push_back(character);
   if (m_incoming_command.size() >= 3) {
-    if (m_terminal) {
+    if (m_text_area) {
       uint8_t x = get_param_8(1);
       uint8_t y = get_param_8(2);
-      m_terminal->move_cursor_tab(x, y);
+      m_text_area->move_cursor_tab(x, y);
     }
     m_incoming_command.clear();
     return true;
@@ -2133,16 +2131,16 @@ bool DiManager::move_cursor_tab(uint8_t character) {
 }
 
 uint8_t DiManager::read_character(int16_t x, int16_t y) {
-  if (m_terminal) {
-    return m_terminal->read_character(x, y);
+  if (m_text_area) {
+    return m_text_area->read_character(x, y);
   } else {
     return 0;
   }
 }
 
 void DiManager::write_character(uint8_t character) {
-  if (m_terminal) {
-    m_terminal->write_character(character);
+  if (m_text_area) {
+    m_text_area->write_character(character);
   }
 }
 
@@ -2159,8 +2157,8 @@ int16_t DiManager::get_param_16(uint32_t index) {
 void DiManager::send_cursor_position() {
   uint16_t column = 0;
   uint16_t row = 0;
-  if (m_terminal) {
-    m_terminal->get_position(column, row);
+  if (m_text_area) {
+    m_text_area->get_position(column, row);
   }
 	byte packet[] = {
 		(byte) column,
