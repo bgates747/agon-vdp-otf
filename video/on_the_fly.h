@@ -29,6 +29,8 @@ void otf(void * pvParameters) {
 	text_area->clear_screen();
 	di_manager->generate_code_for_primitive(1);
 	debug_log("Running OTF manager...\r\n");
+	auto dot = di_manager->create_point(10, 0, PRIM_FLAGS_DEFAULT, 400, 300, 0xFF);
+	di_manager->generate_code_for_primitive(dot->get_id());
 	di_manager->run();
 }
 

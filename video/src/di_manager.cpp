@@ -2259,10 +2259,10 @@ void DiManager::delete_primitive(uint16_t id) {
 
 void DiManager::generate_code_for_primitive(uint16_t id) {
   DiPrimitive* prim; if (!(prim = (DiPrimitive*)get_safe_primitive(id))) return;
-  //debug_log("\nGEN CODE FOR %hu at x %i y %i dx %i dy %i\n", id, prim->get_absolute_x(), prim->get_absolute_y(), prim->get_draw_x(), prim->get_draw_y());
+  debug_log("\nGEN CODE FOR %hu at x %i y %i dx %i dy %i\n", id, prim->get_absolute_x(), prim->get_absolute_y(), prim->get_draw_x(), prim->get_draw_y());
   prim->delete_instructions();
   prim->generate_instructions();
-  //debug_log("\n gen end\n");
+  debug_log("\n gen end\n");
 }
 
 DiPrimitive* DiManager::create_rectangle_outline(OtfCmd_40_Create_primitive_Rectangle_Outline* cmd) {
