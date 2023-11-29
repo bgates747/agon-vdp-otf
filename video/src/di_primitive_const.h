@@ -58,9 +58,11 @@
 #define FLD_last_child  116      // id of last child primitive
 #define FLD_prev_sibling  120    // id of previous sibling primitive
 #define FLD_next_sibling  124    // id of next sibling primitive
+#define FLD_paint_fcn  128       // points to paint function or array of them
+#define FLD_cur_paint_fcn  132   // points to current paint function based on position
 
-#define FLD_first_group  128     // lowest index of drawing group in which it is a member
-#define FLD_last_group  130      // highest index of drawing group in which it is a member
-#define FLD_id  132              // id of this primitive
-#define FLD_flags  134           // flag bits to control painting, etc.
-#define sizeof_DiPrimitive  136  // total size of the base class structure
+#define FLD_first_group  136     // lowest index of drawing group in which it is a member
+#define FLD_last_group  138      // highest index of drawing group in which it is a member
+#define FLD_id  140              // id of this primitive
+#define FLD_flags  142           // flag bits to control painting, etc.
+#define sizeof_DiPrimitive  144  // total size of the base class structure

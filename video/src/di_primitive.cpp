@@ -142,7 +142,7 @@ void IRAM_ATTR DiPrimitive::compute_absolute_geometry(
   m_draw_y_extent = MIN(m_y_extent, m_view_y_extent);
 
   m_abs_x_word = m_abs_x & 0xFFFFFFFC;
-  m_draw_x_offset = m_draw_x - m_abs_x;
+  m_draw_left_trunc = m_draw_x - m_abs_x;
   m_draw_y_offset = m_draw_y - m_abs_y;
   m_draw_x_word = m_draw_x & 0xFFFFFFFC;
   m_draw_x_word_offset = m_draw_x_word - m_abs_x_word;
@@ -150,7 +150,7 @@ void IRAM_ATTR DiPrimitive::compute_absolute_geometry(
   //if (m_id>2) debug_log(" GEO id %hu rel(%i,%i) abs(%i,%i), w=%hu, h=%hu, d(%i,%i), de(%i,%i), aw=%i, dxo=%i, dyo=%i, dxw=%i, dxwo=%o\n",
   //  m_id, m_rel_x, m_rel_y, m_abs_x, m_abs_y, m_width, m_height,
   //  m_draw_x, m_draw_y, m_draw_x_extent, m_draw_y_extent,
-  //  m_abs_x_word, m_draw_x_offset, m_draw_y_offset, m_draw_x_word, m_draw_x_word_offset);
+  //  m_abs_x_word, m_draw_left_trunc, m_draw_y_offset, m_draw_x_word, m_draw_x_word_offset);
 
   DiPrimitive* child = m_first_child;
   while (child) {
@@ -198,4 +198,106 @@ uint8_t DiPrimitive::inverted_alpha_to_opaqueness(uint8_t &color) {
     case 3: return 25;
     default: return 100;
   }
+}
+
+/*
+    Overall cases for clipping the drawing of a primitive horizontally:
+
+                     Clipping Area (dots)
+
+               m_view_x                      m_view_x_extent
+               v                             v
+               ..............................
+               :                            :
+           ***********                      :
+           ***********  Primitive           :   Clip on Left Side
+           ***********   (stars)            :
+           ***********                      :
+           ***********                      :
+           ^   :                            :
+     m_abs_x   ..............................
+               ^      ^
+        m_draw_x      m_draw_x_extent, m_x_extent
+
+               ..............................
+               :                            :
+               :       ***********          :
+               :       ***********          :  Show Full Primitive
+               :       ***********          :  (no clipping)
+               :       ***********          :
+               :       ***********          :
+               :                            :
+               ..............................
+                       ^          ^
+       m_abs_x, m_draw_x          m_draw_x_extent, m_x_extent
+
+               ..............................
+               :                            :
+               :                       ***********
+               :                       ***********  Clip on Right Side
+               :                       ***********
+               :                       ***********
+               :                       ***********
+               :                            :     ^
+               ..............................     m_x_extent
+                                       ^     ^
+                       m_abs_x, m_draw_x     m_draw_x_extent
+
+  What code we generate depends on the above cases, plus whether the
+  primitive can be moved (scrolled), as indicated by its flag bits.
+*/
+
+void DiPrimitive::generate_code_for_left_edge(uint32_t y_line, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
+}
+
+void DiPrimitive::generate_code_for_right_edge(uint32_t y_line, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
+}
+
+void DiPrimitive::generate_code_for_draw_area(uint32_t y_line, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
+}
+
+void DiPrimitive::generate_code_for_positions(uint32_t y_line, uint32_t width, uint32_t height) {
+  m_paint_code.clear();
+  m_paint_ptrs.clear();
+  m_cur_paint_ptr.clear();
+
+  for (uint32_t y_line = 0; y_line < height; y_line++) {
+    if (m_flags & PRIM_FLAG_H_SCROLL_1) {
+      // Support scrolling by 1 pixel
+      if (m_flags & PRIM_FLAGS_LEFT_EDGE) {
+        for (uint32_t hidden = 1; hidden < width; hidden++) {
+          uint32_t visible = width - hidden;
+          generate_code_for_left_edge(y_line, width, height, hidden, visible);
+        }
+      }
+      if (m_flags & PRIM_FLAGS_RIGHT_EDGE) {
+        for (uint32_t hidden = 1; hidden < width; hidden++) {
+          uint32_t visible = width - hidden;
+          generate_code_for_right_edge(y_line, width, height, hidden, visible);
+        }
+      }
+    } else if (m_flags & PRIM_FLAG_H_SCROLL_4) {
+      // Support scrolling by 4 pixels
+      if (m_flags & PRIM_FLAGS_LEFT_EDGE) {
+        for (uint32_t hidden = 4; hidden < width + 3; hidden += 4) {
+          uint32_t visible = width - hidden;
+          generate_code_for_left_edge(y_line, width, height, hidden, visible);
+        }
+      }
+      if (m_flags & PRIM_FLAGS_RIGHT_EDGE) {
+        for (uint32_t hidden = 4; hidden < width + 3; hidden += 4) {
+          uint32_t visible = width - hidden;
+          generate_code_for_right_edge(y_line, width, height, hidden, visible);
+        }
+      }
+    } else {
+      // Primitive must be static (no scrolling)
+      uint32_t hidden = m_draw_x - m_abs_x;
+      uint32_t visible = m_draw_x_extent - m_draw_x;
+      generate_code_for_draw_area(y_line, width, height, hidden, visible);
+    }
+  }
+
+  // Default function just returns, for safety.
+  m_paint_code.enter_and_leave_outer_function();
 }

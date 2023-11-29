@@ -85,6 +85,5 @@ class DiBitmap : public DiPrimitive {
   uint32_t*   m_pixels;
   uint32_t    m_save_height;
   uint32_t    m_built_width;
-  EspFunction m_paint_fcn[4];
   uint8_t     m_transparent_color;
 };

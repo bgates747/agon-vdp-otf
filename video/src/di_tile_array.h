@@ -96,5 +96,4 @@ class DiTileArray: public DiPrimitive {
   uint8_t   m_transparent_color;    // value indicating not to draw the pixel
   DiTileIdToBitmapMap m_id_to_bitmap_map; // caches bitmaps based on bitmap ID
   uint32_t** m_tile_pixels;         // 2D array of tile bitmap IDs
-  EspFunction m_paint_fcn[4];       // dynamic code to copy pixel data
 };

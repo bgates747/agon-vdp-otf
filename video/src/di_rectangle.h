@@ -44,5 +44,4 @@ class DiRectangle: public DiPrimitive {
 
   protected:
   uint8_t     m_opaqueness;
-  EspFunction m_paint_fcn[2];
 };

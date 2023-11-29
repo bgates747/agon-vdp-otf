@@ -32,25 +32,25 @@ DiSetPixel::DiSetPixel(int32_t x, int32_t y, uint8_t color) {
   m_width = 1;
   m_height = 1;
   m_color = PIXEL_COLOR_X4(color);
-  m_paint_fcn.enter_and_leave_outer_function();
+  m_paint_code.enter_and_leave_outer_function();
 }
 
 void IRAM_ATTR DiSetPixel::delete_instructions() {
-  m_paint_fcn.clear();
+  m_paint_code.clear();
 }
   
 void IRAM_ATTR DiSetPixel::generate_instructions() {
-  m_paint_fcn.clear();
+  m_paint_code.clear();
   if (m_flags & PRIM_FLAGS_CAN_DRAW) {
     EspFixups fixups;
     uint16_t width = 1;
     DiLineSections sections;
     sections.add_piece(1, 0, 1, false);
-    m_paint_fcn.draw_line_as_outer_fcn(fixups, m_draw_x, m_draw_x, &sections, m_flags, m_opaqueness);
-    m_paint_fcn.do_fixups(fixups);
+    m_paint_code.draw_line_as_outer_fcn(fixups, m_draw_x, m_draw_x, &sections, m_flags, m_opaqueness);
+    m_paint_code.do_fixups(fixups);
   }
 }
 
 void IRAM_ATTR DiSetPixel::paint(volatile uint32_t* p_scan_line, uint32_t line_index) {
-  m_paint_fcn.call(this, p_scan_line, line_index);
+  m_paint_code.call(this, p_scan_line, line_index);
 }

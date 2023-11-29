@@ -74,6 +74,9 @@ If no motion is necessary (i.e., the
 primitive has just one location on the screen), then do not set
 the PRIM_FLAG_H_SCROLL_1 flag or the PRIM_FLAG_H_SCROLL_4 flag.
 
+NOTE: If any ancestor of the primitive uses this flag, then
+this primitive must also use this flag.
+
 <b>PRIM_FLAG_H_SCROLL_4</b><br>
 This flag determines whether the primitive will need to be scrolled
 horizontally on a 4-pixel boundary. If this flag
@@ -81,6 +84,9 @@ is set when creating the primitive, more RAM will be used to support
 the rough horizontal motion. If no motion is necessary (i.e., the
 primitive has just one location on the screen), then do not set
 the PRIM_FLAG_H_SCROLL_1 flag or the PRIM_FLAG_H_SCROLL_4 flag.
+
+NOTE: If any ancestor of the primitive uses this flag, then
+this primitive must also use this flag.
 
 <b>PRIM_FLAG_ABSOLUTE</b><br>
 This flag determines whether the primitive should <i>always</i> be
@@ -115,20 +121,30 @@ level (e.g., all pixels are 50% opaque).
 <b>PRIM_FLAGS_LEFT_EDGE</b><br>
 This flag determines whether to generate code that can draw the
 primitive with part of its left edge missing, such as hidden off
-of the left side of the screen. This flag must be set for any
-primitive that will be positioned such that its left edge is
+of the left side of the screen, <i>as a result of being moved
+(scrolled)</i>. This flag must be set for any
+primitive that will be <i>repositioned</i>
+(after dynamic code generation for it)
+such that its left edge is
 hidden, either by being off-screen or clipped by some ancestor.
 This flag is not required when part of the primitive is hidden
-only by virtue of being underneath some other primitive.
+only by virtue of being underneath some other primitive, and is
+not required for a static primitive that happens to be clipped
+(meaning that part of it will never be drawn).
 
 <b>PRIM_FLAGS_RIGHT_EDGE</b><br>
 This flag determines whether to generate code that can draw the
 primitive with part of its right edge missing, such as hidden off
-of the right side of the screen. This flag must be set for any
-primitive that will be positioned such that its right edge is
+of the right side of the screen, <i>as a result of being moved
+(scrolled)</i>. This flag must be set for any
+primitive that will be <i>repositioned</i>
+(after dynamic code generation for it)
+such that its right edge is
 hidden, either by being off-screen or clipped by some ancestor.
 This flag is not required when part of the primitive is hidden
-only by virtue of being underneath some other primitive.
+only by virtue of being underneath some other primitive, and is
+not required for a static primitive that happens to be clipped
+(meaning that part of it will never be drawn).
 
 <b>PRIM_FLAGS_CAN_DRAW</b><br>
 This OTF-internal flag determines whether a primitive can be

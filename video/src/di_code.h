@@ -38,11 +38,20 @@ typedef int32_t s_off_t;   // signed offset
 
 extern "C" {
 typedef void (*CallEspFcn)(void* p_this, volatile uint32_t* p_scan_line, uint32_t line_index);
-typedef void (*CallEspXFcn)(void* p_this, volatile uint32_t* p_scan_line, uint32_t line_index,
+typedef void (*CallEspA5Fcn)(void* p_this, volatile uint32_t* p_scan_line, uint32_t line_index,
                                 uint32_t x);
-typedef void (*CallEspXSrcFcn)(void* p_this, volatile uint32_t* p_scan_line, uint32_t line_index,
+typedef void (*CallEspA5A6Fcn)(void* p_this, volatile uint32_t* p_scan_line, uint32_t line_index,
                                 uint32_t a5_value, uint32_t a6_value);
 };
+
+typedef union {
+    uint32_t        m_address;
+    CallEspFcn      m_simple;
+    CallEspA5Fcn    m_a5;
+    CallEspA5A6Fcn  m_a5a6;
+
+    void clear() { m_address = 0; }
+} EspFcnPtr;
 
 typedef struct {
     uint32_t code_index;
@@ -50,6 +59,7 @@ typedef struct {
 } EspFixup;
 
 typedef std::vector<EspFixup> EspFixups;
+typedef std::vector<EspFcnPtr> EspFcnPtrs;
 
 class EspFunction {
     public:
@@ -175,7 +185,7 @@ class EspFunction {
     // a5 = draw_x
     inline void call_x(void* p_this, volatile uint32_t* p_scan_line, uint32_t line_index,
                         uint32_t draw_x) {
-        (*((CallEspXFcn)m_code))(p_this, p_scan_line, line_index, draw_x);
+        (*((CallEspA5Fcn)m_code))(p_this, p_scan_line, line_index, draw_x);
     }
 
     // a0 = return address
@@ -187,7 +197,7 @@ class EspFunction {
     // a6 = a6_value
     inline void call_a5_a6(void* p_this, volatile uint32_t* p_scan_line, uint32_t line_index,
                         uint32_t a5_value, uint32_t a6_value) {
-        (*((CallEspXSrcFcn)m_code))(p_this, p_scan_line, line_index, a5_value, a6_value);
+        (*((CallEspA5A6Fcn)m_code))(p_this, p_scan_line, line_index, a5_value, a6_value);
     }
 
     protected:
@@ -261,69 +271,3 @@ class EspFunction {
         return instr | ((value & 0xFF) << 16) | (dst << 4) | (value & 0xF00); }
 
 };
-
-#define FCN_ARRAY_SIZE(w)   ((w)+3)/4
-
-// Used for a primitive that is always fully drawn, and never moved,
-// or only moved in increments of 4 pixels.
-typedef struct {
-    EspFunction* get_fcn();
-    EspFunction m_fcn;
-} DiPaintFcnSimple;
-
-// Used for a primitve that is always fully drawn, and may be moved
-// in increments of 1 pixel.
-typedef struct {
-    EspFunction* get_fcn(int32_t x);
-    void allocate(uint32_t width) { m_fcn.resize(4); }
-    std::vector<EspFunction> m_fcn;
-} DiPaintFcnScroll;
-
-// Used for a primitive that may have its left side not drawn, and is
-// never moved, or only moved in increments of 4 pixels.
-typedef struct {
-    EspFunction* get_fcn(int32_t x);
-    void allocate(uint32_t width) { m_fcn.resize(FCN_ARRAY_SIZE(width)); }
-    std::vector<EspFunction> m_fcn;
-} DiPaintFcnLeftSide;
-
-// Used for a primitive that may have its right side not drawn, and is
-// never moved, or only moved in increments of 4 pixels.
-typedef struct {
-    EspFunction* get_fcn(int32_t x);
-    void allocate(uint32_t width) { m_fcn.resize(FCN_ARRAY_SIZE(width)); }
-    std::vector<EspFunction> m_fcn;
-} DiPaintFcnRightSide;
-
-// Used for a primitive that may have either side not drawn, and is
-// never moved, or only moved in increments of 4 pixels.
-typedef struct {
-    EspFunction* get_fcn(int32_t x);
-    void allocate(uint32_t width) { m_fcn.resize(FCN_ARRAY_SIZE(width)*2-1); }
-    std::vector<EspFunction> m_fcn;
-} DiPaintFcnEitherSide;
-
-// Used for a primitive that may have its left side not drawn, and
-// may be moved in increments of 1 pixel.
-typedef struct {
-    EspFunction* get_fcn(int32_t x);
-    void allocate(uint32_t width) { m_fcn.resize(width*4); }
-    std::vector<EspFunction> m_fcn;
-} DiPaintFcnLeftSideScroll;
-
-// Used for a primitive that may have its right side not drawn, and
-// may be moved in increments of 1 pixel.
-typedef struct {
-    EspFunction* get_fcn(int32_t x);
-    void allocate(uint32_t width) { m_fcn.resize(width*4); }
-    std::vector<EspFunction> m_fcn;
-} DiPaintFcnRightSideScroll;
-
-// Used for a primitive that may have either side not drawn, and
-// may be moved in increments of 1 pixel.
-typedef struct {
-    EspFunction* get_fcn(int32_t x);
-    void allocate(uint32_t width) { m_fcn.resize((FCN_ARRAY_SIZE(width)*2-1)*4); }
-    std::vector<EspFunction> m_fcn;
-} DiPaintFcnEitherSideScroll;
-

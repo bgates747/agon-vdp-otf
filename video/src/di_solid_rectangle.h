@@ -46,5 +46,4 @@ class DiSolidRectangle: public DiPrimitive {
   virtual void IRAM_ATTR paint(volatile uint32_t* p_scan_line, uint32_t line_index);
 
   protected:
-  EspFunction m_paint_fcn;
 };

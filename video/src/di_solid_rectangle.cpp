@@ -36,25 +36,25 @@ void DiSolidRectangle::make_rectangle(uint16_t flags, int32_t x, int32_t y, uint
   m_width = width;
   m_height = height;
   m_color = PIXEL_COLOR_X4(color);
-  m_paint_fcn.enter_and_leave_outer_function();
+  m_paint_code.enter_and_leave_outer_function();
 }
 
 void IRAM_ATTR DiSolidRectangle::delete_instructions() {
-  m_paint_fcn.clear();
+  m_paint_code.clear();
 }
 
 void IRAM_ATTR DiSolidRectangle::generate_instructions() {
-  m_paint_fcn.clear();
+  m_paint_code.clear();
   if (m_flags & PRIM_FLAGS_CAN_DRAW) {
     EspFixups fixups;
     auto width = (uint16_t)m_width;
     DiLineSections sections;
     sections.add_piece(1, 0, width, false);
-    m_paint_fcn.draw_line_as_outer_fcn(fixups, m_draw_x, m_draw_x, &sections, m_flags, m_opaqueness);
-    m_paint_fcn.do_fixups(fixups);
+    m_paint_code.draw_line_as_outer_fcn(fixups, m_draw_x, m_draw_x, &sections, m_flags, m_opaqueness);
+    m_paint_code.do_fixups(fixups);
   }
 }
 
 void IRAM_ATTR DiSolidRectangle::paint(volatile uint32_t* p_scan_line, uint32_t line_index) {
-  m_paint_fcn.call(this, p_scan_line, line_index);
+  m_paint_code.call(this, p_scan_line, line_index);
 }

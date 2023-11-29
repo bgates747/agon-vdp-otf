@@ -79,16 +79,19 @@ DiTileArray::~DiTileArray() {
 }
 
 void IRAM_ATTR DiTileArray::delete_instructions() {
+  /*
   if (m_flags & PRIM_FLAG_H_SCROLL_1) {
     for (uint32_t pos = 0; pos < 4; pos++) {
-      m_paint_fcn[pos].clear();
+      m_paint_code[pos].clear();
     }
   } else {
-    m_paint_fcn[0].clear();
+    m_paint_code[0].clear();
   }
+  */
 }
 
 void IRAM_ATTR DiTileArray::generate_instructions() {
+  /*
   delete_instructions();
 
   // Painting is done with this parameter list:
@@ -99,48 +102,48 @@ void IRAM_ATTR DiTileArray::generate_instructions() {
   // a4 = line_index
   // a5 = a5_value (pointer to array of src_pixel pointers for 1 row)
   // a6 = a6_value (src_pixels_offset)
-  // m_paint_fcn->call_a5_a6(this, p_scan_line, y_offset_within_tile, row_array, src_pixels_offset);
+  // m_paint_code->call_a5_a6(this, p_scan_line, y_offset_within_tile, row_array, src_pixels_offset);
 
   if (m_flags & PRIM_FLAG_H_SCROLL_1) {
     for (uint32_t pos = 0; pos < 4; pos++) {
-      m_paint_fcn[pos].entry(REG_STACK_PTR, 32);
-      m_paint_fcn[pos].retw();
+      m_paint_code[pos].entry(REG_STACK_PTR, 32);
+      m_paint_code[pos].retw();
     }
   } else {
-    m_paint_fcn[0].entry(REG_STACK_PTR, 32);
+    m_paint_code[0].entry(REG_STACK_PTR, 32);
 
-    //m_paint_fcn[0].movi(a11, 0x3F);
-    //m_paint_fcn[0].s32i(a11, a3, 4);
-    //m_paint_fcn[0].retw();
+    //m_paint_code[0].movi(a11, 0x3F);
+    //m_paint_code[0].s32i(a11, a3, 4);
+    //m_paint_code[0].retw();
 
-    m_paint_fcn[0].movi(a12, m_visible_columns); // a12 <-- loop counter (# of visible columns)
-    auto at_loop = m_paint_fcn[0].get_code_index();
-    m_paint_fcn[0].loop(a12, 0); // loop once per column
+    m_paint_code[0].movi(a12, m_visible_columns); // a12 <-- loop counter (# of visible columns)
+    auto at_loop = m_paint_code[0].get_code_index();
+    m_paint_code[0].loop(a12, 0); // loop once per column
 
-    m_paint_fcn[0].l32i(a10, a5, 0); // a10 <-- points to start of pixels for 1 bitmap
-    auto at_branch = m_paint_fcn[0].get_code_index();
-    m_paint_fcn[0].beqz(a10, 0); // go if the tile cell is empty (null)
-    m_paint_fcn[0].add(a10, a10, a6); // a10 <-- points to line of source pixels for 1 bitmap
+    m_paint_code[0].l32i(a10, a5, 0); // a10 <-- points to start of pixels for 1 bitmap
+    auto at_branch = m_paint_code[0].get_code_index();
+    m_paint_code[0].beqz(a10, 0); // go if the tile cell is empty (null)
+    m_paint_code[0].add(a10, a10, a6); // a10 <-- points to line of source pixels for 1 bitmap
     for (uint32_t x = 0; x < m_tile_width; x+=4) {
-      m_paint_fcn[0].l32i(a11, a10, x);
-      m_paint_fcn[0].s32i(a11, a3, x);
+      m_paint_code[0].l32i(a11, a10, x);
+      m_paint_code[0].s32i(a11, a3, x);
     }
     uint32_t x = m_tile_width;
     while (x) {
       if (x < 124) {
-        m_paint_fcn[0].addi(a3, a3, x);
+        m_paint_code[0].addi(a3, a3, x);
         break;
       }
-      m_paint_fcn[0].addi(a3, a3, 124);
+      m_paint_code[0].addi(a3, a3, 124);
       x -= 124;
     }
-    m_paint_fcn[0].bgez_to_here(a10, at_branch);
-    m_paint_fcn[0].addi(a5, a5, 4);
+    m_paint_code[0].bgez_to_here(a10, at_branch);
+    m_paint_code[0].addi(a5, a5, 4);
 
-    m_paint_fcn[0].loop_to_here(a12, at_loop);
-    m_paint_fcn[0].retw();
+    m_paint_code[0].loop_to_here(a12, at_loop);
+    m_paint_code[0].retw();
 
-    /*
+    / *
     old code. remove later.
     //if (!done) debug_log(" row=%i", row);
     auto start_x_offset_within_tile_array = m_draw_x - m_abs_x;
@@ -161,8 +164,9 @@ void IRAM_ATTR DiTileArray::generate_instructions() {
       draw_x += m_tile_width;
     }
     //if (!done) debug_log("\n");
-    //done=true;*/
+    //done=true;* /
   }
+  */
 }
 
 DiTileBitmap* DiTileArray::create_bitmap(DiTileBitmapID bm_id) {
@@ -235,10 +239,12 @@ void DiTileArray::get_tile_coordinates(int16_t column, int16_t row,
 }
 
 void IRAM_ATTR DiTileArray::paint(volatile uint32_t* p_scan_line, uint32_t line_index) {
+  /*
   auto y_offset_within_tile_array = (int32_t)line_index - m_abs_y;
   auto y_offset_within_tile = y_offset_within_tile_array % (int32_t)m_tile_height;
   auto row = y_offset_within_tile_array / (int32_t)m_tile_height;
   auto src_pixels_offset = y_offset_within_tile * m_bytes_per_line;
   auto row_array = (uint32_t)(m_tile_pixels + row * m_columns);
-  m_paint_fcn[0].call_a5_a6(this, p_scan_line, y_offset_within_tile, row_array, src_pixels_offset);
+  m_paint_code[0].call_a5_a6(this, p_scan_line, y_offset_within_tile, row_array, src_pixels_offset);
+  */
 }

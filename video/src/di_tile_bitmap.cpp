@@ -100,22 +100,25 @@ DiPaintableTileBitmap::~DiPaintableTileBitmap() {
 }
 
 void IRAM_ATTR DiPaintableTileBitmap::delete_instructions() {
+  /*
   if (m_flags & PRIM_FLAG_H_SCROLL_1) {
     for (uint32_t pos = 0; pos < 4; pos++) {
-      m_paint_fcn[pos].clear();
+      m_paint_code[pos].clear();
     }
   } else {
-    m_paint_fcn[0].clear();
+    m_paint_code[0].clear();
   }
+  */
 }
 
 void IRAM_ATTR DiPaintableTileBitmap::generate_instructions(uint32_t draw_x, int32_t x, uint32_t draw_width) {
+  /*
   delete_instructions();
   if (m_flags & PRIM_FLAG_H_SCROLL_1) {
     // Bitmap can be positioned on any horizontal byte boundary (pixel offsets 0..3).
     for (uint32_t pos = 0; pos < 4; pos++) {
       EspFixups fixups;
-      EspFunction* paint_fcn = &m_paint_fcn[pos];
+      EspFunction* paint_fcn = &m_paint_code[pos];
       uint32_t* src_pixels = m_pixels + pos * m_words_per_position;
       if (m_flags & PRIM_FLAGS_ALL_SAME) {
         paint_fcn->copy_line_as_outer_fcn(fixups, draw_x, x, draw_width, m_flags, m_transparent_color, src_pixels);
@@ -133,7 +136,7 @@ void IRAM_ATTR DiPaintableTileBitmap::generate_instructions(uint32_t draw_x, int
   } else {
     // Bitmap must be positioned on a 4-byte boundary (pixel offset 0)!
     EspFixups fixups;
-    EspFunction* paint_fcn = &m_paint_fcn[0];
+    EspFunction* paint_fcn = &m_paint_code[0];
     uint32_t* src_pixels = m_pixels;
 
     if (m_flags & PRIM_FLAGS_ALL_SAME) {
@@ -149,10 +152,13 @@ void IRAM_ATTR DiPaintableTileBitmap::generate_instructions(uint32_t draw_x, int
     }
     paint_fcn->do_fixups(fixups);
   }
+  */
 }
 
 void IRAM_ATTR DiPaintableTileBitmap::paint(DiPrimitive* tile_map, int32_t fcn_index, volatile uint32_t* p_scan_line,
         uint32_t line_index, uint32_t draw_x, uint32_t src_pixels_offset) {
+  /*
   uint32_t* src_pixels = (uint32_t*)((uint32_t)m_pixels + src_pixels_offset);
-  m_paint_fcn[fcn_index].call_a5_a6(tile_map, p_scan_line, line_index, draw_x, (uint32_t)src_pixels);
+  m_paint_code[fcn_index].call_a5_a6(tile_map, p_scan_line, line_index, draw_x, (uint32_t)src_pixels);
+  */
 }

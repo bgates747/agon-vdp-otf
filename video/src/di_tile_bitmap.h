@@ -102,5 +102,4 @@ class DiPaintableTileBitmap : public DiTileBitmap {
                       uint32_t line_index, uint32_t draw_x, uint32_t src_pixels_offset);
 
   protected:
-  EspFunction m_paint_fcn[4];
 };

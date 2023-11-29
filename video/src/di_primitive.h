@@ -131,17 +131,11 @@ class DiPrimitive {
   void recompute_primitive(DiPrimitive* prim, uint16_t old_flags,
                             int32_t old_min_group, int32_t old_max_group);
 
-  // Allocate a set of dynamic functions.
-  void allocate_functions(uint32_t width);
-
-  // Deallocate a set of dynamic functions;
-  void deallocate_functions();
-
-  // Get an index to one of the dynamic functions, based on an X coordinate.
-  int32_t get_function_index(int32_t width, int32_t x, int32_t view_x_extent);
-
-  // Set a pointer to one of the dynamic functions, based on an X coordinate.
-  void set_current_function(int32_t width, int32_t x, int32_t view_x_extent);
+  // Generically generate the drawing instructions for various X/Y positions.
+  virtual void generate_code_for_left_edge(uint32_t y_line, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible);
+  virtual void generate_code_for_right_edge(uint32_t y_line, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible);
+  virtual void generate_code_for_draw_area(uint32_t y_line, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible);
+  void generate_code_for_positions(uint32_t y_line, uint32_t width, uint32_t height);
 
   int32_t   m_view_x;       // upper-left x coordinate of the enclosing viewport, relative to the screen
   int32_t   m_view_y;       // upper-left y coordinate of the enclosing viewport, relative to the screen
@@ -163,7 +157,8 @@ class DiPrimitive {
   int32_t   m_draw_y;       // max of m_abs_y and m_view_y
   int32_t   m_draw_x_extent; // min of m_x_extent and m_view_x_extent
   int32_t   m_draw_y_extent; // min of m_y_extent and m_view_y_extent
-  int32_t   m_draw_x_offset; // difference of m_draw_x - m_abs_x
+  int32_t   m_draw_left_trunc; // difference of m_draw_x - m_abs_x
+  int32_t   m_draw_right_trunc; // difference of m_x_extent - m_draw_x_extent
   int32_t   m_draw_y_offset; // difference of m_draw_y - m_abs_y
   int32_t   m_draw_x_word;  // m_draw_x & 0xFFFFFFFC (word boundary)
   int32_t   m_draw_x_word_offset; // difference of m_draw_x_word - m_abs_x_word
@@ -174,10 +169,14 @@ class DiPrimitive {
   DiPrimitive* m_last_child;   // id of last child primitive
   DiPrimitive* m_prev_sibling; // id of previous sibling primitive
   DiPrimitive* m_next_sibling; // id of next sibling primitive
+  EspFunction m_paint_code;  // generated code used to draw the primitive
+  EspFcnPtrs m_paint_ptrs;   // pointers to sections of generated paint code
+  EspFcnPtr m_cur_paint_ptr; // address of code section based on position
   int16_t   m_first_group;  // lowest index of drawing group in which it is a member
   int16_t   m_last_group;   // highest index of drawing group in which it is a member
   int16_t   m_id;           // id of this primitive
   uint16_t  m_flags;        // flag bits to control painting, etc.
+  uint16_t  m_num_fcns;     // Number of allocated paint functions
 };
 
 #pragma pack(pop)
