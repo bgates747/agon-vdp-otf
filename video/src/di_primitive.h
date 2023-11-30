@@ -169,9 +169,9 @@ class DiPrimitive {
   DiPrimitive* m_last_child;   // id of last child primitive
   DiPrimitive* m_prev_sibling; // id of previous sibling primitive
   DiPrimitive* m_next_sibling; // id of next sibling primitive
-  EspFunction m_paint_code;  // generated code used to draw the primitive
-  EspFcnPtrs m_paint_ptrs;   // pointers to sections of generated paint code
-  EspFcnPtr m_cur_paint_ptr; // address of code section based on position
+  EspFunction  m_paint_code;   // generated code used to draw the primitive
+  EspFcnPtrs   m_paint_ptrs;   // pointers to sections of generated paint code
+  EspFcnPtr    m_cur_paint_ptr; // address of code section based on position
   int16_t   m_first_group;  // lowest index of drawing group in which it is a member
   int16_t   m_last_group;   // highest index of drawing group in which it is a member
   int16_t   m_id;           // id of this primitive

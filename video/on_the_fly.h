@@ -46,6 +46,7 @@ int8_t use_otf_mode(int8_t mode) {
 	TaskHandle_t xHandle = NULL;
 	xTaskCreatePinnedToCore(otf, "OTF-MODE", 8192, NULL,
 							OTF_MANAGER_PRIORITY, &xHandle, 1); // Core #1
+	while(true);
 	return 0; // success
 }
 
