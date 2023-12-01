@@ -38,13 +38,6 @@ void DiRectangle::make_rectangle_outline(uint16_t flags, int32_t x, int32_t y, u
   m_color = PIXEL_COLOR_X4(color);
 }
 
-void IRAM_ATTR DiRectangle::delete_instructions() {
-  /*
-  m_paint_code[0].clear();
-  m_paint_code[1].clear();
-  */
-}
-
 void IRAM_ATTR DiRectangle::generate_instructions() {
   /*
   delete_instructions();

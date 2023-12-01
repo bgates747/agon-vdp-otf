@@ -78,18 +78,6 @@ DiTileArray::~DiTileArray() {
   }
 }
 
-void IRAM_ATTR DiTileArray::delete_instructions() {
-  /*
-  if (m_flags & PRIM_FLAG_H_SCROLL_1) {
-    for (uint32_t pos = 0; pos < 4; pos++) {
-      m_paint_code[pos].clear();
-    }
-  } else {
-    m_paint_code[0].clear();
-  }
-  */
-}
-
 void IRAM_ATTR DiTileArray::generate_instructions() {
   /*
   delete_instructions();

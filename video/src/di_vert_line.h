@@ -35,9 +35,6 @@ class DiVerticalLine: public DiPrimitive {
   // The line is vertical, covering the given number of pixels.
   void make_line(uint16_t flags, int32_t x, int32_t y, uint32_t height, uint8_t color);
 
-  // Clear the custom instructions needed to draw the primitive.
-  virtual void IRAM_ATTR delete_instructions();
-   
   // Reassemble the custom instructions needed to draw the primitive.
   virtual void IRAM_ATTR generate_instructions();
    

@@ -322,17 +322,6 @@ void DiGeneralLine::make_solid_quad_strip(uint16_t flags,
   create_functions();
 }
 
-void IRAM_ATTR DiGeneralLine::delete_instructions() {
-  /*
-  if (m_flags & PRIM_FLAG_H_SCROLL_1) {
-    for (uint32_t pos = 0; pos < 4; pos++) {
-      m_paint_code[pos].clear();
-    }
-  } else {
-    m_paint_code[0].clear();
-  }
-  */
-}
 //extern void debug_log(const char* fmt, ...);
 void IRAM_ATTR DiGeneralLine::generate_instructions() {
   /*

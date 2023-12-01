@@ -65,9 +65,6 @@ class DiBitmap : public DiPrimitive {
   // 11BBGGRR is 100% opaque).
   void set_transparent_color(uint8_t color);
 
-  // Clear the custom instructions needed to draw the primitive.
-  virtual void IRAM_ATTR delete_instructions();
-   
   // Reassemble the custom instructions needed to draw the primitive.
   virtual void IRAM_ATTR generate_instructions();
    

@@ -169,6 +169,8 @@ void DiPrimitive::clear_child_ptrs() {
 }
 
 void IRAM_ATTR DiPrimitive::delete_instructions() {
+  m_paint_code.clear();
+  m_paint_ptrs.clear();
 }
 
 void IRAM_ATTR DiPrimitive::generate_instructions() {

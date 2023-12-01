@@ -129,9 +129,6 @@ class DiGeneralLine: public DiPrimitive {
   void make_solid_quad_strip(uint16_t flags, int16_t* coords,
             uint16_t n, uint8_t color, uint8_t opaqueness);
 
-  // Clear the custom instructions needed to draw the primitive.
-  virtual void IRAM_ATTR delete_instructions();
-   
   // Reassemble the custom instructions needed to draw the primitive.
   virtual void IRAM_ATTR generate_instructions();
    

@@ -32,9 +32,6 @@ class DiSetPixel: public DiPrimitive {
   // Draws a single pixel on the screen.
   DiSetPixel(int32_t x, int32_t y, uint8_t color);
 
-  // Clear the custom instructions needed to draw the primitive.
-  virtual void IRAM_ATTR delete_instructions();
-   
   // Reassemble the custom instructions needed to draw the primitive.
   virtual void IRAM_ATTR generate_instructions();
    

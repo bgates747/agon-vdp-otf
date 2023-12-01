@@ -34,9 +34,6 @@ class DiRectangle: public DiPrimitive {
   // Draws a rectangle outline on the screen.
   void make_rectangle_outline(uint16_t flags, int32_t x, int32_t y, uint32_t width, uint32_t height, uint8_t color);
 
-  // Clear the custom instructions needed to draw the primitive.
-  virtual void IRAM_ATTR delete_instructions();
-   
   // Reassemble the custom instructions needed to draw the primitive.
   virtual void IRAM_ATTR generate_instructions();
    

@@ -131,16 +131,6 @@ void DiBitmap::set_pixel(int32_t x, int32_t y, uint8_t color) {
   }
 }
 
-void IRAM_ATTR DiBitmap::delete_instructions() {
-  /*
-  //debug_log(" @%i ",__LINE__);
-  for (uint32_t pos = 0; pos < 4; pos++) {
-    m_paint_code[pos].clear();
-  }
-  //debug_log(" @%i ",__LINE__);
-  */
-}
-
 void IRAM_ATTR DiBitmap::generate_instructions() {
   /*
   //debug_log(" @%i ",__LINE__);
