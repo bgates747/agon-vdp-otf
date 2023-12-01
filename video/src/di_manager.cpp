@@ -310,8 +310,13 @@ void DiManager::recompute_primitive(DiPrimitive* prim, uint16_t old_flags,
                                     int32_t old_min_group, int32_t old_max_group) {
   //if (prim->get_id()>2) debug_log("RECOMPUTE id %hu f %04hX g %i %i ... ", prim->get_id(), old_flags, old_min_group, old_max_group);
   auto parent = prim->get_parent();
-  prim->compute_absolute_geometry(parent->get_view_x(), parent->get_view_y(),
-    parent->get_view_x_extent(), parent->get_view_y_extent());
+  if (parent->get_flags() & PRIM_FLAG_CLIP_KIDS) {
+    prim->compute_absolute_geometry(parent->get_draw_x(), parent->get_draw_y(),
+      parent->get_draw_x_extent(), parent->get_draw_y_extent());
+  } else {
+    prim->compute_absolute_geometry(parent->get_view_x(), parent->get_view_y(),
+      parent->get_view_x_extent(), parent->get_view_y_extent());
+  }
 
   bool old_use_groups = (old_min_group >= 0);
   bool new_use_groups = false;

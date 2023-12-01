@@ -47,6 +47,8 @@ void DiPrimitive::init_root() {
   m_y_extent = ACT_LINES;
   m_view_x_extent = ACT_PIXELS;
   m_view_y_extent = ACT_LINES;
+  m_draw_x_extent = ACT_PIXELS;
+  m_draw_y_extent = ACT_LINES;
 }
 
 void DiPrimitive::set_id(uint16_t id) {
@@ -112,7 +114,7 @@ void IRAM_ATTR DiPrimitive::set_size(uint32_t width, uint32_t height) {
 extern void debug_log(const char* fmt, ...);
 void IRAM_ATTR DiPrimitive::compute_absolute_geometry(
   int32_t view_x, int32_t view_y, int32_t view_x_extent, int32_t view_y_extent) {
-  
+  debug_log("Compute %hu: vx %i vy %i vxe %i vye %i\n", m_id, view_x, view_y, view_x_extent, view_y_extent);
   if (m_flags & PRIM_FLAG_ABSOLUTE) {
     m_abs_x = m_rel_x;
     m_abs_y = m_rel_y;
@@ -147,15 +149,16 @@ void IRAM_ATTR DiPrimitive::compute_absolute_geometry(
   m_draw_x_word = m_draw_x & 0xFFFFFFFC;
   m_draw_x_word_offset = m_draw_x_word - m_abs_x_word;
 
-  //if (m_id>2) debug_log(" GEO id %hu rel(%i,%i) abs(%i,%i), w=%hu, h=%hu, d(%i,%i), de(%i,%i), aw=%i, dxo=%i, dyo=%i, dxw=%i, dxwo=%o\n",
-  //  m_id, m_rel_x, m_rel_y, m_abs_x, m_abs_y, m_width, m_height,
-  //  m_draw_x, m_draw_y, m_draw_x_extent, m_draw_y_extent,
-  //  m_abs_x_word, m_draw_left_trunc, m_draw_y_offset, m_draw_x_word, m_draw_x_word_offset);
+  if (m_id>2) debug_log(" GEO id %hu rel(%i,%i) abs(%i,%i), w=%hu, h=%hu, d(%i,%i), de(%i,%i), aw=%i, dxo=%i, dyo=%i, dxw=%i, dxwo=%o\n",
+    m_id, m_rel_x, m_rel_y, m_abs_x, m_abs_y, m_width, m_height,
+    m_draw_x, m_draw_y, m_draw_x_extent, m_draw_y_extent,
+    m_abs_x_word, m_draw_left_trunc, m_draw_y_offset, m_draw_x_word, m_draw_x_word_offset);
 
   DiPrimitive* child = m_first_child;
   while (child) {
     if (m_flags & PRIM_FLAG_CLIP_KIDS) {
-      child->compute_absolute_geometry(m_view_x, m_view_y, m_view_x_extent, m_view_y_extent);
+      debug_log(" kid %hu: vx %i vy %i vxe %i vye %i\n", child->m_id, m_draw_x, m_draw_y, m_draw_x_extent, m_draw_y_extent);
+      child->compute_absolute_geometry(m_draw_x, m_draw_y, m_draw_x_extent, m_draw_y_extent);
     } else {
       child->compute_absolute_geometry(view_x, view_y, view_x_extent, view_y_extent);
     }

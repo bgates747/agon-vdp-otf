@@ -40,11 +40,13 @@ void DiSolidRectangle::make_rectangle(uint16_t flags, int32_t x, int32_t y, uint
 }
 
 void DiSolidRectangle::generate_instructions() {
-  generate_code_for_positions(m_width, m_height);
+  auto draw_width = m_draw_x_extent - m_draw_x;
+  auto draw_height = m_draw_y_extent - m_draw_y;
+  generate_code_for_positions(draw_width, draw_height);
   delete_instructions();
   if (m_flags & PRIM_FLAGS_CAN_DRAW) {
     EspFixups fixups;
-    auto width = (uint16_t)m_width;
+    auto width = (uint16_t)draw_width;
     DiLineSections sections;
     sections.add_piece(1, 0, width, false);
     m_paint_code.draw_line_as_outer_fcn(fixups, m_draw_x, m_draw_x, &sections, m_flags, m_opaqueness);
