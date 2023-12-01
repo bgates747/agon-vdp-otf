@@ -171,8 +171,7 @@ void DiPrimitive::clear_child_ptrs() {
 void DiPrimitive::delete_instructions() {
   m_paint_code.clear();
   m_paint_ptrs.clear();
-  m_cur_paint_ptr.clear();
-  m_paint_ptrs_per_line = 0;
+  m_cur_paint_ptr = 0;
 }
 
 void DiPrimitive::generate_instructions() {
@@ -260,56 +259,108 @@ void DiPrimitive::generate_code_for_right_edge(uint32_t y_line, uint32_t width, 
 void DiPrimitive::generate_code_for_draw_area(uint32_t y_line, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
 }
 
-void DiPrimitive::generate_code_for_positions(uint32_t y_line, uint32_t width, uint32_t height) {
+void DiPrimitive::generate_code_for_positions(uint32_t width, uint32_t height) {
   delete_instructions();
 
-  for (uint32_t y_line = 0; y_line < height; y_line++) {
-    if (m_flags & PRIM_FLAG_H_SCROLL_1) {
-      // Support scrolling by 1 pixel
-      if (m_flags & PRIM_FLAGS_LEFT_EDGE) {
-        for (uint32_t hidden = 1; hidden < width; hidden++) {
-          uint32_t visible = width - hidden;
+  if (m_flags & PRIM_FLAG_H_SCROLL_1) {
+    // Support scrolling by 1 pixel
+    if (m_flags & PRIM_FLAGS_LEFT_EDGE) {
+      // Support left edge being hidden
+      for (uint32_t hidden = 1; hidden < width; hidden++) {
+        uint32_t visible = width - hidden;
+        for (uint32_t y_line = 0; y_line < height; y_line++) {
           generate_code_for_left_edge(y_line, width, height, hidden, visible);
         }
       }
-      if (m_flags & PRIM_FLAGS_RIGHT_EDGE) {
-        for (uint32_t hidden = 1; hidden < width; hidden++) {
-          uint32_t visible = width - hidden;
-          generate_code_for_right_edge(y_line, width, height, hidden, visible);
-        }
-      }
-    } else if (m_flags & PRIM_FLAG_H_SCROLL_4) {
-      // Support scrolling by 4 pixels
-      if (m_flags & PRIM_FLAGS_LEFT_EDGE) {
-        for (uint32_t hidden = 4; hidden < width + 3; hidden += 4) {
-          uint32_t visible = width - hidden;
-          generate_code_for_left_edge(y_line, width, height, hidden, visible);
-        }
-      }
-      if (m_flags & PRIM_FLAGS_RIGHT_EDGE) {
-        for (uint32_t hidden = 4; hidden < width + 3; hidden += 4) {
-          uint32_t visible = width - hidden;
-          generate_code_for_right_edge(y_line, width, height, hidden, visible);
-        }
-      }
-    } else {
-      // Primitive must be static (no scrolling)
-      uint32_t hidden = m_draw_x - m_abs_x;
-      uint32_t visible = m_draw_x_extent - m_draw_x;
-      generate_code_for_draw_area(y_line, width, height, hidden, visible);
     }
-
-    if (y_line == 0) {
-      m_paint_ptrs_per_line = m_paint_ptrs.size();
+    if (m_flags & PRIM_FLAGS_RIGHT_EDGE) {
+      // Support right edge being hidden
+      for (uint32_t hidden = 1; hidden < width; hidden++) {
+        uint32_t visible = width - hidden;
+        for (uint32_t y_line = 0; y_line < height; y_line++) {
+          generate_code_for_right_edge(y_line, width, height, hidden, visible);
+        }
+      }
+    }
+  } else if (m_flags & PRIM_FLAG_H_SCROLL_4) {
+    // Support scrolling by 4 pixels
+    if (m_flags & PRIM_FLAGS_LEFT_EDGE) {
+      // Support left edge being hidden
+      for (uint32_t hidden = 4; hidden < width + 3; hidden += 4) {
+        uint32_t visible = width - hidden;
+        for (uint32_t y_line = 0; y_line < height; y_line++) {
+          generate_code_for_left_edge(y_line, width, height, hidden, visible);
+        }
+      }
+    }
+    if (m_flags & PRIM_FLAGS_RIGHT_EDGE) {
+      // Support right edge being hidden
+      for (uint32_t hidden = 4; hidden < width + 3; hidden += 4) {
+        uint32_t visible = width - hidden;
+        for (uint32_t y_line = 0; y_line < height; y_line++) {
+          generate_code_for_right_edge(y_line, width, height, hidden, visible);
+        }
+      }
+    }
+  } else {
+    // Primitive must be static (no scrolling)
+    uint32_t hidden = m_draw_x - m_abs_x;
+    uint32_t visible = m_draw_x_extent - m_draw_x;
+    for (uint32_t y_line = 0; y_line < height; y_line++) {
+      generate_code_for_draw_area(y_line, width, height, hidden, visible);
     }
   }
 
   // Default function just returns, for safety.
   m_paint_code.enter_and_leave_outer_function();
 
-  debug_log("ptrs/line %u, total ptrs %u\n", m_paint_ptrs_per_line, m_paint_ptrs.size());
+  debug_log("total paint ptrs %u\n", m_paint_ptrs.size());
 }
 
-void DiPrimitive::set_current_paint_pointer() {
+void DiPrimitive::set_current_paint_pointer(uint32_t width, uint32_t height,
+  uint32_t left_hidden, uint32_t right_hidden) {
+  uint32_t index = 0;
+  if (m_flags & PRIM_FLAG_H_SCROLL_1) {
+    // Support scrolling by 1 pixel
+    if (m_flags & PRIM_FLAGS_LEFT_EDGE) {
+      // Support left edge being hidden
+      if (left_hidden) {
+        m_cur_paint_ptr = &m_paint_ptrs[left_hidden - 1];
+        return;
+      } else {
+        index += width - 1;
+      }
+    }
+    if (m_flags & PRIM_FLAGS_RIGHT_EDGE) {
+      // Support right edge being hidden
+      if (right_hidden) {
+        m_cur_paint_ptr = &m_paint_ptrs[index + right_hidden - 1];
+        return;
+      } else {
+        index += width - 1;
+      }
+    }
+  } else if (m_flags & PRIM_FLAG_H_SCROLL_4) {
+    // Support scrolling by 4 pixels
+    if (m_flags & PRIM_FLAGS_LEFT_EDGE) {
+      // Support left edge being hidden
+      if (left_hidden) {
+        m_cur_paint_ptr = &m_paint_ptrs[index + ((left_hidden - 1) + 3) / 4];
+        return;
+      } else {
+        index += ((width - 1) + 3) / 4;
+      }
+    }
+    if (m_flags & PRIM_FLAGS_RIGHT_EDGE) {
+      // Support right edge being hidden
+      if (right_hidden) {
+        m_cur_paint_ptr = &m_paint_ptrs[index + ((left_hidden - 1) + 3) / 4];
+        return;
+      } else {
+        index += ((width - 1) + 3) / 4;
+      }
+    }
+  }
 
+  m_cur_paint_ptr = &m_paint_ptrs[index];
 }
