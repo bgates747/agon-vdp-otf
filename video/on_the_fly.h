@@ -30,7 +30,7 @@ void otf(void * pvParameters) {
 	//di_manager->generate_code_for_primitive(1);
 	
 	OtfCmd_41_Create_primitive_Solid_Rectangle cmd;
-	cmd.m_color = 0xC1;
+	cmd.m_color = 0xC0;
 	cmd.m_flags = PRIM_FLAGS_DEFAULT;
 	cmd.m_w = 800;
 	cmd.m_h = 600;
