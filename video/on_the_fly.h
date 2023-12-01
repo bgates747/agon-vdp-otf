@@ -41,6 +41,32 @@ void otf(void * pvParameters) {
 	auto rect = di_manager->create_solid_rectangle(&cmd);
 	di_manager->generate_code_for_primitive(cmd.m_id);
 
+debug_log("@%i\n",__LINE__);
+	OtfCmd_140_Create_primitive_Group gcmd;
+	gcmd.m_flags = PRIM_FLAGS_DEFAULT;
+	gcmd.m_w = 40;
+	gcmd.m_h = 30;
+	gcmd.m_id = 4;
+	gcmd.m_pid = 0;
+	gcmd.m_x = 400-20;
+	gcmd.m_y = 300-15;
+debug_log("@%i\n",__LINE__);
+	di_manager->create_primitive_group(&gcmd);
+debug_log("@%i\n",__LINE__);
+	di_manager->generate_code_for_primitive(gcmd.m_id);
+debug_log("@%i\n",__LINE__);
+
+	cmd.m_color = 0xD0;
+	cmd.m_flags = PRIM_FLAGS_DEFAULT;
+	cmd.m_w = 80;
+	cmd.m_h = 60;
+	cmd.m_id = 5;
+	cmd.m_pid = gcmd.m_id;
+	cmd.m_x = 40/2-40;
+	cmd.m_y = 30/2-30;
+	rect = di_manager->create_solid_rectangle(&cmd);
+	di_manager->generate_code_for_primitive(cmd.m_id);
+
 	auto dot = di_manager->create_point(10, 0, PRIM_FLAGS_DEFAULT, 400, 300, 0xFF);
 	di_manager->generate_code_for_primitive(dot->get_id());
 

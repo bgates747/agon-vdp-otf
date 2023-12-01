@@ -8,6 +8,8 @@ relative to their parent (i.e., they do not use the PRIM_FLAG_ABSOLUTE flag),
 then the children are moved with the parent. Note that a group node
 has no visible representation (i.e., is not drawn).
 
+When this command is used, OTF will automatically clear the PRIM_FLAG_PAINT_THIS flag.
+
 Changing the flags of a group node can show or hide its children.
 
 [Home](otf_mode.md)
