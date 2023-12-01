@@ -38,7 +38,7 @@ void DiHorizontalLine::make_line(uint16_t flags, int32_t x, int32_t y, uint32_t 
   m_paint_code.enter_and_leave_outer_function();
 }
 
-void IRAM_ATTR DiHorizontalLine::generate_instructions() {
+void DiHorizontalLine::generate_instructions() {
   m_paint_code.clear();
   if (m_flags & PRIM_FLAGS_CAN_DRAW) {
     EspFixups fixups;

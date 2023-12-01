@@ -323,7 +323,7 @@ void DiGeneralLine::make_solid_quad_strip(uint16_t flags,
 }
 
 //extern void debug_log(const char* fmt, ...);
-void IRAM_ATTR DiGeneralLine::generate_instructions() {
+void DiGeneralLine::generate_instructions() {
   /*
   delete_instructions();
   m_flags |= PRIM_FLAGS_X;

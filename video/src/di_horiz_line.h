@@ -36,9 +36,9 @@ class DiHorizontalLine: public DiPrimitive {
   void make_line(uint16_t flags, int32_t x, int32_t y, uint32_t width, uint8_t color);
 
   // Reassemble the custom instructions needed to draw the primitive.
-  virtual void IRAM_ATTR generate_instructions();
+  virtual void generate_instructions();
    
-  virtual void IRAM_ATTR paint(volatile uint32_t* p_scan_line, uint32_t line_index);
+  virtual void paint(volatile uint32_t* p_scan_line, uint32_t line_index);
 
   protected:
   uint8_t   m_opaqueness;

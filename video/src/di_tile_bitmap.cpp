@@ -99,7 +99,7 @@ DiPaintableTileBitmap::DiPaintableTileBitmap(DiTileBitmapID bm_id, uint32_t widt
 DiPaintableTileBitmap::~DiPaintableTileBitmap() {
 }
 
-void IRAM_ATTR DiPaintableTileBitmap::delete_instructions() {
+void DiPaintableTileBitmap::delete_instructions() {
   /*
   if (m_flags & PRIM_FLAG_H_SCROLL_1) {
     for (uint32_t pos = 0; pos < 4; pos++) {
@@ -111,7 +111,7 @@ void IRAM_ATTR DiPaintableTileBitmap::delete_instructions() {
   */
 }
 
-void IRAM_ATTR DiPaintableTileBitmap::generate_instructions(uint32_t draw_x, int32_t x, uint32_t draw_width) {
+void DiPaintableTileBitmap::generate_instructions(uint32_t draw_x, int32_t x, uint32_t draw_width) {
   /*
   delete_instructions();
   if (m_flags & PRIM_FLAG_H_SCROLL_1) {

@@ -131,7 +131,7 @@ void DiBitmap::set_pixel(int32_t x, int32_t y, uint8_t color) {
   }
 }
 
-void IRAM_ATTR DiBitmap::generate_instructions() {
+void DiBitmap::generate_instructions() {
   /*
   //debug_log(" @%i ",__LINE__);
   delete_instructions();

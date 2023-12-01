@@ -168,14 +168,14 @@ void DiPrimitive::clear_child_ptrs() {
   m_last_child = NULL;
 }
 
-void IRAM_ATTR DiPrimitive::delete_instructions() {
+void DiPrimitive::delete_instructions() {
   m_paint_code.clear();
   m_paint_ptrs.clear();
   m_cur_paint_ptr.clear();
   m_paint_ptrs_per_line = 0;
 }
 
-void IRAM_ATTR DiPrimitive::generate_instructions() {
+void DiPrimitive::generate_instructions() {
 }
 
 // Convert normal alpha bits of color to opaqueness percentage.
@@ -298,10 +298,16 @@ void DiPrimitive::generate_code_for_positions(uint32_t y_line, uint32_t width, u
       uint32_t visible = m_draw_x_extent - m_draw_x;
       generate_code_for_draw_area(y_line, width, height, hidden, visible);
     }
+
+    if (y_line == 0) {
+      m_paint_ptrs_per_line = m_paint_ptrs.size();
+    }
   }
 
   // Default function just returns, for safety.
   m_paint_code.enter_and_leave_outer_function();
+
+  debug_log("ptrs/line %u, total ptrs %u\n", m_paint_ptrs_per_line, m_paint_ptrs.size());
 }
 
 void DiPrimitive::set_current_paint_pointer() {

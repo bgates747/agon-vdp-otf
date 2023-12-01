@@ -39,7 +39,7 @@ void DiSolidRectangle::make_rectangle(uint16_t flags, int32_t x, int32_t y, uint
   m_paint_code.enter_and_leave_outer_function();
 }
 
-void IRAM_ATTR DiSolidRectangle::generate_instructions() {
+void DiSolidRectangle::generate_instructions() {
   m_paint_code.clear();
   if (m_flags & PRIM_FLAGS_CAN_DRAW) {
     EspFixups fixups;

@@ -35,7 +35,7 @@ DiSetPixel::DiSetPixel(int32_t x, int32_t y, uint8_t color) {
   m_paint_code.enter_and_leave_outer_function();
 }
 
-void IRAM_ATTR DiSetPixel::generate_instructions() {
+void DiSetPixel::generate_instructions() {
   m_paint_code.clear();
   if (m_flags & PRIM_FLAGS_CAN_DRAW) {
     EspFixups fixups;

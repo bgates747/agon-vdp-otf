@@ -72,13 +72,13 @@ DiTileMap::~DiTileMap() {
   }
 }
 
-void IRAM_ATTR DiTileMap::delete_instructions() {
+void DiTileMap::delete_instructions() {
   for (auto bitmap = m_id_to_bitmap_map.begin(); bitmap != m_id_to_bitmap_map.end(); bitmap++) {
     bitmap->second->delete_instructions();
   }
 }
 
-void IRAM_ATTR DiTileMap::generate_instructions() {
+void DiTileMap::generate_instructions() {
   for (auto bitmap = m_id_to_bitmap_map.begin(); bitmap != m_id_to_bitmap_map.end(); bitmap++) {
     bitmap->second->generate_instructions(m_draw_x, 0, m_tile_width);
   }

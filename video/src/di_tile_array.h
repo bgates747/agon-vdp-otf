@@ -51,7 +51,7 @@ class DiTileArray: public DiPrimitive {
   virtual ~DiTileArray();
 
   // Reassemble the custom instructions needed to draw the primitive.
-  virtual void IRAM_ATTR generate_instructions();
+  virtual void generate_instructions();
 
   // Create the array of pixels for the tile bitmap.
   DiTileBitmap* create_bitmap(DiTileBitmapID bm_id);

@@ -76,10 +76,10 @@ class DiPrimitive {
   void IRAM_ATTR compute_absolute_geometry(int32_t view_x, int32_t view_y, int32_t view_x_extent, int32_t view_y_extent);
 
   // Clear the custom instructions needed to draw the primitive.
-  virtual void IRAM_ATTR delete_instructions();
+  virtual void delete_instructions();
    
   // Reassemble the custom instructions needed to draw the primitive.
-  virtual void IRAM_ATTR generate_instructions();
+  virtual void generate_instructions();
 
   // Convert normal alpha bits of color to opaqueness percentage.
   // This will also remove the alpha bits from the color.

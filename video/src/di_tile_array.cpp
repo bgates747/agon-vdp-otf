@@ -78,7 +78,7 @@ DiTileArray::~DiTileArray() {
   }
 }
 
-void IRAM_ATTR DiTileArray::generate_instructions() {
+void DiTileArray::generate_instructions() {
   /*
   delete_instructions();
 

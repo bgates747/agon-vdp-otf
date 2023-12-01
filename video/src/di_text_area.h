@@ -42,10 +42,10 @@ class DiTextArea: public DiTileArray {
   virtual ~DiTextArea();
 
   // Clear the custom instructions needed to draw the primitive.
-  virtual void IRAM_ATTR delete_instructions();
+  virtual void delete_instructions();
    
   // Reassemble the custom instructions needed to draw the primitive.
-  virtual void IRAM_ATTR generate_instructions();
+  virtual void generate_instructions();
 
   // Define a range of characters using given colors and 8x8 font.
   void define_character_range(uint8_t first_char, uint8_t last_char,

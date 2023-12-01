@@ -93,10 +93,10 @@ class DiPaintableTileBitmap : public DiTileBitmap {
   ~DiPaintableTileBitmap();
 
   // Clear the custom instructions needed to draw the primitive.
-  void IRAM_ATTR delete_instructions();
+  void delete_instructions();
    
   // Reassemble the custom instructions needed to draw the primitive.
-  void IRAM_ATTR generate_instructions(uint32_t draw_x, int32_t x, uint32_t draw_width);
+  void generate_instructions(uint32_t draw_x, int32_t x, uint32_t draw_width);
    
   void IRAM_ATTR paint(DiPrimitive* tile_map, int32_t fcn_index, volatile uint32_t* p_scan_line,
                       uint32_t line_index, uint32_t draw_x, uint32_t src_pixels_offset);

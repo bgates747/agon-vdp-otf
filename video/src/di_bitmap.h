@@ -66,9 +66,9 @@ class DiBitmap : public DiPrimitive {
   void set_transparent_color(uint8_t color);
 
   // Reassemble the custom instructions needed to draw the primitive.
-  virtual void IRAM_ATTR generate_instructions();
+  virtual void generate_instructions();
    
-  virtual void IRAM_ATTR paint(volatile uint32_t* p_scan_line, uint32_t line_index);
+  virtual void paint(volatile uint32_t* p_scan_line, uint32_t line_index);
 
   protected:
   // Set a single pixel with an adjusted color value.

@@ -130,9 +130,9 @@ class DiGeneralLine: public DiPrimitive {
             uint16_t n, uint8_t color, uint8_t opaqueness);
 
   // Reassemble the custom instructions needed to draw the primitive.
-  virtual void IRAM_ATTR generate_instructions();
+  virtual void generate_instructions();
    
-  virtual void IRAM_ATTR paint(volatile uint32_t* p_scan_line, uint32_t line_index);
+  virtual void paint(volatile uint32_t* p_scan_line, uint32_t line_index);
 
   protected:
   void init_from_coords(uint16_t flags, int16_t* coords, uint16_t n, uint8_t color, uint8_t opaqueness);

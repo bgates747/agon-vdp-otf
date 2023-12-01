@@ -40,7 +40,7 @@ DiTextArea::DiTextArea(uint32_t x, uint32_t y, uint8_t flags,
 DiTextArea::~DiTextArea() {
 }
 
-void IRAM_ATTR DiTextArea::delete_instructions() {
+void DiTextArea::delete_instructions() {
   DiTileArray::delete_instructions();
   auto cursor = get_first_child();
   if (cursor) {
@@ -48,7 +48,7 @@ void IRAM_ATTR DiTextArea::delete_instructions() {
   }
 }
   
-void IRAM_ATTR DiTextArea::generate_instructions() {
+void DiTextArea::generate_instructions() {
   delete_instructions();
   DiTileArray::generate_instructions();
   auto cursor = get_first_child();
