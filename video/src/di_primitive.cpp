@@ -171,6 +171,8 @@ void DiPrimitive::clear_child_ptrs() {
 void IRAM_ATTR DiPrimitive::delete_instructions() {
   m_paint_code.clear();
   m_paint_ptrs.clear();
+  m_cur_paint_ptr.clear();
+  m_paint_ptrs_per_line = 0;
 }
 
 void IRAM_ATTR DiPrimitive::generate_instructions() {
@@ -259,9 +261,7 @@ void DiPrimitive::generate_code_for_draw_area(uint32_t y_line, uint32_t width, u
 }
 
 void DiPrimitive::generate_code_for_positions(uint32_t y_line, uint32_t width, uint32_t height) {
-  m_paint_code.clear();
-  m_paint_ptrs.clear();
-  m_cur_paint_ptr.clear();
+  delete_instructions();
 
   for (uint32_t y_line = 0; y_line < height; y_line++) {
     if (m_flags & PRIM_FLAG_H_SCROLL_1) {
@@ -302,4 +302,8 @@ void DiPrimitive::generate_code_for_positions(uint32_t y_line, uint32_t width, u
 
   // Default function just returns, for safety.
   m_paint_code.enter_and_leave_outer_function();
+}
+
+void DiPrimitive::set_current_paint_pointer() {
+
 }
