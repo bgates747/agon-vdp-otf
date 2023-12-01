@@ -39,7 +39,7 @@ void DiHorizontalLine::make_line(uint16_t flags, int32_t x, int32_t y, uint32_t 
 }
 
 void DiHorizontalLine::generate_instructions() {
-  m_paint_code.clear();
+  delete_instructions();
   if (m_flags & PRIM_FLAGS_CAN_DRAW) {
     EspFixups fixups;
     auto width = (uint16_t)m_width;

@@ -498,6 +498,7 @@ DiSolidRectangle* DiManager::create_solid_rectangle(OtfCmd_41_Create_primitive_S
     if (!validate_id(cmd->m_id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
+    cmd->m_flags |= PRIM_FLAGS_ALL_SAME;
     auto prim = new DiSolidRectangle();
     prim->make_rectangle(cmd->m_flags, cmd->m_x, cmd->m_y, cmd->m_w, cmd->m_h, cmd->m_color);
 

@@ -40,7 +40,7 @@ void DiVerticalLine::make_line(uint16_t flags, int32_t x, int32_t y, uint32_t he
 }
 
 void DiVerticalLine::generate_instructions() {
-  m_paint_code.clear();
+  delete_instructions();
   if (m_flags & PRIM_FLAGS_CAN_DRAW) {
     EspFixups fixups;
     uint16_t width = 1;

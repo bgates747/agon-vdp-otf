@@ -40,7 +40,8 @@ void DiSolidRectangle::make_rectangle(uint16_t flags, int32_t x, int32_t y, uint
 }
 
 void DiSolidRectangle::generate_instructions() {
-  m_paint_code.clear();
+  generate_code_for_positions(m_width, m_height);
+  delete_instructions();
   if (m_flags & PRIM_FLAGS_CAN_DRAW) {
     EspFixups fixups;
     auto width = (uint16_t)m_width;

@@ -36,7 +36,7 @@ DiSetPixel::DiSetPixel(int32_t x, int32_t y, uint8_t color) {
 }
 
 void DiSetPixel::generate_instructions() {
-  m_paint_code.clear();
+  delete_instructions();
   if (m_flags & PRIM_FLAGS_CAN_DRAW) {
     EspFixups fixups;
     uint16_t width = 1;
