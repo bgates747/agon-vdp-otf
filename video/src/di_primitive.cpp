@@ -253,19 +253,19 @@ uint8_t DiPrimitive::inverted_alpha_to_opaqueness(uint8_t &color) {
   primitive can be moved (scrolled), as indicated by its flag bits.
 */
 
-void DiPrimitive::generate_code_for_left_edge(uint32_t y_line, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
+void DiPrimitive::generate_code_for_left_edge(EspFixups& fixups, uint32_t y_line, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
   debug_log("generate_code_for_left_edge(y%u w%u h%u h%u v%u)\n", y_line, width, height, hidden, visible);
 }
 
-void DiPrimitive::generate_code_for_right_edge(uint32_t y_line, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
+void DiPrimitive::generate_code_for_right_edge(EspFixups& fixups, uint32_t y_line, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
   debug_log("generate_code_for_right_edge(y%u w%u h%u h%u v%u)\n", y_line, width, height, hidden, visible);
 }
 
-void DiPrimitive::generate_code_for_draw_area(uint32_t y_line, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
+void DiPrimitive::generate_code_for_draw_area(EspFixups& fixups, uint32_t y_line, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
   debug_log("generate_code_for_draw_area(y%u w%u h%u h%u v%u)\n", y_line, width, height, hidden, visible);
 }
 
-void DiPrimitive::generate_code_for_positions(uint32_t width, uint32_t height) {
+void DiPrimitive::generate_code_for_positions(EspFixups& fixups, uint32_t width, uint32_t height) {
   delete_instructions();
   auto gen_height = ((m_flags & PRIM_FLAGS_ALL_SAME) ? 1 : height);
 
@@ -276,7 +276,7 @@ void DiPrimitive::generate_code_for_positions(uint32_t width, uint32_t height) {
       for (uint32_t hidden = 1; hidden < width; hidden++) {
         uint32_t visible = width - hidden;
         for (uint32_t y_line = 0; y_line < gen_height; y_line++) {
-          generate_code_for_left_edge(y_line, width, height, hidden, visible);
+          generate_code_for_left_edge(fixups, y_line, width, height, hidden, visible);
         }
       }
     }
@@ -285,7 +285,7 @@ void DiPrimitive::generate_code_for_positions(uint32_t width, uint32_t height) {
       for (uint32_t hidden = 1; hidden < width; hidden++) {
         uint32_t visible = width - hidden;
         for (uint32_t y_line = 0; y_line < gen_height; y_line++) {
-          generate_code_for_right_edge(y_line, width, height, hidden, visible);
+          generate_code_for_right_edge(fixups, y_line, width, height, hidden, visible);
         }
       }
     }
@@ -296,7 +296,7 @@ void DiPrimitive::generate_code_for_positions(uint32_t width, uint32_t height) {
       for (uint32_t hidden = 4; hidden < width + 3; hidden += 4) {
         uint32_t visible = width - hidden;
         for (uint32_t y_line = 0; y_line < gen_height; y_line++) {
-          generate_code_for_left_edge(y_line, width, height, hidden, visible);
+          generate_code_for_left_edge(fixups, y_line, width, height, hidden, visible);
         }
       }
     }
@@ -305,7 +305,7 @@ void DiPrimitive::generate_code_for_positions(uint32_t width, uint32_t height) {
       for (uint32_t hidden = 4; hidden < width + 3; hidden += 4) {
         uint32_t visible = width - hidden;
         for (uint32_t y_line = 0; y_line < gen_height; y_line++) {
-          generate_code_for_right_edge(y_line, width, height, hidden, visible);
+          generate_code_for_right_edge(fixups, y_line, width, height, hidden, visible);
         }
       }
     }
@@ -314,7 +314,7 @@ void DiPrimitive::generate_code_for_positions(uint32_t width, uint32_t height) {
     uint32_t hidden = m_draw_x - m_abs_x;
     uint32_t visible = m_draw_x_extent - m_draw_x;
     for (uint32_t y_line = 0; y_line < gen_height; y_line++) {
-      generate_code_for_draw_area(y_line, width, height, hidden, visible);
+      generate_code_for_draw_area(fixups, y_line, width, height, hidden, visible);
     }
   }
 

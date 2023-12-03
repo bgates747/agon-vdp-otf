@@ -37,6 +37,10 @@ class DiSolidRectangle: public DiPrimitive {
   // Draws a solid (filled) rectangle on the screen.
   void make_rectangle(uint16_t flags, int32_t x, int32_t y, uint32_t width, uint32_t height, uint8_t color);
 
+  virtual void generate_code_for_left_edge(uint32_t y_line, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible);
+  virtual void generate_code_for_right_edge(uint32_t y_line, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible);
+  virtual void generate_code_for_draw_area(uint32_t y_line, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible);
+
   // Reassemble the custom instructions needed to draw the primitive.
   virtual void generate_instructions();
    
