@@ -174,7 +174,7 @@ void DiPrimitive::clear_child_ptrs() {
 void DiPrimitive::delete_instructions() {
   m_paint_code.clear();
   m_paint_ptrs.clear();
-  m_cur_paint_ptr = 0;
+  m_cur_paint_ptr.clear();
 }
 
 void DiPrimitive::generate_instructions() {
@@ -318,10 +318,14 @@ void DiPrimitive::generate_code_for_positions(EspFixups& fixups, uint32_t width,
     }
   }
 
-  // Default function just returns, for safety.
-  m_paint_code.enter_and_leave_outer_function();
-
   debug_log("total paint ptrs %u\n", m_paint_ptrs.size());
+
+  // Convert function offsets to function pointers.
+  for (auto ptr = m_paint_ptrs.begin(); ptr != m_paint_ptrs.end(); ptr++) {
+    debug_log("fcn offset %X --> fcn ptr ");
+    ptr->m_address = m_paint_code.get_real_address(ptr->m_address);
+    debug_log("%X\n", ptr->m_address);
+  }
 }
 
 void DiPrimitive::set_current_paint_pointer(uint32_t width, uint32_t height,
@@ -332,7 +336,7 @@ void DiPrimitive::set_current_paint_pointer(uint32_t width, uint32_t height,
     if (m_flags & PRIM_FLAGS_LEFT_EDGE) {
       // Support left edge being hidden
       if (left_hidden) {
-        m_cur_paint_ptr = &m_paint_ptrs[left_hidden - 1];
+        m_cur_paint_ptr = m_paint_ptrs[left_hidden - 1];
         return;
       } else {
         index += width - 1;
@@ -341,7 +345,7 @@ void DiPrimitive::set_current_paint_pointer(uint32_t width, uint32_t height,
     if (m_flags & PRIM_FLAGS_RIGHT_EDGE) {
       // Support right edge being hidden
       if (right_hidden) {
-        m_cur_paint_ptr = &m_paint_ptrs[index + right_hidden - 1];
+        m_cur_paint_ptr = m_paint_ptrs[index + right_hidden - 1];
         return;
       } else {
         index += width - 1;
@@ -352,7 +356,7 @@ void DiPrimitive::set_current_paint_pointer(uint32_t width, uint32_t height,
     if (m_flags & PRIM_FLAGS_LEFT_EDGE) {
       // Support left edge being hidden
       if (left_hidden) {
-        m_cur_paint_ptr = &m_paint_ptrs[index + ((left_hidden - 1) + 3) / 4];
+        m_cur_paint_ptr = m_paint_ptrs[index + ((left_hidden - 1) + 3) / 4];
         return;
       } else {
         index += ((width - 1) + 3) / 4;
@@ -361,7 +365,7 @@ void DiPrimitive::set_current_paint_pointer(uint32_t width, uint32_t height,
     if (m_flags & PRIM_FLAGS_RIGHT_EDGE) {
       // Support right edge being hidden
       if (right_hidden) {
-        m_cur_paint_ptr = &m_paint_ptrs[index + ((left_hidden - 1) + 3) / 4];
+        m_cur_paint_ptr = m_paint_ptrs[index + ((left_hidden - 1) + 3) / 4];
         return;
       } else {
         index += ((width - 1) + 3) / 4;
@@ -369,5 +373,11 @@ void DiPrimitive::set_current_paint_pointer(uint32_t width, uint32_t height,
     }
   }
 
-  m_cur_paint_ptr = &m_paint_ptrs[index];
+  m_cur_paint_ptr = m_paint_ptrs[index];
+}
+
+void DiPrimitive::start_paint_section() {
+  EspFcnPtr p;
+  p.m_address = m_paint_code.get_code_index();
+  m_paint_ptrs.push_back(p);
 }

@@ -137,6 +137,7 @@ class DiPrimitive {
   virtual void generate_code_for_draw_area(EspFixups& fixups, uint32_t y_line, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible);
   void generate_code_for_positions(EspFixups& fixups, uint32_t width, uint32_t height);
   void set_current_paint_pointer(uint32_t width, uint32_t height, uint32_t left_hidden, uint32_t right_hidden);
+  void start_paint_section();
 
   int32_t   m_view_x;       // upper-left x coordinate of the enclosing viewport, relative to the screen
   int32_t   m_view_y;       // upper-left y coordinate of the enclosing viewport, relative to the screen
@@ -172,7 +173,7 @@ class DiPrimitive {
   DiPrimitive* m_next_sibling; // id of next sibling primitive
   EspFunction  m_paint_code;   // generated code used to draw the primitive
   EspFcnPtrs   m_paint_ptrs;   // pointers to sections of generated paint code
-  EspFcnPtr*   m_cur_paint_ptr; // points to pointers to code sections based on position
+  EspFcnPtr    m_cur_paint_ptr; // points to pointers to code sections based on position
   int16_t   m_first_group;  // lowest index of drawing group in which it is a member
   int16_t   m_last_group;   // highest index of drawing group in which it is a member
   int16_t   m_id;           // id of this primitive
