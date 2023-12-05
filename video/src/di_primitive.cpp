@@ -321,8 +321,9 @@ void DiPrimitive::generate_code_for_positions(EspFixups& fixups, uint32_t width,
   debug_log("total paint ptrs %u\n", m_paint_ptrs.size());
 
   // Convert function offsets to function pointers.
+  debug_log("paint fcns at %X\n", m_paint_code.get_real_address(0));
   for (auto ptr = m_paint_ptrs.begin(); ptr != m_paint_ptrs.end(); ptr++) {
-    debug_log("fcn offset %X --> fcn ptr ");
+    debug_log("fcn offset %X --> fcn ptr ", ptr->m_address);
     ptr->m_address = m_paint_code.get_real_address(ptr->m_address);
     debug_log("%X\n", ptr->m_address);
   }
@@ -374,10 +375,23 @@ void DiPrimitive::set_current_paint_pointer(uint32_t width, uint32_t height,
   }
 
   m_cur_paint_ptr = m_paint_ptrs[index];
+  debug_log("cur index %u, ptr %X\n", index, m_cur_paint_ptr.m_address);
+}
+
+void DiPrimitive::set_current_paint_pointer(uint32_t width, uint32_t height) {
+  uint32_t hidden_left = 0;
+  uint32_t hidden_right = 0;
+  if (m_abs_x < m_draw_x) {
+    hidden_left = m_draw_x - m_abs_x;
+  } else if (m_draw_x_extent < m_x_extent) {
+    hidden_right = m_x_extent < m_draw_x_extent;
+  }
+  set_current_paint_pointer(width, height, hidden_left, hidden_right);
 }
 
 void DiPrimitive::start_paint_section() {
   EspFcnPtr p;
   p.m_address = m_paint_code.get_code_index();
   m_paint_ptrs.push_back(p);
+  debug_log("start_paint_section %X\n", p.m_address);
 }

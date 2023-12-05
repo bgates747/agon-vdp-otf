@@ -45,6 +45,7 @@ void DiSolidRectangle::generate_instructions() {
     EspFixups fixups;
     generate_code_for_positions(fixups, m_width, m_height);
     m_paint_code.do_fixups(fixups);
+    set_current_paint_pointer(m_width, m_height);
   }
 }
 

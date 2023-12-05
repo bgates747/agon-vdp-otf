@@ -137,6 +137,7 @@ class DiPrimitive {
   virtual void generate_code_for_draw_area(EspFixups& fixups, uint32_t y_line, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible);
   void generate_code_for_positions(EspFixups& fixups, uint32_t width, uint32_t height);
   void set_current_paint_pointer(uint32_t width, uint32_t height, uint32_t left_hidden, uint32_t right_hidden);
+  void set_current_paint_pointer(uint32_t width, uint32_t height);
   void start_paint_section();
 
   int32_t   m_view_x;       // upper-left x coordinate of the enclosing viewport, relative to the screen
