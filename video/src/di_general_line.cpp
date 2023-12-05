@@ -363,30 +363,52 @@ void DiGeneralLine::generate_instructions() {
     }
   }
   */
+  delete_instructions();
+  if (m_flags & PRIM_FLAGS_CAN_DRAW) {
+    EspFixups fixups;
+    generate_code_for_positions(fixups, m_width, m_height);
+    m_paint_code.do_fixups(fixups);
+    set_current_paint_pointer(m_width, m_height);
+  }
+}
+
+void DiGeneralLine::create_functions() {
+}
+
+void DiGeneralLine::generate_code_for_left_edge(EspFixups& fixups, uint32_t y_line, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
+  start_paint_section();
+  auto draw_width = (m_draw_x_extent - m_draw_x) - hidden;
+  auto draw_height = m_draw_y_extent - m_draw_y;
+  DiLineSections sections;
+  sections.add_piece(1, 0, (uint16_t)draw_width, false);
+  m_paint_code.draw_line_as_outer_fcn(fixups, m_draw_x, 0, &sections, m_flags, m_opaqueness);
+}
+
+void DiGeneralLine::generate_code_for_right_edge(EspFixups& fixups, uint32_t y_line, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
+  start_paint_section();
+  auto draw_width = (m_draw_x_extent - m_draw_x) - hidden;
+  auto draw_height = m_draw_y_extent - m_draw_y;
+  DiLineSections sections;
+  sections.add_piece(1, 0, (uint16_t)draw_width, false);
+  m_paint_code.draw_line_as_outer_fcn(fixups, m_draw_x, m_draw_x, &sections, m_flags, m_opaqueness);
+}
+
+void DiGeneralLine::generate_code_for_draw_area(EspFixups& fixups, uint32_t y_line, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
+  start_paint_section();
+  auto draw_width = m_draw_x_extent - m_draw_x;
+  auto draw_height = m_draw_y_extent - m_draw_y;
+  DiLineSections sections;
+  sections.add_piece(1, 0, (uint16_t)draw_width, false);
+  m_paint_code.draw_line_as_outer_fcn(fixups, m_draw_x, m_draw_x, &sections, m_flags, m_opaqueness);
 }
 
 void IRAM_ATTR DiGeneralLine::paint(volatile uint32_t* p_scan_line, uint32_t line_index) {
-  /*
+   /*
   if (m_flags & PRIM_FLAG_H_SCROLL_1) {
     m_paint_code[m_abs_x & 3].call_x(this, p_scan_line, line_index, m_draw_x);
   } else {
     m_paint_code[0].call_x(this, p_scan_line, line_index, m_draw_x);
   }
   */
-}
-
-void DiGeneralLine::create_functions() {
-  /*
-  if (m_flags & PRIM_FLAG_H_SCROLL_1) {
-    m_paint_code = new EspFunction[4];
-    for (uint32_t pos = 0; pos < 4; pos++) {
-      m_paint_code[pos].enter_and_leave_outer_function();
-      //debug_log("CF id=%hu pos=%u code=%X %X\n", m_id, pos, &m_paint_code[pos], m_paint_code[pos].get_real_address(0));
-    }
-  } else {
-    m_paint_code = new EspFunction;
-    m_paint_code[0].enter_and_leave_outer_function();
-    //debug_log("CF id=%hu code=%X %X\n", m_id, m_paint_code, m_paint_code[0].get_real_address(0));
-  }
-  */
+ (*(m_cur_paint_ptr.m_simple))(this, p_scan_line, line_index);
 }
