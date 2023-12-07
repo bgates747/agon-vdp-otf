@@ -52,28 +52,25 @@ void DiSolidRectangle::generate_instructions() {
 void DiSolidRectangle::generate_code_for_left_edge(EspFixups& fixups, uint32_t y_line, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
   start_paint_section();
   auto draw_width = (m_draw_x_extent - m_draw_x) - hidden;
-  auto draw_height = m_draw_y_extent - m_draw_y;
   DiLineSections sections;
   sections.add_piece(1, 0, (uint16_t)draw_width, false);
-  m_paint_code.draw_line_as_outer_fcn(fixups, m_draw_x, 0, &sections, m_flags, m_opaqueness);
+  m_paint_code.draw_line_as_outer_fcn(fixups, m_draw_x, 0, draw_width, &sections, m_flags, m_opaqueness);
 }
 
 void DiSolidRectangle::generate_code_for_right_edge(EspFixups& fixups, uint32_t y_line, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
   start_paint_section();
   auto draw_width = (m_draw_x_extent - m_draw_x) - hidden;
-  auto draw_height = m_draw_y_extent - m_draw_y;
   DiLineSections sections;
   sections.add_piece(1, 0, (uint16_t)draw_width, false);
-  m_paint_code.draw_line_as_outer_fcn(fixups, m_draw_x, m_draw_x, &sections, m_flags, m_opaqueness);
+  m_paint_code.draw_line_as_outer_fcn(fixups, m_draw_x, m_draw_x, draw_width, &sections, m_flags, m_opaqueness);
 }
 
 void DiSolidRectangle::generate_code_for_draw_area(EspFixups& fixups, uint32_t y_line, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
   start_paint_section();
   auto draw_width = m_draw_x_extent - m_draw_x;
-  auto draw_height = m_draw_y_extent - m_draw_y;
   DiLineSections sections;
   sections.add_piece(1, 0, (uint16_t)draw_width, false);
-  m_paint_code.draw_line_as_outer_fcn(fixups, m_draw_x, m_draw_x, &sections, m_flags, m_opaqueness);
+  m_paint_code.draw_line_as_outer_fcn(fixups, m_draw_x, m_draw_x, draw_width, &sections, m_flags, m_opaqueness);
 }
 
 void IRAM_ATTR DiSolidRectangle::paint(volatile uint32_t* p_scan_line, uint32_t line_index) {

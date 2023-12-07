@@ -297,6 +297,7 @@ void EspFunction::init_members() {
 }
 
 void EspFunction::draw_line_as_outer_fcn(EspFixups& fixups, uint32_t draw_x, uint32_t x,
+                            uint32_t draw_width,
                             const DiLineSections* sections,
                             uint16_t flags, uint8_t opaqueness) {
     auto at_jump = enter_outer_function();
@@ -324,13 +325,14 @@ void EspFunction::draw_line_as_outer_fcn(EspFixups& fixups, uint32_t draw_x, uin
         mov(REG_SAVE_COLOR, REG_PIXEL_COLOR);
     }
 
-    draw_line_loop(fixups, draw_x, x, sections, flags, opaqueness);
+    draw_line_loop(fixups, draw_x, x, draw_width, sections, flags, opaqueness);
 
     l32i(REG_RETURN_ADDR, REG_STACK_PTR, OUTER_RET_ADDR_IN_STACK);
     retw();
 }
 
 void EspFunction::draw_line_as_inner_fcn(EspFixups& fixups, uint32_t draw_x, uint32_t x,
+                uint32_t draw_width,
                 const DiLineSections* sections,
                 uint16_t flags, uint8_t opaqueness) {
     auto at_jump = enter_inner_function();
@@ -357,7 +359,7 @@ void EspFunction::draw_line_as_inner_fcn(EspFixups& fixups, uint32_t draw_x, uin
         mov(REG_SAVE_COLOR, REG_PIXEL_COLOR);
     }
 
-    draw_line_loop(fixups, draw_x, x, sections, flags, opaqueness);
+    draw_line_loop(fixups, draw_x, x, draw_width, sections, flags, opaqueness);
 
     l32i(REG_RETURN_ADDR, REG_STACK_PTR, INNER_RET_ADDR_IN_STACK);
     ret();
@@ -393,7 +395,7 @@ void EspFunction::adjust_dst_pixel_ptr(uint32_t draw_x, uint32_t x) {
     }
 }
 
-void EspFunction::draw_line_loop(EspFixups& fixups, uint32_t draw_x, uint32_t x,
+void EspFunction::draw_line_loop(EspFixups& fixups, uint32_t draw_x, uint32_t x, uint32_t draw_width,
     const DiLineSections* sections, uint16_t flags, uint8_t opaqueness) {
     uint32_t p_fcn = 0;
     auto x_offset = x & 3;
