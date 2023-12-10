@@ -270,4 +270,20 @@ class EspFunction {
     inline instr_t iv(uint32_t instr, reg_t dst, uint32_t value) {
         return instr | ((value & 0xFF) << 16) | (dst << 4) | (value & 0xF00); }
 
+    uint32_t cover_256(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy);
+    uint32_t cover_128(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy);
+    uint32_t cover_64(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy);
+    uint32_t cover_32(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy);
+    uint32_t cover_16(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy);
+    uint32_t cover_8(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy);
+    uint32_t cover_4(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy);
+    uint32_t cover_3_at_0(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy);
+    uint32_t cover_2_at_0(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy);
+    uint32_t cover_1_at_0(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy);
+    uint32_t cover_3_at_1(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy);
+    uint32_t cover_2_at_1(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy);
+    uint32_t cover_1_at_1(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy);
+    uint32_t cover_2_at_2(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy);
+    uint32_t cover_1_at_2(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy);
+    uint32_t cover_1_at_3(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy);
 };
