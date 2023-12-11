@@ -397,7 +397,6 @@ void EspFunction::adjust_dst_pixel_ptr(uint32_t draw_x, uint32_t x) {
 
 void EspFunction::draw_line_loop(EspFixups& fixups, uint32_t draw_x, uint32_t x, uint32_t draw_width,
     const DiLineSections* sections, uint16_t flags, uint8_t opaqueness) {
-    uint32_t p_fcn = 0;
     auto x_offset = x & 3;
 
     if (!(flags & PRIM_FLAGS_X_SRC)) {
@@ -448,105 +447,110 @@ debug_log("@%i\n",__LINE__);
         }
 debug_log("@%i\n",__LINE__);
 
-        while (width) {
-            auto offset = x_offset & 3;
-            debug_log(" -- x %u, xo %u, now at offset %u, width = %u, op = %hu\n", x, x_offset, offset, width, opaqueness);
-            uint32_t sub = 1;
-            switch (offset) {
-                case 0:
+        cover_width(fixups, x_offset, width, opaqueness, false);
+    }
+}
+
+void EspFunction::cover_width(EspFixups& fixups, uint32_t& x_offset, u_int32_t width, uint8_t opaqueness, bool copy) {
+    uint32_t p_fcn = 0;
+    while (width) {
+        auto offset = x_offset & 3;
+        debug_log(" -- x %u, xo %u, now at offset %u, width = %u, op = %hu\n", x, x_offset, offset, width, opaqueness);
+        uint32_t sub = 1;
+        switch (offset) {
+            case 0:
 debug_log("@%i\n",__LINE__);
-                    if (width >= 4) {
-                        if (width >= 256) {
-                            // Need at least 64 full words
-                            p_fcn = cover_256(fixups, width, opaqueness, false);
-                            sub = times * 256;
-                        } else if (width >= 128) {
-                            // Need at least 32 full words
-                            p_fcn = cover_128(fixups, width, opaqueness, false);
-                            sub = 128;
-                        } else if (width >= 64) {
-                            // Need at least 16 full words
-                            p_fcn = cover_64(fixups, width, opaqueness, false);
-                            sub = 64;
-                        } else if (width >= 32) {
-                            // Need at least 8 full words
-                            p_fcn = cover_32(fixups, width, opaqueness, false);
-                            sub = 32;
-                        } else if (width >= 16) {
-                            // Need at least 4 full words
-                            p_fcn = cover_16(fixups, width, opaqueness, false);
-                            sub = 16;
-                        } else if (width >= 8) {
-                            // Need at least 2 full words
-                            p_fcn = cover_8(fixups, width, opaqueness, false);
-                            sub = 8;
-                        } else {
-                            // Need at least 1 full word
-                            p_fcn = cover_4(fixups, width, opaqueness, false);
-                            sub = 4;
-                        }
-                    } else if (width == 3) {
-                        p_fcn = cover_3_at_0(fixups, width, opaqueness, false);
-                        //if (more) {
-                        //    addi(REG_DST_PIXEL_PTR, REG_DST_PIXEL_PTR, 4);
-                        //}
-                        sub = 3;
-                    } else if (width == 2) {
-                        p_fcn = cover_2_at_0(fixups, width, opaqueness, false);
-                        //if (more) {
-                        //    addi(REG_DST_PIXEL_PTR, REG_DST_PIXEL_PTR, 4);
-                        //}
-                        sub = 2;
-                    } else { // width == 1
-                        p_fcn = cover_1_at_0(fixups, width, opaqueness, false);
-                        //if (more) {
-                        //    addi(REG_DST_PIXEL_PTR, REG_DST_PIXEL_PTR, 4);
-                        //}
+                if (width >= 4) {
+                    if (width >= 256) {
+                        // Need at least 64 full words
+                        p_fcn = cover_256(fixups, width, opaqueness, copy);
+                        sub = times * 256;
+                    } else if (width >= 128) {
+                        // Need at least 32 full words
+                        p_fcn = cover_128(fixups, width, opaqueness, copy);
+                        sub = 128;
+                    } else if (width >= 64) {
+                        // Need at least 16 full words
+                        p_fcn = cover_64(fixups, width, opaqueness, copy);
+                        sub = 64;
+                    } else if (width >= 32) {
+                        // Need at least 8 full words
+                        p_fcn = cover_32(fixups, width, opaqueness, copy);
+                        sub = 32;
+                    } else if (width >= 16) {
+                        // Need at least 4 full words
+                        p_fcn = cover_16(fixups, width, opaqueness, copy);
+                        sub = 16;
+                    } else if (width >= 8) {
+                        // Need at least 2 full words
+                        p_fcn = cover_8(fixups, width, opaqueness, copy);
+                        sub = 8;
+                    } else {
+                        // Need at least 1 full word
+                        p_fcn = cover_4(fixups, width, opaqueness, copy);
+                        sub = 4;
                     }
-                    break;
+                } else if (width == 3) {
+                    p_fcn = cover_3_at_0(fixups, width, opaqueness, copy);
+                    //if (more) {
+                    //    addi(REG_DST_PIXEL_PTR, REG_DST_PIXEL_PTR, 4);
+                    //}
+                    sub = 3;
+                } else if (width == 2) {
+                    p_fcn = cover_2_at_0(fixups, width, opaqueness, copy);
+                    //if (more) {
+                    //    addi(REG_DST_PIXEL_PTR, REG_DST_PIXEL_PTR, 4);
+                    //}
+                    sub = 2;
+                } else { // width == 1
+                    p_fcn = cover_1_at_0(fixups, width, opaqueness, copy);
+                    //if (more) {
+                    //    addi(REG_DST_PIXEL_PTR, REG_DST_PIXEL_PTR, 4);
+                    //}
+                }
+                break;
 
-                case 1:
-                    if (width >= 3) {
-                        p_fcn = cover_3_at_1(fixups, width, opaqueness, false);
-                        sub = 3;                
-                    } else if (width == 2) {
-                        p_fcn = cover_2_at_1(fixups, width, opaqueness, false);
-                        //if (more) {
-                        //    addi(REG_DST_PIXEL_PTR, REG_DST_PIXEL_PTR, 4);
-                        //}
-                        sub = 2;
-                    } else { // width == 1
-                        p_fcn = cover_1_at_1(fixups, width, opaqueness, false);
-                        //if (more) {
-                        //    addi(REG_DST_PIXEL_PTR, REG_DST_PIXEL_PTR, 4);
-                        //}
-                    }
-                    break;
+            case 1:
+                if (width >= 3) {
+                    p_fcn = cover_3_at_1(fixups, width, opaqueness, copy);
+                    sub = 3;                
+                } else if (width == 2) {
+                    p_fcn = cover_2_at_1(fixups, width, opaqueness, copy);
+                    //if (more) {
+                    //    addi(REG_DST_PIXEL_PTR, REG_DST_PIXEL_PTR, 4);
+                    //}
+                    sub = 2;
+                } else { // width == 1
+                    p_fcn = cover_1_at_1(fixups, width, opaqueness, copy);
+                    //if (more) {
+                    //    addi(REG_DST_PIXEL_PTR, REG_DST_PIXEL_PTR, 4);
+                    //}
+                }
+                break;
 
-                case 2:
-                    if (width >= 2) {
-                        p_fcn = cover_2_at_2(fixups, width, opaqueness, false);
-                        sub = 2;
-                    } else { // width == 1
-                        p_fcn = cover_1_at_2(fixups, width, opaqueness, false);
-                        //if (more) {
-                        //    addi(REG_DST_PIXEL_PTR, REG_DST_PIXEL_PTR, 4);
-                        //}
-                    }
-                    break;
-                
-                case 3:
-                    p_fcn = cover_1_at_3(fixups, width, opaqueness, false);
-                    break;
-            }
-            width -= sub;
-            x_offset += sub;
-            if (p_fcn) {
-                fixups.push_back(EspFixup { get_code_index(), p_fcn });
-                //debug_log(" >%X ", p_fcn);
-                call0(0);
-                p_fcn = 0;
-            }
+            case 2:
+                if (width >= 2) {
+                    p_fcn = cover_2_at_2(fixups, width, opaqueness, copy);
+                    sub = 2;
+                } else { // width == 1
+                    p_fcn = cover_1_at_2(fixups, width, opaqueness, copy);
+                    //if (more) {
+                    //    addi(REG_DST_PIXEL_PTR, REG_DST_PIXEL_PTR, 4);
+                    //}
+                }
+                break;
+            
+            case 3:
+                p_fcn = cover_1_at_3(fixups, width, opaqueness, copy);
+                break;
+        }
+        width -= sub;
+        x_offset += sub;
+        if (p_fcn) {
+            fixups.push_back(EspFixup { get_code_index(), p_fcn });
+            //debug_log(" >%X ", p_fcn);
+            call0(0);
+            p_fcn = 0;
         }
     }
 }
@@ -632,7 +636,6 @@ void EspFunction::copy_line_loop(EspFixups& fixups, uint32_t draw_x, uint32_t x,
         adjust_dst_pixel_ptr(draw_x, x);
     }
 
-    uint32_t p_fcn = 0;
     uint32_t rem_width = width;
     uint8_t* p_src_bytes = (uint8_t*) src_pixels;
 
@@ -670,89 +673,8 @@ void EspFunction::copy_line_loop(EspFixups& fixups, uint32_t draw_x, uint32_t x,
             }
         }
         rem_width -= width;
-
         // Use the series of pixels, rather than the rest of the line, if necessary.
-        while (width) {
-            auto offset = x_offset & 3;
-            //debug_log("  rem %u w %u o %u\n", rem_width, width, offset);
-            uint32_t sub = 1;
-            switch (offset) {
-                case 0:
-                    if (width >= 4) {
-                        if (width >= 256) {
-                            // Need at least 64 full words
-                            cover_256(fixups, width, opaqueness, true);
-                            sub = times * 256;
-                        } else if (width >= 128) {
-                            // Need at least 32 full words
-                            cover_128(fixups, width, opaqueness, true);
-                            sub = 128;
-                        } else if (width >= 64) {
-                            // Need at least 16 full words
-                            cover_64(fixups, width, opaqueness, true);
-                            sub = 64;
-                        } else if (width >= 32) {
-                            // Need at least 8 full words
-                            cover_64(fixups, width, opaqueness, true);
-                            sub = 32;
-                        } else if (width >= 16) {
-                            // Need at least 4 full words
-                            cover_16(fixups, width, opaqueness, true);
-                            sub = 16;
-                        } else if (width >= 8) {
-                            // Need at least 2 full words
-                            cover_8(fixups, width, opaqueness, true);
-                            sub = 8;
-                        } else {
-                            // Need at least 1 full word
-                            cover_4(fixups, width, opaqueness, true);
-                            sub = 4;
-                        }
-                    } else if (width == 3) {
-                        cover_3_at_0(fixups, width, opaqueness, true);
-                        sub = 3;
-                    } else if (width == 2) {
-                        cover_2_at_0(fixups, width, opaqueness, true);
-                        sub = 2;
-                    } else { // width == 1
-                        cover_1_at_0(fixups, width, opaqueness, true);
-                    }
-                    break;
-
-                case 1:
-                    if (width >= 3) {
-                        cover_3_at_1(fixups, width, opaqueness, true);
-                        sub = 3;                
-                    } else if (width == 2) {
-                        cover_2_at_1(fixups, width, opaqueness, true);
-                        sub = 2;
-                    } else { // width == 1
-                        cover_1_at_1(fixups, width, opaqueness, true);
-                    }
-                    break;
-
-                case 2:
-                    if (width >= 2) {
-                        cover_2_at_2(fixups, width, opaqueness, true);
-                        sub = 2;
-                    } else { // width == 1
-                        cover_1_at_2(fixups, width, opaqueness, true);
-                    }
-                    break;
-                
-                case 3:
-                    cover_1_at_3(fixups, width, opaqueness, true);
-                    break;
-            }
-            width -= sub;
-            x_offset += sub;
-            if (p_fcn) {
-                fixups.push_back(EspFixup { get_code_index(), p_fcn });
-                //debug_log(" >%X ", p_fcn);
-                call0(0);
-                p_fcn = 0;
-            }
-        }
+        cover_width(fixups, x_offset, width, opaqueness, true);
     }
 }
 
@@ -1009,9 +931,9 @@ uint32_t EspFunction::cover_256(EspFixups& fixups, uint32_t width, uint8_t opaqu
     }
 }
 
-uint32_t EspFunction::cover_128(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy) {
+uint32_t EspFunction::cover_128(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy, bool more) {
     if (copy) {
-        if (width > 128 || rem_width) {
+        if (width > 128 || more) {
             switch (opaqueness) {
                 case 25: return (uint32_t) &fcn_src_blend_25_for_128_pixels; break;
                 case 50: return (uint32_t) &fcn_src_blend_50_for_128_pixels; break;
@@ -1049,9 +971,9 @@ uint32_t EspFunction::cover_128(EspFixups& fixups, uint32_t width, uint8_t opaqu
     }
 }
 
-uint32_t EspFunction::cover_64(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy) {
+uint32_t EspFunction::cover_64(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy, bool more) {
     if (copy) {
-        if (width > 64 || rem_width) {
+        if (width > 64 || more) {
             switch (opaqueness) {
                 case 25: return (uint32_t) &fcn_src_blend_25_for_64_pixels; break;
                 case 50: return (uint32_t) &fcn_src_blend_50_for_64_pixels; break;
@@ -1089,9 +1011,9 @@ uint32_t EspFunction::cover_64(EspFixups& fixups, uint32_t width, uint8_t opaque
     }
 }
 
-uint32_t EspFunction::cover_32(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy) {
+uint32_t EspFunction::cover_32(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy, bool more) {
     if (copy) {
-        if (width > 32 || rem_width) {
+        if (width > 32 || more) {
             switch (opaqueness) {
                 case 25: return (uint32_t) &fcn_src_blend_25_for_32_pixels; break;
                 case 50: return (uint32_t) &fcn_src_blend_50_for_32_pixels; break;
@@ -1129,9 +1051,9 @@ uint32_t EspFunction::cover_32(EspFixups& fixups, uint32_t width, uint8_t opaque
     }
 }
 
-uint32_t EspFunction::cover_16(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy) {
+uint32_t EspFunction::cover_16(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy, bool more) {
     if (copy) {
-        if (width > 16 || rem_width) {
+        if (width > 16 || more) {
             switch (opaqueness) {
                 case 25: return (uint32_t) &fcn_src_blend_25_for_16_pixels; break;
                 case 50: return (uint32_t) &fcn_src_blend_50_for_16_pixels; break;
@@ -1169,9 +1091,9 @@ uint32_t EspFunction::cover_16(EspFixups& fixups, uint32_t width, uint8_t opaque
     }
 }
 
-uint32_t EspFunction::cover_8(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy) {
+uint32_t EspFunction::cover_8(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy, bool more) {
     if (copy) {
-        if (width > 8 || rem_width) {
+        if (width > 8 || more) {
             switch (opaqueness) {
                 case 25: return (uint32_t) &fcn_src_blend_25_for_8_pixels; break;
                 case 50: return (uint32_t) &fcn_src_blend_50_for_8_pixels; break;
@@ -1209,9 +1131,9 @@ uint32_t EspFunction::cover_8(EspFixups& fixups, uint32_t width, uint8_t opaquen
     }
 }
 
-uint32_t EspFunction::cover_4(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy) {
+uint32_t EspFunction::cover_4(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy, bool more) {
     if (copy) {
-        if (width > 4 || rem_width) {
+        if (width > 4 || more) {
             switch (opaqueness) {
                 case 25: return (uint32_t) &fcn_src_blend_25_for_4_pixels_at_offset_0; break;
                 case 50: return (uint32_t) &fcn_src_blend_50_for_4_pixels_at_offset_0; break;
@@ -1339,9 +1261,9 @@ uint32_t EspFunction::cover_1_at_0(EspFixups& fixups, uint32_t width, uint8_t op
     }
 }
 
-uint32_t EspFunction::cover_3_at_1(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy) {
+uint32_t EspFunction::cover_3_at_1(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy, bool more) {
     if (copy) {
-        if (width > 3 || rem_width) {
+        if (width > 3 || more) {
             switch (opaqueness) {
                 case 25: return (uint32_t) &fcn_src_blend_25_for_3_pixels_at_offset_1; break;
                 case 50: return (uint32_t) &fcn_src_blend_50_for_3_pixels_at_offset_1; break;
@@ -1451,9 +1373,9 @@ uint32_t EspFunction::cover_1_at_1(EspFixups& fixups, uint32_t width, uint8_t op
     }
 }
 
-uint32_t EspFunction::cover_2_at_2(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy) {
+uint32_t EspFunction::cover_2_at_2(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy, bool more) {
     if (copy) {
-        if (width > 2 || rem_width) {
+        if (width > 2 || more) {
             switch (opaqueness) {
                 case 25: return (uint32_t) &fcn_src_blend_25_for_2_pixels_at_offset_2; break;
                 case 50: return (uint32_t) &fcn_src_blend_50_for_2_pixels_at_offset_2; break;
@@ -1534,9 +1456,9 @@ uint32_t EspFunction::cover_1_at_2(EspFixups& fixups, uint32_t width, uint8_t op
     }
 }
 
-uint32_t EspFunction::cover_1_at_3(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy) {
+uint32_t EspFunction::cover_1_at_3(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy, bool more) {
     if (copy) {
-        if (width > 1 || rem_width) {
+        if (width > 1 || more) {
             switch (opaqueness) {
                 case 25: return (uint32_t) &fcn_src_blend_25_for_1_pixel_at_offset_3; break;
                 case 50: return (uint32_t) &fcn_src_blend_50_for_1_pixel_at_offset_3; break;
