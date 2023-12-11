@@ -297,7 +297,7 @@ void EspFunction::init_members() {
 }
 
 void EspFunction::draw_line_as_outer_fcn(EspFixups& fixups, uint32_t draw_x, uint32_t x,
-                            uint32_t draw_width,
+                            uint32_t skip, uint32_t draw_width,
                             const DiLineSections* sections,
                             uint16_t flags, uint8_t opaqueness) {
     auto at_jump = enter_outer_function();
@@ -325,14 +325,14 @@ void EspFunction::draw_line_as_outer_fcn(EspFixups& fixups, uint32_t draw_x, uin
         mov(REG_SAVE_COLOR, REG_PIXEL_COLOR);
     }
 
-    draw_line_loop(fixups, draw_x, x, draw_width, sections, flags, opaqueness);
+    draw_line_loop(fixups, draw_x, x, skip, draw_width, sections, flags, opaqueness);
 
     l32i(REG_RETURN_ADDR, REG_STACK_PTR, OUTER_RET_ADDR_IN_STACK);
     retw();
 }
 
 void EspFunction::draw_line_as_inner_fcn(EspFixups& fixups, uint32_t draw_x, uint32_t x,
-                uint32_t draw_width,
+                uint32_t skip, uint32_t draw_width,
                 const DiLineSections* sections,
                 uint16_t flags, uint8_t opaqueness) {
     auto at_jump = enter_inner_function();
@@ -359,7 +359,7 @@ void EspFunction::draw_line_as_inner_fcn(EspFixups& fixups, uint32_t draw_x, uin
         mov(REG_SAVE_COLOR, REG_PIXEL_COLOR);
     }
 
-    draw_line_loop(fixups, draw_x, x, draw_width, sections, flags, opaqueness);
+    draw_line_loop(fixups, draw_x, x, skip, draw_width, sections, flags, opaqueness);
 
     l32i(REG_RETURN_ADDR, REG_STACK_PTR, INNER_RET_ADDR_IN_STACK);
     ret();
@@ -395,7 +395,8 @@ void EspFunction::adjust_dst_pixel_ptr(uint32_t draw_x, uint32_t x) {
     }
 }
 
-void EspFunction::draw_line_loop(EspFixups& fixups, uint32_t draw_x, uint32_t x, uint32_t draw_width,
+void EspFunction::draw_line_loop(EspFixups& fixups, uint32_t draw_x, uint32_t x,
+    uint32_t skip, uint32_t draw_width,
     const DiLineSections* sections, uint16_t flags, uint8_t opaqueness) {
     auto x_offset = x & 3;
 
@@ -463,7 +464,7 @@ debug_log("@%i\n",__LINE__);
                 if (width >= 4) {
                     if (width >= 256) {
                         // Need at least 64 full words
-                        p_fcn = cover_256(fixups, width, opaqueness, copy);
+                        p_fcn = cover_256(fixups, width, opaqueness, copy, more);
                         sub = times * 256;
                     } else if (width >= 128) {
                         // Need at least 32 full words
@@ -471,27 +472,27 @@ debug_log("@%i\n",__LINE__);
                         sub = 128;
                     } else if (width >= 64) {
                         // Need at least 16 full words
-                        p_fcn = cover_64(fixups, width, opaqueness, copy);
+                        p_fcn = cover_64(fixups, width, opaqueness, copy, more);
                         sub = 64;
                     } else if (width >= 32) {
                         // Need at least 8 full words
-                        p_fcn = cover_32(fixups, width, opaqueness, copy);
+                        p_fcn = cover_32(fixups, width, opaqueness, copy, more);
                         sub = 32;
                     } else if (width >= 16) {
                         // Need at least 4 full words
-                        p_fcn = cover_16(fixups, width, opaqueness, copy);
+                        p_fcn = cover_16(fixups, width, opaqueness, copy, more);
                         sub = 16;
                     } else if (width >= 8) {
                         // Need at least 2 full words
-                        p_fcn = cover_8(fixups, width, opaqueness, copy);
+                        p_fcn = cover_8(fixups, width, opaqueness, copy, more);
                         sub = 8;
                     } else {
                         // Need at least 1 full word
-                        p_fcn = cover_4(fixups, width, opaqueness, copy);
+                        p_fcn = cover_4(fixups, width, opaqueness, copy, more);
                         sub = 4;
                     }
                 } else if (width == 3) {
-                    p_fcn = cover_3_at_0(fixups, width, opaqueness, copy);
+                    p_fcn = cover_3_at_0(fixups, width, opaqueness, copy, more);
                     //if (more) {
                     //    addi(REG_DST_PIXEL_PTR, REG_DST_PIXEL_PTR, 4);
                     //}
@@ -512,7 +513,7 @@ debug_log("@%i\n",__LINE__);
 
             case 1:
                 if (width >= 3) {
-                    p_fcn = cover_3_at_1(fixups, width, opaqueness, copy);
+                    p_fcn = cover_3_at_1(fixups, width, opaqueness, copy, more);
                     sub = 3;                
                 } else if (width == 2) {
                     p_fcn = cover_2_at_1(fixups, width, opaqueness, copy);
@@ -530,7 +531,7 @@ debug_log("@%i\n",__LINE__);
 
             case 2:
                 if (width >= 2) {
-                    p_fcn = cover_2_at_2(fixups, width, opaqueness, copy);
+                    p_fcn = cover_2_at_2(fixups, width, opaqueness, copy, more);
                     sub = 2;
                 } else { // width == 1
                     p_fcn = cover_1_at_2(fixups, width, opaqueness, copy);
@@ -541,7 +542,7 @@ debug_log("@%i\n",__LINE__);
                 break;
             
             case 3:
-                p_fcn = cover_1_at_3(fixups, width, opaqueness, copy);
+                p_fcn = cover_1_at_3(fixups, width, opaqueness, copy, more);
                 break;
         }
         width -= sub;
@@ -555,7 +556,8 @@ debug_log("@%i\n",__LINE__);
     }
 }
 
-void EspFunction::copy_line_as_outer_fcn(EspFixups& fixups, uint32_t draw_x, uint32_t x, uint32_t width,
+void EspFunction::copy_line_as_outer_fcn(EspFixups& fixups, uint32_t draw_x, uint32_t x,
+        uint32_t skip, uint32_t width,
         uint16_t flags, uint8_t transparent_color, uint32_t* src_pixels) {
     auto at_jump = enter_outer_function();
     auto at_data = begin_data();
@@ -585,12 +587,13 @@ void EspFunction::copy_line_as_outer_fcn(EspFixups& fixups, uint32_t draw_x, uin
     }
 
     s32i(REG_RETURN_ADDR, REG_STACK_PTR, OUTER_RET_ADDR_IN_STACK);
-    copy_line_loop(fixups, draw_x, x, width, flags, transparent_color, src_pixels);
+    copy_line_loop(fixups, draw_x, x, width, skip, flags, transparent_color, src_pixels);
     l32i(REG_RETURN_ADDR, REG_STACK_PTR, OUTER_RET_ADDR_IN_STACK);
     retw();
 }
 
-void EspFunction::copy_line_as_inner_fcn(EspFixups& fixups, uint32_t draw_x, uint32_t x, uint32_t width,
+void EspFunction::copy_line_as_inner_fcn(EspFixups& fixups, uint32_t draw_x, uint32_t x,
+        uint32_t skip, uint32_t width,
         uint16_t flags, uint8_t transparent_color, uint32_t* src_pixels) {
     auto at_jump = enter_inner_function();
     auto at_data = begin_data();
@@ -621,12 +624,13 @@ void EspFunction::copy_line_as_inner_fcn(EspFixups& fixups, uint32_t draw_x, uin
     }
 
     s32i(REG_RETURN_ADDR, REG_STACK_PTR, INNER_RET_ADDR_IN_STACK);
-    copy_line_loop(fixups, draw_x, x, width, flags, transparent_color, src_pixels);
+    copy_line_loop(fixups, draw_x, x, skip, width, flags, transparent_color, src_pixels);
     l32i(REG_RETURN_ADDR, REG_STACK_PTR, INNER_RET_ADDR_IN_STACK);
     ret();
 }
 
-void EspFunction::copy_line_loop(EspFixups& fixups, uint32_t draw_x, uint32_t x, uint32_t width,
+void EspFunction::copy_line_loop(EspFixups& fixups, uint32_t draw_x, uint32_t x,
+        uint32_t skip, uint32_t width,
         uint16_t flags, uint8_t transparent_color, uint32_t* src_pixels) {
 
     auto x_offset = x & 3;
@@ -1314,7 +1318,7 @@ uint32_t EspFunction::cover_3_at_1(EspFixups& fixups, uint32_t width, uint8_t op
                     break;
                 default: return 0;
             }
-            if (more) { ??
+            if (more) {
                 addi(REG_DST_PIXEL_PTR, REG_DST_PIXEL_PTR, 4);
             }
         }
