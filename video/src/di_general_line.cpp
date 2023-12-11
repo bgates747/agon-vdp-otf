@@ -339,8 +339,8 @@ void DiGeneralLine::generate_instructions() {
           //debug_log(" [%i] x%hi w%hi", i, piece->m_x, piece->m_width);
           m_paint_code[pos].align32();
           m_paint_code[pos].j_to_here(at_jump_table + i * sizeof(uint32_t));
-          m_paint_code[pos].draw_line_as_inner_fcn(fixups, pos, pos,
-            sections, m_flags, m_opaqueness);
+          m_paint_code[pos].draw_line(fixups, pos, pos,
+            sections, m_flags, m_opaqueness, false);
         }
         m_paint_code[pos].do_fixups(fixups);
         //debug_log("id=%hu pos=%u code=%X %X\n", m_id, pos, &m_paint_code[pos], m_paint_code[pos].get_real_address(0));
@@ -355,8 +355,8 @@ void DiGeneralLine::generate_instructions() {
         //debug_log("\n > section [%i] ", i);
         m_paint_code[0].align32();
         m_paint_code[0].j_to_here(at_jump_table + i * sizeof(uint32_t));
-        m_paint_code[0].draw_line_as_inner_fcn(fixups, 0, 0,
-          sections, m_flags, m_opaqueness);
+        m_paint_code[0].draw_line(fixups, 0, 0,
+          sections, m_flags, m_opaqueness, false);
       }
       m_paint_code[0].do_fixups(fixups);
       //debug_log("    id=%hu code=%X %X\n", m_id, m_paint_code, m_paint_code[0].get_real_address(0));
@@ -384,7 +384,7 @@ void DiGeneralLine::generate_code_for_left_edge(EspFixups& fixups, uint32_t y_li
     auto sections = &m_line_details.m_sections[i];
     m_paint_code.align32();
     m_paint_code.j_to_here(at_jump_table + i * sizeof(uint32_t));
-    m_paint_code.draw_line_as_inner_fcn(fixups, hidden, 0, draw_width, sections, m_flags, m_opaqueness);
+    m_paint_code.draw_line(fixups, hidden, 0, 0, draw_width, sections, m_flags, m_opaqueness, true);
   }
 }
 
@@ -393,7 +393,7 @@ void DiGeneralLine::generate_code_for_right_edge(EspFixups& fixups, uint32_t y_l
   auto draw_width = (m_draw_x_extent - m_draw_x) - hidden;
   DiLineSections sections;
   sections.add_piece(1, 0, (uint16_t)draw_width, false);
-  m_paint_code.draw_line_as_outer_fcn(fixups, m_draw_x, m_draw_x, draw_width, &sections, m_flags, m_opaqueness);
+  m_paint_code.draw_line(fixups, m_draw_x, m_draw_x, 0, draw_width, &sections, m_flags, m_opaqueness, true);
 }
 
 void DiGeneralLine::generate_code_for_draw_area(EspFixups& fixups, uint32_t y_line, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
@@ -401,7 +401,7 @@ void DiGeneralLine::generate_code_for_draw_area(EspFixups& fixups, uint32_t y_li
   auto draw_width = m_draw_x_extent - m_draw_x;
   DiLineSections sections;
   sections.add_piece(1, 0, (uint16_t)draw_width, false);
-  m_paint_code.draw_line_as_outer_fcn(fixups, m_draw_x, m_draw_x, draw_width, &sections, m_flags, m_opaqueness);
+  m_paint_code.draw_line(fixups, m_draw_x, m_draw_x, 0, draw_width, &sections, m_flags, m_opaqueness, true);
 }
 
 void IRAM_ATTR DiGeneralLine::paint(volatile uint32_t* p_scan_line, uint32_t line_index) {

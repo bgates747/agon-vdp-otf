@@ -68,13 +68,10 @@ class EspFunction {
 
     // Pixel-level operations:
 
-    void draw_line_as_outer_fcn(EspFixups& fixups, uint32_t draw_x, uint32_t x,
+    void draw_line(EspFixups& fixups, uint32_t draw_x, uint32_t x,
                         uint32_t skip, uint32_t draw_width,
-                        const DiLineSections* sections, uint16_t flags, uint8_t opaqueness);
-
-    void draw_line_as_inner_fcn(EspFixups& fixups, uint32_t draw_x, uint32_t x,
-                        uint32_t skip, uint32_t draw_width,
-                        const DiLineSections* sections, uint16_t flags, uint8_t opaqueness);
+                        const DiLineSections* sections, uint16_t flags,
+                        uint8_t opaqueness, bool outer_fcn);
 
     void draw_line_loop(EspFixups& fixups, uint32_t draw_x, uint32_t x,
                         uint32_t skip, uint32_t draw_width,
@@ -276,15 +273,15 @@ class EspFunction {
     inline instr_t iv(uint32_t instr, reg_t dst, uint32_t value) {
         return instr | ((value & 0xFF) << 16) | (dst << 4) | (value & 0xF00); }
 
-    void cover_width(EspFixups& fixups, uint32_t& x_offset, u_int32_t width, uint8_t opaqueness, bool copy);
-    uint32_t cover_256(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy);
+    void cover_width(EspFixups& fixups, uint32_t& x_offset, uint32_t width, uint8_t opaqueness, bool copy, bool more);
+    uint32_t cover_256(EspFixups& fixups, uint32_t times, uint8_t opaqueness, bool copy);
     uint32_t cover_128(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy, bool more);
     uint32_t cover_64(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy, bool more);
     uint32_t cover_32(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy, bool more);
     uint32_t cover_16(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy, bool more);
     uint32_t cover_8(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy, bool more);
     uint32_t cover_4(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy, bool more);
-    uint32_t cover_3_at_0(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy, bool more);
+    uint32_t cover_3_at_0(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy);
     uint32_t cover_2_at_0(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy);
     uint32_t cover_1_at_0(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy);
     uint32_t cover_3_at_1(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy, bool more);

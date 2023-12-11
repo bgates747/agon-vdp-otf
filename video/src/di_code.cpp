@@ -296,11 +296,11 @@ void EspFunction::init_members() {
     m_code = 0;
 }
 
-void EspFunction::draw_line_as_outer_fcn(EspFixups& fixups, uint32_t draw_x, uint32_t x,
+void EspFunction::draw_line(EspFixups& fixups, uint32_t draw_x, uint32_t x,
                             uint32_t skip, uint32_t draw_width,
                             const DiLineSections* sections,
-                            uint16_t flags, uint8_t opaqueness) {
-    auto at_jump = enter_outer_function();
+                            uint16_t flags, uint8_t opaqueness, bool outer_fcn) {
+    auto at_jump = (outer_fcn ? enter_outer_function() : enter_inner_function());
     auto at_data = begin_data();
 
     uint32_t at_isolate_br = 0;
@@ -327,42 +327,9 @@ void EspFunction::draw_line_as_outer_fcn(EspFixups& fixups, uint32_t draw_x, uin
 
     draw_line_loop(fixups, draw_x, x, skip, draw_width, sections, flags, opaqueness);
 
-    l32i(REG_RETURN_ADDR, REG_STACK_PTR, OUTER_RET_ADDR_IN_STACK);
-    retw();
-}
+    l32i(REG_RETURN_ADDR, REG_STACK_PTR, (outer_fcn ? OUTER_RET_ADDR_IN_STACK : INNER_RET_ADDR_IN_STACK));
 
-void EspFunction::draw_line_as_inner_fcn(EspFixups& fixups, uint32_t draw_x, uint32_t x,
-                uint32_t skip, uint32_t draw_width,
-                const DiLineSections* sections,
-                uint16_t flags, uint8_t opaqueness) {
-    auto at_jump = enter_inner_function();
-    auto at_data = begin_data();
-
-    uint32_t at_isolate_br = 0;
-    uint32_t at_isolate_g = 0;
-    if (opaqueness != 100) {
-        at_isolate_br = d32(MASK_ISOLATE_BR); // mask to isolate blue & red, removing green
-        at_isolate_g = d32(MASK_ISOLATE_G); // mask to isolate green, removing red & blue
-    }
-
-    begin_code(at_jump);
-    set_reg_dst_pixel_ptr_for_draw(flags);
-
-    if (opaqueness != 100) {
-        l32r_from(REG_ISOLATE_BR, at_isolate_br);
-        l32r_from(REG_ISOLATE_G, at_isolate_g);
-    }
-
-    s32i(REG_RETURN_ADDR, REG_STACK_PTR, INNER_RET_ADDR_IN_STACK);
-
-    if (opaqueness != 100) {
-        mov(REG_SAVE_COLOR, REG_PIXEL_COLOR);
-    }
-
-    draw_line_loop(fixups, draw_x, x, skip, draw_width, sections, flags, opaqueness);
-
-    l32i(REG_RETURN_ADDR, REG_STACK_PTR, INNER_RET_ADDR_IN_STACK);
-    ret();
+    if (outer_fcn) retw(); else ret();
 }
 
 void EspFunction::adjust_dst_pixel_ptr(uint32_t draw_x, uint32_t x) {
@@ -425,38 +392,59 @@ void EspFunction::draw_line_loop(EspFixups& fixups, uint32_t draw_x, uint32_t x,
 debug_log("@%i\n",__LINE__);
             opaqueness = 0;
             width = space;
+            skip -= MIN(skip, space);
+            space = 0;
             debug_log("  initial space %u\n", space);
             state = LoopState::ColoredPixels;
         } else if (state == LoopState::LaterSpace) {
 debug_log("@%i\n",__LINE__);
             opaqueness = 0;
             width = space;
+            skip -= MIN(skip, space);
+            space = 0;
             debug_log("  later space %u\n", space);
             si++;
             state = LoopState::ColoredPixels;
         } else {
+            if (space || !skip) {
 debug_log("@%i\n",__LINE__);
-            opaqueness = given_opaqueness;
-            state = LoopState::LaterSpace;
-            if (!more) {
-                si++;
+                if (space) {
+                    opaqueness = 0;
+                    width = space;
+                    space = 0;
+                } else {
+                    opaqueness = given_opaqueness;
+                }
+                state = LoopState::LaterSpace;
+                if (!more) {
+                    si++;
+                } else {
+                    space = sections->m_pieces[si+1].m_x - sections->m_pieces[si].m_x - width;
+                    debug_log("  need space from %hi to %hi, w %hu\n",
+                        sections->m_pieces[si].m_x + width, sections->m_pieces[si+1].m_x, space);
+                }
             } else {
-                space = sections->m_pieces[si+1].m_x - sections->m_pieces[si].m_x - width;
-                debug_log("  need space from %hi to %hi, w %hu\n",
-                    sections->m_pieces[si].m_x + width, sections->m_pieces[si+1].m_x, space);
+debug_log("@%i\n",__LINE__);
+                opaqueness = 0;
+                space = MIN(skip, width);
+                skip -= space;
+                debug_log("   space %u, skip %u\n", space, skip);
+                auto w = width;
+                width = space;
+                space = w - space;
             }
         }
 debug_log("@%i\n",__LINE__);
 
-        cover_width(fixups, x_offset, width, opaqueness, false);
+        cover_width(fixups, x_offset, width, opaqueness, false, more);
     }
 }
 
-void EspFunction::cover_width(EspFixups& fixups, uint32_t& x_offset, u_int32_t width, uint8_t opaqueness, bool copy) {
+void EspFunction::cover_width(EspFixups& fixups, uint32_t& x_offset, u_int32_t width, uint8_t opaqueness, bool copy, bool more) {
     uint32_t p_fcn = 0;
     while (width) {
         auto offset = x_offset & 3;
-        debug_log(" -- x %u, xo %u, now at offset %u, width = %u, op = %hu\n", x, x_offset, offset, width, opaqueness);
+        debug_log(" -- xo %u, now at offset %u, width = %u, op = %hu\n", x_offset, offset, width, opaqueness);
         uint32_t sub = 1;
         switch (offset) {
             case 0:
@@ -464,11 +452,12 @@ debug_log("@%i\n",__LINE__);
                 if (width >= 4) {
                     if (width >= 256) {
                         // Need at least 64 full words
-                        p_fcn = cover_256(fixups, width, opaqueness, copy, more);
+                        auto times = width / 256;
+                        p_fcn = cover_256(fixups, times, opaqueness, copy);
                         sub = times * 256;
                     } else if (width >= 128) {
                         // Need at least 32 full words
-                        p_fcn = cover_128(fixups, width, opaqueness, copy);
+                        p_fcn = cover_128(fixups, width, opaqueness, copy, more);
                         sub = 128;
                     } else if (width >= 64) {
                         // Need at least 16 full words
@@ -492,7 +481,7 @@ debug_log("@%i\n",__LINE__);
                         sub = 4;
                     }
                 } else if (width == 3) {
-                    p_fcn = cover_3_at_0(fixups, width, opaqueness, copy, more);
+                    p_fcn = cover_3_at_0(fixups, width, opaqueness, copy);
                     //if (more) {
                     //    addi(REG_DST_PIXEL_PTR, REG_DST_PIXEL_PTR, 4);
                     //}
@@ -678,7 +667,7 @@ void EspFunction::copy_line_loop(EspFixups& fixups, uint32_t draw_x, uint32_t x,
         }
         rem_width -= width;
         // Use the series of pixels, rather than the rest of the line, if necessary.
-        cover_width(fixups, x_offset, width, opaqueness, true);
+        cover_width(fixups, x_offset, width, opaqueness, true, (rem_width > 0));
     }
 }
 
@@ -912,8 +901,7 @@ instr_t EspFunction::isieo(uint32_t instr, reg_t src, int32_t imm, u_off_t offse
     return instr | (offset << 16) | (imm << 12) | (src << 8);
 }
 
-uint32_t EspFunction::cover_256(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy) {
-    auto times = width / 256;
+uint32_t EspFunction::cover_256(EspFixups& fixups, uint32_t times, uint8_t opaqueness, bool copy) {
     movi(REG_LOOP_INDEX, times);
 
     if (copy) {
@@ -951,7 +939,6 @@ uint32_t EspFunction::cover_128(EspFixups& fixups, uint32_t width, uint8_t opaqu
                 case 50: return (uint32_t) &fcn_src_blend_50_for_128_pixels_last; break;
                 case 75: return (uint32_t) &fcn_src_blend_75_for_128_pixels_last; break;
                 case 100: return (uint32_t) &fcn_copy_128_pixels_last; break;
-                default: return 0;
             }
         }
     } else {
@@ -969,10 +956,10 @@ uint32_t EspFunction::cover_128(EspFixups& fixups, uint32_t width, uint8_t opaqu
                 case 50: return (uint32_t) &fcn_color_blend_50_for_128_pixels_last; break;
                 case 75: return (uint32_t) &fcn_color_blend_75_for_128_pixels_last; break;
                 case 100: return (uint32_t) &fcn_draw_128_pixels_last; break;
-                default: return 0;
             }
         }
     }
+    return 0;
 }
 
 uint32_t EspFunction::cover_64(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy, bool more) {
@@ -991,7 +978,6 @@ uint32_t EspFunction::cover_64(EspFixups& fixups, uint32_t width, uint8_t opaque
                 case 50: return (uint32_t) &fcn_src_blend_50_for_64_pixels_last; break;
                 case 75: return (uint32_t) &fcn_src_blend_75_for_64_pixels_last; break;
                 case 100: return (uint32_t) &fcn_copy_64_pixels_last; break;
-                default: return 0;
             }
         }
     } else {
@@ -1009,10 +995,10 @@ uint32_t EspFunction::cover_64(EspFixups& fixups, uint32_t width, uint8_t opaque
                 case 50: return (uint32_t) &fcn_color_blend_50_for_64_pixels_last; break;
                 case 75: return (uint32_t) &fcn_color_blend_75_for_64_pixels_last; break;
                 case 100: return (uint32_t) &fcn_draw_64_pixels_last; break;
-                default: return 0;
             }
         }
     }
+    return 0;
 }
 
 uint32_t EspFunction::cover_32(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy, bool more) {
@@ -1031,7 +1017,6 @@ uint32_t EspFunction::cover_32(EspFixups& fixups, uint32_t width, uint8_t opaque
                 case 50: return (uint32_t) &fcn_src_blend_50_for_32_pixels_last; break;
                 case 75: return (uint32_t) &fcn_src_blend_75_for_32_pixels_last; break;
                 case 100: return (uint32_t) &fcn_copy_32_pixels_last; break;
-                default: return 0;
             }
         }
     } else {
@@ -1049,10 +1034,10 @@ uint32_t EspFunction::cover_32(EspFixups& fixups, uint32_t width, uint8_t opaque
                 case 50: return (uint32_t) &fcn_color_blend_50_for_32_pixels_last; break;
                 case 75: return (uint32_t) &fcn_color_blend_75_for_32_pixels_last; break;
                 case 100: return (uint32_t) &fcn_draw_32_pixels_last; break;
-                default: return 0;
             }
         }
     }
+    return 0;
 }
 
 uint32_t EspFunction::cover_16(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy, bool more) {
@@ -1071,7 +1056,6 @@ uint32_t EspFunction::cover_16(EspFixups& fixups, uint32_t width, uint8_t opaque
                 case 50: return (uint32_t) &fcn_src_blend_50_for_16_pixels_last; break;
                 case 75: return (uint32_t) &fcn_src_blend_75_for_16_pixels_last; break;
                 case 100: return (uint32_t) &fcn_copy_16_pixels_last; break;
-                default: return 0;
             }
         }
     } else {
@@ -1089,10 +1073,10 @@ uint32_t EspFunction::cover_16(EspFixups& fixups, uint32_t width, uint8_t opaque
                 case 50: return (uint32_t) &fcn_color_blend_50_for_16_pixels_last; break;
                 case 75: return (uint32_t) &fcn_color_blend_75_for_16_pixels_last; break;
                 case 100: return (uint32_t) &fcn_draw_16_pixels_last; break;
-                default: return 0;
             }
         }
     }
+    return 0;
 }
 
 uint32_t EspFunction::cover_8(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy, bool more) {
@@ -1111,7 +1095,6 @@ uint32_t EspFunction::cover_8(EspFixups& fixups, uint32_t width, uint8_t opaquen
                 case 50: return (uint32_t) &fcn_src_blend_50_for_8_pixels_last; break;
                 case 75: return (uint32_t) &fcn_src_blend_75_for_8_pixels_last; break;
                 case 100: return (uint32_t) &fcn_copy_8_pixels_last; break;
-                default: return 0;
             }
         }
     } else {
@@ -1129,10 +1112,10 @@ uint32_t EspFunction::cover_8(EspFixups& fixups, uint32_t width, uint8_t opaquen
                 case 50: return (uint32_t) &fcn_color_blend_50_for_8_pixels_last; break;
                 case 75: return (uint32_t) &fcn_color_blend_75_for_8_pixels_last; break;
                 case 100: return (uint32_t) &fcn_draw_8_pixels_last; break;
-                default: return 0;
             }
         }
     }
+    return 0;
 }
 
 uint32_t EspFunction::cover_4(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy, bool more) {
@@ -1148,7 +1131,6 @@ uint32_t EspFunction::cover_4(EspFixups& fixups, uint32_t width, uint8_t opaquen
                     addi(REG_SRC_PIXEL_PTR, REG_SRC_PIXEL_PTR, 4);
                     addi(REG_DST_PIXEL_PTR, REG_DST_PIXEL_PTR, 4);
                     break;
-                default: return 0;
             }
         } else {
             switch (opaqueness) {
@@ -1159,7 +1141,6 @@ uint32_t EspFunction::cover_4(EspFixups& fixups, uint32_t width, uint8_t opaquen
                     l32i(REG_PIXEL_COLOR, REG_SRC_PIXEL_PTR, 0);
                     s32i(REG_PIXEL_COLOR, REG_DST_PIXEL_PTR, 0);
                     break;
-                default: return 0;
             }
         }
     } else {
@@ -1182,10 +1163,10 @@ uint32_t EspFunction::cover_4(EspFixups& fixups, uint32_t width, uint8_t opaquen
                 case 100:
                     s32i(REG_PIXEL_COLOR, REG_DST_PIXEL_PTR, 0);
                     break;
-                default: return 0;
             }
         }
     }
+    return 0;
 }
 
 uint32_t EspFunction::cover_3_at_0(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy) {
@@ -1199,7 +1180,6 @@ uint32_t EspFunction::cover_3_at_0(EspFixups& fixups, uint32_t width, uint8_t op
                 s16i(REG_PIXEL_COLOR, REG_DST_PIXEL_PTR, FIX_OFFSET(0));
                 s8i(REG_PIXEL_COLOR, REG_DST_PIXEL_PTR, FIX_OFFSET(2));
                 break;
-            default: return 0;
         }
     } else {
         switch (opaqueness) {
@@ -1210,9 +1190,9 @@ uint32_t EspFunction::cover_3_at_0(EspFixups& fixups, uint32_t width, uint8_t op
                 s16i(REG_PIXEL_COLOR, REG_DST_PIXEL_PTR, FIX_OFFSET(0));
                 s8i(REG_PIXEL_COLOR, REG_DST_PIXEL_PTR, FIX_OFFSET(2));
                 break;
-            default: return 0;
         }
     }
+    return 0;
 }
 
 uint32_t EspFunction::cover_2_at_0(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy) {
@@ -1225,7 +1205,6 @@ uint32_t EspFunction::cover_2_at_0(EspFixups& fixups, uint32_t width, uint8_t op
                 l16ui(REG_PIXEL_COLOR, REG_SRC_PIXEL_PTR, FIX_OFFSET(0));
                 s16i(REG_PIXEL_COLOR, REG_DST_PIXEL_PTR, FIX_OFFSET(0));
                 break;
-            default: return 0;
         }
     } else {
         switch (opaqueness) {
@@ -1235,9 +1214,9 @@ uint32_t EspFunction::cover_2_at_0(EspFixups& fixups, uint32_t width, uint8_t op
             case 100:
                 s16i(REG_PIXEL_COLOR, REG_DST_PIXEL_PTR, FIX_OFFSET(0));
                 break;
-            default: return 0;
         }
     }
+    return 0;
 }
 
 uint32_t EspFunction::cover_1_at_0(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy) {
@@ -1250,7 +1229,6 @@ uint32_t EspFunction::cover_1_at_0(EspFixups& fixups, uint32_t width, uint8_t op
                 l8ui(REG_PIXEL_COLOR, REG_SRC_PIXEL_PTR, FIX_OFFSET(0));
                 s8i(REG_PIXEL_COLOR, REG_DST_PIXEL_PTR, FIX_OFFSET(0));
                 break;
-            default: return 0;
         }
     } else {
         switch (opaqueness) {
@@ -1260,9 +1238,9 @@ uint32_t EspFunction::cover_1_at_0(EspFixups& fixups, uint32_t width, uint8_t op
             case 100:
                 s8i(REG_PIXEL_COLOR, REG_DST_PIXEL_PTR, FIX_OFFSET(0));
                 break;
-            default: return 0;
         }
     }
+    return 0;
 }
 
 uint32_t EspFunction::cover_3_at_1(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy, bool more) {
@@ -1279,7 +1257,6 @@ uint32_t EspFunction::cover_3_at_1(EspFixups& fixups, uint32_t width, uint8_t op
                     addi(REG_SRC_PIXEL_PTR, REG_SRC_PIXEL_PTR, 4);
                     addi(REG_DST_PIXEL_PTR, REG_DST_PIXEL_PTR, 4);
                     break;
-                default: return 0;
             }
         } else {
             switch (opaqueness) {
@@ -1291,7 +1268,6 @@ uint32_t EspFunction::cover_3_at_1(EspFixups& fixups, uint32_t width, uint8_t op
                     s8i(REG_PIXEL_COLOR, REG_DST_PIXEL_PTR, FIX_OFFSET(1));    
                     s16i(REG_PIXEL_COLOR, REG_DST_PIXEL_PTR, FIX_OFFSET(2));
                     break;
-                default: return 0;
             }
         }
     } else {
@@ -1316,13 +1292,13 @@ uint32_t EspFunction::cover_3_at_1(EspFixups& fixups, uint32_t width, uint8_t op
                     s8i(REG_PIXEL_COLOR, REG_DST_PIXEL_PTR, FIX_OFFSET(1));    
                     s16i(REG_PIXEL_COLOR, REG_DST_PIXEL_PTR, FIX_OFFSET(2));
                     break;
-                default: return 0;
             }
             if (more) {
                 addi(REG_DST_PIXEL_PTR, REG_DST_PIXEL_PTR, 4);
             }
         }
     }
+    return 0;
 }
 
 uint32_t EspFunction::cover_2_at_1(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy) {
@@ -1336,7 +1312,6 @@ uint32_t EspFunction::cover_2_at_1(EspFixups& fixups, uint32_t width, uint8_t op
                 s8i(REG_PIXEL_COLOR, REG_DST_PIXEL_PTR, FIX_OFFSET(1));
                 s8i(REG_PIXEL_COLOR, REG_DST_PIXEL_PTR, FIX_OFFSET(2));
                 break;
-            default: return 0;
         }
     } else {
         switch (opaqueness) {
@@ -1347,9 +1322,9 @@ uint32_t EspFunction::cover_2_at_1(EspFixups& fixups, uint32_t width, uint8_t op
                 s8i(REG_PIXEL_COLOR, REG_DST_PIXEL_PTR, FIX_OFFSET(1));
                 s8i(REG_PIXEL_COLOR, REG_DST_PIXEL_PTR, FIX_OFFSET(2));
                 break;
-            default: return 0;
         }
     }
+    return 0;
 }
 
 uint32_t EspFunction::cover_1_at_1(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy) {
@@ -1362,7 +1337,6 @@ uint32_t EspFunction::cover_1_at_1(EspFixups& fixups, uint32_t width, uint8_t op
                 l8ui(REG_PIXEL_COLOR, REG_SRC_PIXEL_PTR, FIX_OFFSET(1));    
                 s8i(REG_PIXEL_COLOR, REG_DST_PIXEL_PTR, FIX_OFFSET(1));
                 break;
-            default: return 0;
         }
     } else {
         switch (opaqueness) {
@@ -1372,9 +1346,9 @@ uint32_t EspFunction::cover_1_at_1(EspFixups& fixups, uint32_t width, uint8_t op
             case 100:
                 s8i(REG_PIXEL_COLOR, REG_DST_PIXEL_PTR, FIX_OFFSET(1));
                 break;
-            default: return 0;
         }
     }
+    return 0;
 }
 
 uint32_t EspFunction::cover_2_at_2(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy, bool more) {
@@ -1390,7 +1364,6 @@ uint32_t EspFunction::cover_2_at_2(EspFixups& fixups, uint32_t width, uint8_t op
                     addi(REG_SRC_PIXEL_PTR, REG_SRC_PIXEL_PTR, 4);
                     addi(REG_DST_PIXEL_PTR, REG_DST_PIXEL_PTR, 4);
                     break;
-                default: return 0;
             }
         } else {
             switch (opaqueness) {
@@ -1403,7 +1376,6 @@ uint32_t EspFunction::cover_2_at_2(EspFixups& fixups, uint32_t width, uint8_t op
                     addi(REG_SRC_PIXEL_PTR, REG_SRC_PIXEL_PTR, 4);
                     addi(REG_DST_PIXEL_PTR, REG_DST_PIXEL_PTR, 4);
                     break;
-                default: return 0;
             }
         }
     } else {
@@ -1426,13 +1398,13 @@ uint32_t EspFunction::cover_2_at_2(EspFixups& fixups, uint32_t width, uint8_t op
                 case 100:
                     s16i(REG_PIXEL_COLOR, REG_DST_PIXEL_PTR, FIX_OFFSET(2));
                     break;
-                default: return 0;
             }
-            if (more) { ??
+            if (more) {
                 addi(REG_DST_PIXEL_PTR, REG_DST_PIXEL_PTR, 4);
             }
         }
     }
+    return 0;
 }
 
 uint32_t EspFunction::cover_1_at_2(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy) {
@@ -1445,7 +1417,6 @@ uint32_t EspFunction::cover_1_at_2(EspFixups& fixups, uint32_t width, uint8_t op
                 l8ui(REG_PIXEL_COLOR, REG_SRC_PIXEL_PTR, FIX_OFFSET(2));
                 s8i(REG_PIXEL_COLOR, REG_DST_PIXEL_PTR, FIX_OFFSET(2));
                 break;
-            default: return 0;
         }
     } else {
         switch (opaqueness) {
@@ -1455,9 +1426,9 @@ uint32_t EspFunction::cover_1_at_2(EspFixups& fixups, uint32_t width, uint8_t op
             case 100:
                 s8i(REG_PIXEL_COLOR, REG_DST_PIXEL_PTR, FIX_OFFSET(2));
                 break;
-            default: return 0;
         }
     }
+    return 0;
 }
 
 uint32_t EspFunction::cover_1_at_3(EspFixups& fixups, uint32_t width, uint8_t opaqueness, bool copy, bool more) {
@@ -1473,7 +1444,6 @@ uint32_t EspFunction::cover_1_at_3(EspFixups& fixups, uint32_t width, uint8_t op
                     addi(REG_SRC_PIXEL_PTR, REG_SRC_PIXEL_PTR, 4);
                     addi(REG_DST_PIXEL_PTR, REG_DST_PIXEL_PTR, 4);
                     break;
-                default: return 0;
             }
         } else {
             switch (opaqueness) {
@@ -1484,7 +1454,6 @@ uint32_t EspFunction::cover_1_at_3(EspFixups& fixups, uint32_t width, uint8_t op
                     l8ui(REG_PIXEL_COLOR, REG_SRC_PIXEL_PTR, FIX_OFFSET(3));
                     s8i(REG_PIXEL_COLOR, REG_DST_PIXEL_PTR, FIX_OFFSET(3));
                     break;
-                default: return 0;
             }
         }
     } else {
@@ -1507,12 +1476,11 @@ uint32_t EspFunction::cover_1_at_3(EspFixups& fixups, uint32_t width, uint8_t op
                 case 100:
                     s8i(REG_PIXEL_COLOR, REG_DST_PIXEL_PTR, FIX_OFFSET(3));
                     break;
-                default: return 0;
             }
-            if (more) { ??
+            if (more) {
                 addi(REG_DST_PIXEL_PTR, REG_DST_PIXEL_PTR, 4);
             }
         }
     }
+    return 0;
 }
-

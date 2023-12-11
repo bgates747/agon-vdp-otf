@@ -47,7 +47,7 @@ void DiRectangle::generate_instructions() {
       EspFixups fixups;
       DiLineSections sections;
       sections.add_piece(1, 0, width, false);
-      m_paint_code[0].draw_line_as_outer_fcn(fixups, m_draw_x, m_draw_x, &sections, m_flags, m_opaqueness);
+      m_paint_code[0].draw_line(fixups, m_draw_x, m_draw_x, &sections, m_flags, m_opaqueness, true);
       m_paint_code[0].do_fixups(fixups);
     }
     {
@@ -55,7 +55,7 @@ void DiRectangle::generate_instructions() {
       DiLineSections sections;
       sections.add_piece(1, 0, 1, false);
       sections.add_piece(1, width-1, 1, false);
-      m_paint_code[1].draw_line_as_outer_fcn(fixups, m_draw_x, m_draw_x, &sections, m_flags, m_opaqueness);
+      m_paint_code[1].draw_line(fixups, m_draw_x, m_draw_x, &sections, m_flags, m_opaqueness, true);
       m_paint_code[1].do_fixups(fixups);
     }
   }
