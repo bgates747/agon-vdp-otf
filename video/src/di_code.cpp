@@ -273,12 +273,6 @@ extern uint32_t fcn_src_blend_75_for_3_pixels_at_offset_1_last;
 extern uint32_t fcn_src_blend_75_for_4_pixels_at_offset_0;
 extern uint32_t fcn_src_blend_75_for_4_pixels_at_offset_0_last;
 
-typedef enum {
-    InitialSpace,
-    LaterSpace,
-    ColoredPixels
-} LoopState;
-
 EspFunction::EspFunction() {
     init_members();
 }
@@ -373,70 +367,48 @@ void EspFunction::draw_line_loop(EspFixups& fixups, uint32_t draw_x, uint32_t x,
 
     auto given_opaqueness = opaqueness;
     auto num_sections = (uint32_t)sections->m_pieces.size();
-    LoopState state = LoopState::ColoredPixels;
-    uint32_t space = sections->m_pieces[0].m_x;
-    debug_log("sections %u, space %hu\n", num_sections, space);
-    if (space) {
-        state = LoopState::InitialSpace;
-    }
 
-    for (uint16_t si = 0; si < num_sections;) {
-        auto more = (state != LoopState::ColoredPixels) || (si + 1 < num_sections);
-        debug_log("si %hu w %hu\n", si, sections->m_pieces[si].m_width);
-        uint32_t width = sections->m_pieces[si].m_width;
-
-        debug_log("\ndraw loop: xo %u si %hu more %i width %u\n",
-            x_offset, si, more, width);
-
-        if (state == LoopState::InitialSpace) {
-debug_log("@%i\n",__LINE__);
-            opaqueness = 0;
-            width = space;
-            skip -= MIN(skip, space);
-            space = 0;
-            debug_log("  initial space %u\n", space);
-            state = LoopState::ColoredPixels;
-        } else if (state == LoopState::LaterSpace) {
-debug_log("@%i\n",__LINE__);
-            opaqueness = 0;
-            width = space;
-            skip -= MIN(skip, space);
-            space = 0;
-            debug_log("  later space %u\n", space);
-            si++;
-            state = LoopState::ColoredPixels;
+    debug_log("\nDRAW LOOP dx %u, x %u, skip %u, dw %u\n",draw_x,x,skip,draw_width);
+    for (uint16_t si = 0; (si < num_sections) && draw_width;) {
+        auto next_x = sections->m_pieces[si].m_x;
+        debug_log("@%i x %u, next %u, dw %u, skip %u\n",__LINE__,x,next_x,draw_width,skip);
+        uint16_t gap;
+        if (next_x > x) {
+            gap = next_x - x;
+            debug_log(" > gap %hu\n", gap);
         } else {
-            if (space || !skip) {
-debug_log("@%i\n",__LINE__);
-                if (space) {
-                    opaqueness = 0;
-                    width = space;
-                    space = 0;
-                } else {
-                    opaqueness = given_opaqueness;
-                }
-                state = LoopState::LaterSpace;
-                if (!more) {
-                    si++;
-                } else {
-                    space = sections->m_pieces[si+1].m_x - sections->m_pieces[si].m_x - width;
-                    debug_log("  need space from %hi to %hi, w %hu\n",
-                        sections->m_pieces[si].m_x + width, sections->m_pieces[si+1].m_x, space);
-                }
-            } else {
-debug_log("@%i\n",__LINE__);
-                opaqueness = 0;
-                space = MIN(skip, width);
-                skip -= space;
-                debug_log("   space %u, skip %u\n", space, skip);
-                auto w = width;
-                width = space;
-                space = w - space;
-            }
+            gap = 0;
         }
-debug_log("@%i\n",__LINE__);
+        if (skip > gap) {
+            skip -= gap;
+            debug_log(" > skip %u\n", skip);
+        } else if (!gap) {
+            gap = skip;
+            skip = 0;
+        } else {
+            skip = 0;
+        }
+        gap = MIN(gap, draw_width);
+        if (gap) {
+            debug_log(" gap %hu\n", gap);
+            cover_width(fixups, x_offset, gap, 0, false, true);
+            x += gap;
+            x_offset += gap;
+            draw_width -= gap;
+            continue;
+        }
 
-        cover_width(fixups, x_offset, width, opaqueness, false, more);
+        auto width = sections->m_pieces[si].m_width;
+        if (x > next_x) {
+            width -= x - next_x;
+        }
+        width = MIN(width, draw_width);
+        debug_log(" color %hu\n", width);
+        cover_width(fixups, x_offset, width, opaqueness, false, (si + 1 < num_sections));
+        x += width;
+        x_offset += width;
+        draw_width -= width;
+        si++;
     }
 }
 

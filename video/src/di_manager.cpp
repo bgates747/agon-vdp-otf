@@ -765,13 +765,25 @@ void IRAM_ATTR DiManager::loop() {
   // test code
   DiPrimitive prim;
   prim.set_color32(0x20202020);
-  EspFunction fcn;
-  EspFixups fixups;
   DiLineSections sections;
-  sections.add_piece(1, 0, 100, true);
+  uint16_t x = 0;
+  sections.add_piece(1, x, 10, false); x += 10 + 1;
+  sections.add_piece(1, x, 11, false); x += 11 + 2;
+  sections.add_piece(1, x, 12, false); x += 12 + 3;
+  sections.add_piece(1, x, 13, false); x += 13 + 4;
+  sections.add_piece(1, x, 14, false); x += 14 + 5;
+  sections.add_piece(1, x, 15, false); x += 15 + 6;
+  sections.add_piece(1, x, 16, false); x += 16 + 7;
+  sections.add_piece(1, x, 17, false); x += 17;
+  prim.set_size(x, 1);
   uint16_t flags = PRIM_FLAGS_DEFAULT|PRIM_FLAGS_X;
-  fcn.draw_line(fixups, 0, 0, 0, 100, &sections, flags, 100, true);
-  fcn.do_fixups(fixups);
+  EspFunction fcn[8];
+  for (int i = 0; i < 8; i++) {
+    EspFixups fixups;
+    fcn[i].draw_line(fixups, 0, 0, i, x, &sections, flags, 100, true);
+    fcn[i].do_fixups(fixups);
+    if (i >= 1) break;
+  }
 
   while (true) {
     uint32_t descr_addr = (uint32_t) I2S1.out_link_dscr;
@@ -783,14 +795,15 @@ void IRAM_ATTR DiManager::loop() {
       // Draw enough lines to stay ahead of DMA.
       while (current_line_index < ACT_LINES && current_buffer_index != dma_buffer_index) {
         volatile DiVideoBuffer* vbuf = &m_video_buffer[current_buffer_index];
-        draw_primitives(vbuf->get_buffer_ptr_0(), current_line_index);
-        draw_primitives(vbuf->get_buffer_ptr_1(), ++current_line_index);
         
         // test code
-        if (current_line_index == 51) {
-          fcn.call_x(&prim, vbuf->get_buffer_ptr_0(), current_line_index, 0);
-        }
+        fcn[current_line_index & 0x1].call_x(&prim, vbuf->get_buffer_ptr_0(), current_line_index, 0);
+        //prim.set_color32(((prim.get_color32()+0x01010101) & 0x3F3F3F3F) | 0x01010101);
+        fcn[(current_line_index + 1) & 0x1].call_x(&prim, vbuf->get_buffer_ptr_1(), current_line_index+1, 0);
+        //prim.set_color32(((prim.get_color32()+0x01010101) & 0x3F3F3F3F) | 0x01010101);
 
+        draw_primitives(vbuf->get_buffer_ptr_0(), current_line_index);
+        draw_primitives(vbuf->get_buffer_ptr_1(), ++current_line_index);
         ++current_line_index;
         if (++current_buffer_index >= NUM_ACTIVE_BUFFERS) {
           current_buffer_index = 0;
