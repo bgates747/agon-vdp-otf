@@ -797,6 +797,8 @@ void IRAM_ATTR DiManager::loop() {
         volatile DiVideoBuffer* vbuf = &m_video_buffer[current_buffer_index];
         
         // test code
+        memset((void*)(vbuf->get_buffer_ptr_0()), 0, 200);
+        memset((void*)(vbuf->get_buffer_ptr_1()), 0, 200);
         fcn[current_line_index & 0x1].call_x(&prim, vbuf->get_buffer_ptr_0(), current_line_index, 0);
         //prim.set_color32(((prim.get_color32()+0x01010101) & 0x3F3F3F3F) | 0x01010101);
         fcn[(current_line_index + 1) & 0x1].call_x(&prim, vbuf->get_buffer_ptr_1(), current_line_index+1, 0);
