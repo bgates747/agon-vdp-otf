@@ -28,7 +28,7 @@ void otf(void * pvParameters) {
 	//text_area->define_character_range(0x20, 0x7E, PIXEL_ALPHA_100_MASK|0x05, PIXEL_ALPHA_100_MASK|0x00);
 	//text_area->clear_screen();
 	//di_manager->generate_code_for_primitive(1);
-	
+	/*
 	OtfCmd_41_Create_primitive_Solid_Rectangle cmd;
 	cmd.m_color = 0xC0;
 	cmd.m_flags = PRIM_FLAGS_DEFAULT;
@@ -69,7 +69,7 @@ debug_log("@%i\n",__LINE__);
 
 	auto dot = di_manager->create_point(10, 0, PRIM_FLAGS_DEFAULT, 400, 300, 0xFF);
 	di_manager->generate_code_for_primitive(dot->get_id());
-
+*/
 	debug_log("Running OTF manager...\r\n");
 	di_manager->run();
 }

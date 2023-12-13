@@ -762,6 +762,17 @@ void IRAM_ATTR DiManager::loop() {
   uint32_t current_buffer_index = 0;
   LoopState loop_state = LoopState::NearNewFrameStart;
 
+  // test code
+  DiPrimitive prim;
+  prim.set_color32(0x20202020);
+  EspFunction fcn;
+  EspFixups fixups;
+  DiLineSections sections;
+  sections.add_piece(1, 0, 100, true);
+  uint16_t flags = PRIM_FLAGS_DEFAULT|PRIM_FLAGS_X;
+  fcn.draw_line(fixups, 0, 0, 0, 100, &sections, flags, 100, true);
+  fcn.do_fixups(fixups);
+
   while (true) {
     uint32_t descr_addr = (uint32_t) I2S1.out_link_dscr;
     uint32_t descr_index = (descr_addr - (uint32_t)m_dma_descriptor) / sizeof(lldesc_t);
@@ -774,6 +785,12 @@ void IRAM_ATTR DiManager::loop() {
         volatile DiVideoBuffer* vbuf = &m_video_buffer[current_buffer_index];
         draw_primitives(vbuf->get_buffer_ptr_0(), current_line_index);
         draw_primitives(vbuf->get_buffer_ptr_1(), ++current_line_index);
+        
+        // test code
+        if (current_line_index == 51) {
+          fcn.call_x(&prim, vbuf->get_buffer_ptr_0(), current_line_index, 0);
+        }
+
         ++current_line_index;
         if (++current_buffer_index >= NUM_ACTIVE_BUFFERS) {
           current_buffer_index = 0;
