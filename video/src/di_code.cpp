@@ -393,7 +393,6 @@ void EspFunction::draw_line_loop(EspFixups& fixups, uint32_t draw_x, uint32_t x,
             debug_log(" gap %hu\n", gap);
             cover_width(fixups, x_offset, gap, 0, false, true);
             x += gap;
-            x_offset += gap;
             draw_width -= gap;
             continue;
         }
@@ -403,10 +402,21 @@ void EspFunction::draw_line_loop(EspFixups& fixups, uint32_t draw_x, uint32_t x,
             width -= x - next_x;
         }
         width = MIN(width, draw_width);
-        debug_log(" color %hu\n", width);
-        cover_width(fixups, x_offset, width, opaqueness, false, (si + 1 < num_sections));
+        if (skip >= width) {
+            auto skip_now = MIN(skip, width);
+            debug_log(" skip whole color %hu\n", skip_now);
+            cover_width(fixups, x_offset, skip_now, 0, false, (si + 1 < num_sections));
+            skip -= skip_now;            
+        } else {
+            if (skip) {
+                debug_log(" skip part color %hu\n", skip);
+                cover_width(fixups, x_offset, skip, 0, false, true);
+                skip = 0;
+            }
+            debug_log(" color %hu\n", width);
+            cover_width(fixups, x_offset, width, opaqueness, false, (si + 1 < num_sections));            
+        }
         x += width;
-        x_offset += width;
         draw_width -= width;
         si++;
     }
