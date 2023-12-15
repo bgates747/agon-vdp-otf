@@ -777,10 +777,10 @@ void IRAM_ATTR DiManager::loop() {
   sections.add_piece(1, x, 17, false); x += 17;
   prim.set_size(x, 1);
   uint16_t flags = PRIM_FLAGS_DEFAULT|PRIM_FLAGS_X;
-  EspFunction fcn[8];
-  for (int i = 0; i < 8; i++) {
+  EspFunction fcn[136];
+  for (int i = 0; i < 136; i++) {
     EspFixups fixups;
-    fcn[i].draw_line(fixups, 0, 0, i*5, x, &sections, flags, 100, true);
+    fcn[i].draw_line(fixups, 0, 0, i, x, &sections, flags, 100, true);
     fcn[i].do_fixups(fixups);
   }
 
@@ -798,10 +798,10 @@ void IRAM_ATTR DiManager::loop() {
         // test code
         memset((void*)(vbuf->get_buffer_ptr_0()), 0, 200);
         memset((void*)(vbuf->get_buffer_ptr_1()), 0, 200);
-        if (current_line_index >= 48 && current_line_index <= 55) {
-          fcn[current_line_index & 7].call_x(&prim, vbuf->get_buffer_ptr_0(), current_line_index, 0);
+        if (current_line_index >= 200 && current_line_index < 200+136) {
+          fcn[(current_line_index-200)].call_x(&prim, vbuf->get_buffer_ptr_0(), current_line_index, 0);
           //prim.set_color32(((prim.get_color32()+0x01010101) & 0x3F3F3F3F) | 0x01010101);
-          fcn[(current_line_index+1)&7].call_x(&prim, vbuf->get_buffer_ptr_1(), current_line_index+1, 0);
+          fcn[(current_line_index-200+1)].call_x(&prim, vbuf->get_buffer_ptr_1(), current_line_index+1, 0);
           //prim.set_color32(((prim.get_color32()+0x01010101) & 0x3F3F3F3F) | 0x01010101);
         }
 
