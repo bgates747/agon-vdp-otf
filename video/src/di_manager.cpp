@@ -780,7 +780,7 @@ void IRAM_ATTR DiManager::loop() {
   EspFunction fcn[136];
   for (int i = 0; i < 136; i++) {
     EspFixups fixups;
-    fcn[i].draw_line(fixups, 0, 0, i, x, &sections, flags, 100, true);
+    fcn[i].draw_line(fixups, 0, 0, 0, x-i, &sections, flags, 100, true);
     fcn[i].do_fixups(fixups);
   }
 
