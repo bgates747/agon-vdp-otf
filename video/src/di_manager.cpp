@@ -432,81 +432,79 @@ DiPrimitive* DiManager::create_point(uint16_t id, uint16_t parent, uint16_t flag
     return finish_create(id, flags, prim, parent_prim);
 }
 
-DiPrimitive* DiManager::create_line(uint16_t id, uint16_t parent, uint16_t flags,
-                            int32_t x1, int32_t y1, int32_t x2, int32_t y2,
-                            uint8_t color) {
-    if (!validate_id(id)) return NULL;
-    DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(parent))) return NULL;
-    auto sep_color = color;
+DiPrimitive* DiManager::create_line(OtfCmd_20_Create_primitive_Line* cmd) {
+    if (!validate_id(cmd->m_id)) return NULL;
+    DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
+    auto sep_color = cmd->m_color;
     uint8_t opaqueness = DiPrimitive::normal_alpha_to_opaqueness(sep_color);
     DiPrimitive* prim;
-    if (x1 == x2) {
-        if (y1 == y2) {
-            prim = new DiSetPixel(x1, y1, color);
-        } else if (y1 < y2) {
+    if (cmd->m_x1 == cmd->m_x2) {
+        if (cmd->m_y1 == cmd->m_y2) {
+            prim = new DiSetPixel(cmd->m_x1, cmd->m_y1, cmd->m_color);
+        } else if (cmd->m_y1 < cmd->m_y2) {
             auto line = new DiVerticalLine();
-            line->make_line(flags, x1, y1, y2 - y1 + 1, color);
+            line->make_line(cmd->m_flags, cmd->m_x1, cmd->m_y1, cmd->m_y2 - cmd->m_y1 + 1, cmd->m_color);
             prim = line;
         } else {
             auto line = new DiVerticalLine();
-            line->make_line(flags, x1, y2, y1 - y2 + 1, color);
+            line->make_line(cmd->m_flags, cmd->m_x1, cmd->m_y2, cmd->m_y1 - cmd->m_y2 + 1, cmd->m_color);
             prim = line;
         }
-    } else if (x1 < x2) {
-        if (y1 == y2) {
+    } else if (cmd->m_x1 < cmd->m_x2) {
+        if (cmd->m_y1 == cmd->m_y2) {
             auto line = new DiHorizontalLine();
-            line->make_line(flags, x1, y1, x2 - x1 + 1, color);
+            line->make_line(cmd->m_flags, cmd->m_x1, cmd->m_y1, cmd->m_x2 - cmd->m_x1 + 1, cmd->m_color);
             prim = line;
-        } else if (y1 < y2) {
-            if (y2 - y1 == x2 - x1) {
+        } else if (cmd->m_y1 < cmd->m_y2) {
+            if (cmd->m_y2 - cmd->m_y1 == cmd->m_x2 - cmd->m_x1) {
                 auto line = new DiGeneralLine();
-                line->make_line(flags, x1, y1, x2, y2, sep_color, opaqueness);
+                line->make_line(cmd->m_flags, cmd->m_x1, cmd->m_y1, cmd->m_x2, cmd->m_y2, sep_color, opaqueness);
                 prim = line;
             } else {
                 auto line = new DiGeneralLine();
-                line->make_line(flags, x1, y1, x2, y2, sep_color, opaqueness);
+                line->make_line(cmd->m_flags, cmd->m_x1, cmd->m_y1, cmd->m_x2, cmd->m_y2, sep_color, opaqueness);
                 prim = line;
             }
         } else {
-            if (y2 - y1 == x2 - x1) {
+            if (cmd->m_y2 - cmd->m_y1 == cmd->m_x2 - cmd->m_x1) {
                 auto line = new DiGeneralLine();
-                line->make_line(flags, x1, y1, x2, y2, sep_color, opaqueness);
+                line->make_line(cmd->m_flags, cmd->m_x1, cmd->m_y1, cmd->m_x2, cmd->m_y2, sep_color, opaqueness);
                 prim = line;
             } else {
                 auto line = new DiGeneralLine();
-                line->make_line(flags, x1, y1, x2, y2, sep_color, opaqueness);
+                line->make_line(cmd->m_flags, cmd->m_x1, cmd->m_y1, cmd->m_x2, cmd->m_y2, sep_color, opaqueness);
                 prim = line;
             }
         }
     } else {
-        if (y1 == y2) {
+        if (cmd->m_y1 == cmd->m_y2) {
             auto line = new DiHorizontalLine();
-            line->make_line(flags, x2, y1, x1 - x2 + 1, color);
+            line->make_line(cmd->m_flags, cmd->m_x2, cmd->m_y1, cmd->m_x1 - cmd->m_x2 + 1, cmd->m_color);
             prim = line;
-        } else if (y1 < y2) {
-            if (y2 - y1 == x1 - x2) {
+        } else if (cmd->m_y1 < cmd->m_y2) {
+            if (cmd->m_y2 - cmd->m_y1 == cmd->m_x1 - cmd->m_x2) {
                 auto line = new DiGeneralLine();
-                line->make_line(flags, x1, y1, x2, y2, sep_color, opaqueness);
+                line->make_line(cmd->m_flags, cmd->m_x1, cmd->m_y1, cmd->m_x2, cmd->m_y2, sep_color, opaqueness);
                 prim = line;
             } else {
                 auto line = new DiGeneralLine();
-                line->make_line(flags, x1, y1, x2, y2, sep_color, opaqueness);
+                line->make_line(cmd->m_flags, cmd->m_x1, cmd->m_y1, cmd->m_x2, cmd->m_y2, sep_color, opaqueness);
                 prim = line;
             }
         } else {
-            if (y2 - y1 == x1 - x2) {
+            if (cmd->m_y2 - cmd->m_y1 == cmd->m_x1 - cmd->m_x2) {
                 auto line = new DiGeneralLine();
-                line->make_line(flags, x1, y1, x2, y2, sep_color, opaqueness);
+                line->make_line(cmd->m_flags, cmd->m_x1, cmd->m_y1, cmd->m_x2, cmd->m_y2, sep_color, opaqueness);
                 prim = line;
             } else {
                 auto line = new DiGeneralLine();
-                line->make_line(flags, x1, y1, x2, y2, sep_color, opaqueness);
+                line->make_line(cmd->m_flags, cmd->m_x1, cmd->m_y1, cmd->m_x2, cmd->m_y2, sep_color, opaqueness);
                 prim = line;
             }
         }
     }
 
-    return finish_create(id, flags, prim, parent_prim);
+    return finish_create(cmd->m_id, cmd->m_flags, prim, parent_prim);
 }
 
 DiSolidRectangle* DiManager::create_solid_rectangle(OtfCmd_41_Create_primitive_Solid_Rectangle* cmd) {
@@ -762,28 +760,6 @@ void IRAM_ATTR DiManager::loop() {
   uint32_t current_buffer_index = 0;
   LoopState loop_state = LoopState::NearNewFrameStart;
 
-  // test code
-  DiPrimitive prim;
-  prim.set_color32(0x20202020);
-  DiLineSections sections;
-  uint16_t x = 0;
-  sections.add_piece(1, x, 10, false); x += 10 + 1;
-  sections.add_piece(1, x, 11, false); x += 11 + 2;
-  sections.add_piece(1, x, 12, false); x += 12 + 3;
-  sections.add_piece(1, x, 13, false); x += 13 + 4;
-  sections.add_piece(1, x, 14, false); x += 14 + 5;
-  sections.add_piece(1, x, 15, false); x += 15 + 6;
-  sections.add_piece(1, x, 16, false); x += 16 + 7;
-  sections.add_piece(1, x, 17, false); x += 17;
-  prim.set_size(x, 1);
-  uint16_t flags = PRIM_FLAGS_DEFAULT|PRIM_FLAGS_X;
-  EspFunction fcn[136];
-  for (int i = 0; i < 136; i++) {
-    EspFixups fixups;
-    fcn[i].draw_line(fixups, 0, 0, 0, x-i, &sections, flags, 100, true);
-    fcn[i].do_fixups(fixups);
-  }
-
   while (true) {
     uint32_t descr_addr = (uint32_t) I2S1.out_link_dscr;
     uint32_t descr_index = (descr_addr - (uint32_t)m_dma_descriptor) / sizeof(lldesc_t);
@@ -794,17 +770,6 @@ void IRAM_ATTR DiManager::loop() {
       // Draw enough lines to stay ahead of DMA.
       while (current_line_index < ACT_LINES && current_buffer_index != dma_buffer_index) {
         volatile DiVideoBuffer* vbuf = &m_video_buffer[current_buffer_index];
-        
-        // test code
-        memset((void*)(vbuf->get_buffer_ptr_0()), 0, 200);
-        memset((void*)(vbuf->get_buffer_ptr_1()), 0, 200);
-        if (current_line_index >= 200 && current_line_index < 200+136) {
-          fcn[(current_line_index-200)].call_x(&prim, vbuf->get_buffer_ptr_0(), current_line_index, 0);
-          //prim.set_color32(((prim.get_color32()+0x01010101) & 0x3F3F3F3F) | 0x01010101);
-          fcn[(current_line_index-200+1)].call_x(&prim, vbuf->get_buffer_ptr_1(), current_line_index+1, 0);
-          //prim.set_color32(((prim.get_color32()+0x01010101) & 0x3F3F3F3F) | 0x01010101);
-        }
-
         draw_primitives(vbuf->get_buffer_ptr_0(), current_line_index);
         draw_primitives(vbuf->get_buffer_ptr_1(), ++current_line_index);
         ++current_line_index;
@@ -1345,8 +1310,7 @@ bool DiManager::handle_otf_cmd() {
       case 20: {
         auto cmd = &cu->m_20_Create_primitive_Line;
         if (m_incoming_command.size() == sizeof(*cmd)) {
-          create_line(cmd->m_id, cmd->m_pid, cmd->m_flags,
-            cmd->m_x1, cmd->m_y1, cmd->m_x2, cmd->m_y2, cmd->m_color);
+          create_line(cmd);
           m_incoming_command.clear();
           return true;
         }

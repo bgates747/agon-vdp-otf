@@ -53,9 +53,7 @@ class DiManager {
     DiPrimitive* create_point(uint16_t id, uint16_t parent, uint16_t flags,
                             int32_t x, int32_t y, uint8_t color);
 
-    DiPrimitive* create_line(uint16_t id, uint16_t parent, uint16_t flags,
-                            int32_t x1, int32_t y1, int32_t x2, int32_t y2,
-                            uint8_t color);
+    DiPrimitive* create_line(OtfCmd_20_Create_primitive_Line* cmd);
 
     DiPrimitive* create_rectangle_outline(OtfCmd_40_Create_primitive_Rectangle_Outline* cmd);
 

@@ -28,7 +28,7 @@ void otf(void * pvParameters) {
 	//text_area->define_character_range(0x20, 0x7E, PIXEL_ALPHA_100_MASK|0x05, PIXEL_ALPHA_100_MASK|0x00);
 	//text_area->clear_screen();
 	//di_manager->generate_code_for_primitive(1);
-	/*
+
 	OtfCmd_41_Create_primitive_Solid_Rectangle cmd;
 	cmd.m_color = 0xC0;
 	cmd.m_flags = PRIM_FLAGS_DEFAULT;
@@ -41,6 +41,7 @@ void otf(void * pvParameters) {
 	auto rect = di_manager->create_solid_rectangle(&cmd);
 	di_manager->generate_code_for_primitive(cmd.m_id);
 
+/*
 debug_log("@%i\n",__LINE__);
 	OtfCmd_140_Create_primitive_Group gcmd;
 	gcmd.m_flags = PRIM_FLAGS_DEFAULT;
@@ -70,6 +71,20 @@ debug_log("@%i\n",__LINE__);
 	auto dot = di_manager->create_point(10, 0, PRIM_FLAGS_DEFAULT, 400, 300, 0xFF);
 	di_manager->generate_code_for_primitive(dot->get_id());
 */
+    {
+		OtfCmd_20_Create_primitive_Line cmd;
+		cmd.m_color = 0xC3;
+		cmd.m_flags = PRIM_FLAGS_DEFAULT;
+		cmd.m_id = 7;
+		cmd.m_pid = 0;
+		cmd.m_x1 = 400;
+		cmd.m_y1 = 400;
+		cmd.m_x2 = 440;
+		cmd.m_y2 = 400;
+		auto line = di_manager->create_line(&cmd);
+		di_manager->generate_code_for_primitive(cmd.m_id);
+	}
+
 	debug_log("Running OTF manager...\r\n");
 	di_manager->run();
 }
