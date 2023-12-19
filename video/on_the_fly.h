@@ -114,6 +114,23 @@ void otf(void * pvParameters) {
 		di_manager->generate_code_for_primitive(cmd.m_id);
 	}*/
 
+	{
+		OtfCmd_120_Create_primitive_Solid_Bitmap cmd;
+		cmd.m_flags = PRIM_FLAGS_DEFAULT|PRIM_FLAG_H_SCROLL_1|PRIM_FLAGS_RIGHT_EDGE;
+		cmd.m_id = 11;
+		cmd.m_pid = gcmd.m_id;
+		cmd.m_w = 15;
+		cmd.m_h = 12;
+		auto bitmap = di_manager->create_solid_bitmap(&cmd);
+		for (uint32_t y = 0; y < cmd.m_h; y++) {
+			for (uint32_t x = 0; x < cmd.m_w; x++) {
+				di_manager->set_solid_bitmap_pixel(cmd.m_id, x, y, 0xC0+((x+y)&0x3F), 0);
+			}
+		}
+		di_manager->generate_code_for_primitive(cmd.m_id);
+		di_manager->move_primitive_absolute(cmd.m_id, 37, 20);
+	}
+
 	debug_log("Running OTF manager...\r\n");
 	di_manager->run();
 }

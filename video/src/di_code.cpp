@@ -390,17 +390,6 @@ void EspFunction::draw_line_loop(EspFixups& fixups, uint32_t x_offset,
             draw_width -= gap;
         }
 
-        /*if (skip) {
-            if (skip >= draw_width) {
-                break;
-            }
-            auto skip_now = MIN(skip, draw_width);
-            //debug_log(" x=%u, skip %hu\n", x, skip_now);
-            cover_width(fixups, x_offset, skip_now, 0, false, true);
-            x += skip_now;
-            draw_width -= skip_now;
-        }*/
-
         auto width = sections->m_pieces[si].m_width;
         if (x > next_x) {
             width -= x - next_x;
@@ -533,16 +522,12 @@ void EspFunction::cover_width(EspFixups& fixups, uint32_t& x_offset, u_int32_t w
     }
 }
 
-void EspFunction::copy_line_as_outer_fcn(EspFixups& fixups, uint32_t draw_x, uint32_t x,
+void EspFunction::copy_line(EspFixups& fixups, uint32_t x_offset,
         uint32_t skip, uint32_t width,
-        uint16_t flags, uint8_t transparent_color, uint32_t* src_pixels) {
-    auto at_jump = enter_outer_function();
+        uint16_t flags, uint8_t transparent_color,
+        uint32_t* src_pixels, bool outer_fcn) {
+    auto at_jump = (outer_fcn ? enter_outer_function() : enter_inner_function());
     auto at_data = begin_data();
-
-    uint32_t at_src = 0;
-    if (!(flags & PRIM_FLAGS_X_SRC)) {
-        at_src = d32((uint32_t)src_pixels);
-    }
 
     uint32_t at_isolate_br = 0;
     uint32_t at_isolate_g = 0;
@@ -554,78 +539,40 @@ void EspFunction::copy_line_as_outer_fcn(EspFixups& fixups, uint32_t draw_x, uin
     begin_code(at_jump);
     set_reg_dst_pixel_ptr_for_copy(flags);
 
-    if (!(flags & PRIM_FLAGS_X_SRC)) {
-        l32r_from(REG_SRC_PIXEL_PTR, at_src);
-    }
-
     if (flags & PRIM_FLAGS_BLENDED) {
         l32r_from(REG_ISOLATE_BR, at_isolate_br);
         l32r_from(REG_ISOLATE_G, at_isolate_g);
     }
 
-    s32i(REG_RETURN_ADDR, REG_STACK_PTR, OUTER_RET_ADDR_IN_STACK);
-    copy_line_loop(fixups, draw_x, x, width, skip, flags, transparent_color, src_pixels);
-    l32i(REG_RETURN_ADDR, REG_STACK_PTR, OUTER_RET_ADDR_IN_STACK);
-    retw();
+    s32i(REG_RETURN_ADDR, REG_STACK_PTR, (outer_fcn ? OUTER_RET_ADDR_IN_STACK : INNER_RET_ADDR_IN_STACK));
+
+    copy_line_loop(fixups, x_offset, skip, width, flags, transparent_color, src_pixels);
+
+    l32i(REG_RETURN_ADDR, REG_STACK_PTR, (outer_fcn ? OUTER_RET_ADDR_IN_STACK : INNER_RET_ADDR_IN_STACK));
+
+    if (outer_fcn) retw(); else ret();
 }
 
-void EspFunction::copy_line_as_inner_fcn(EspFixups& fixups, uint32_t draw_x, uint32_t x,
-        uint32_t skip, uint32_t width,
-        uint16_t flags, uint8_t transparent_color, uint32_t* src_pixels) {
-    auto at_jump = enter_inner_function();
-    auto at_data = begin_data();
-
-    uint32_t at_src = 0;
-    if (!(flags & PRIM_FLAGS_X_SRC)) {
-        at_src = d32((uint32_t)src_pixels);
-    }
-
-    uint32_t at_isolate_br = 0;
-    uint32_t at_isolate_g = 0;
-    if (flags & PRIM_FLAGS_BLENDED) {
-        at_isolate_br = d32(MASK_ISOLATE_BR); // mask to isolate blue & red, removing green
-        at_isolate_g = d32(MASK_ISOLATE_G); // mask to isolate green, removing red & blue
-    }
-
-    begin_code(at_jump);
-
-    set_reg_dst_pixel_ptr_for_copy(flags);
-
-    if (!(flags & PRIM_FLAGS_X_SRC)) {
-        l32r_from(REG_SRC_PIXEL_PTR, at_src);
-    }
-
-    if (flags & PRIM_FLAGS_BLENDED) {
-        l32r_from(REG_ISOLATE_BR, at_isolate_br);
-        l32r_from(REG_ISOLATE_G, at_isolate_g);
-    }
-
-    s32i(REG_RETURN_ADDR, REG_STACK_PTR, INNER_RET_ADDR_IN_STACK);
-    copy_line_loop(fixups, draw_x, x, skip, width, flags, transparent_color, src_pixels);
-    l32i(REG_RETURN_ADDR, REG_STACK_PTR, INNER_RET_ADDR_IN_STACK);
-    ret();
-}
-
-void EspFunction::copy_line_loop(EspFixups& fixups, uint32_t draw_x, uint32_t x,
-        uint32_t skip, uint32_t width,
+void EspFunction::copy_line_loop(EspFixups& fixups, uint32_t x_offset,
+        uint32_t skip, uint32_t draw_width,
         uint16_t flags, uint8_t transparent_color, uint32_t* src_pixels) {
 
-    auto x_offset = x & 3;
+    auto x = x_offset;
     ////debug_log("\ncopy_line dx %u x %u w %u f %04hX c %02hX\n", draw_x, x, width, flags, transparent_color);
 
-    if (!(flags & PRIM_FLAGS_X_SRC)) {
-        adjust_dst_pixel_ptr(draw_x, x);
-    }
-
-    uint32_t rem_width = width;
     uint8_t* p_src_bytes = (uint8_t*) src_pixels;
 
-    while (rem_width) {
+    while (draw_width) {
 
         uint8_t opaqueness = 100;
-        if (!(flags & PRIM_FLAGS_BLENDED)) {
+        uint32_t width;
+        if (skip) {
+            width = MIN(skip, draw_width);
+            opaqueness = 0;
+            skip = 0;
+        } else if (!(flags & PRIM_FLAGS_BLENDED)) {
             // Transfer all pixels at 100% opaqueness.
-            width = rem_width;            
+            width = draw_width;            
         } else {
             // Determine the width of adjacent, similarly transparent (or opaque) pixels in the line.
             // The colors do not have to be equal.
@@ -633,7 +580,7 @@ void EspFunction::copy_line_loop(EspFixups& fixups, uint32_t draw_x, uint32_t x,
             uint32_t index = FIX_OFFSET(x_offset);
             uint8_t src_color = p_src_bytes[index];
             uint8_t first_alpha = (src_color == transparent_color) ? 0xFF : (src_color & 0xC0);
-            for (uint32_t i = 1; i < rem_width; i++) {
+            for (uint32_t i = 1; i < draw_width; i++) {
                 index = FIX_OFFSET(x_offset + i);
                 src_color = p_src_bytes[index];
                 uint8_t next_alpha = (src_color == transparent_color) ? 0xFF : (src_color & 0xC0);
@@ -653,9 +600,9 @@ void EspFunction::copy_line_loop(EspFixups& fixups, uint32_t draw_x, uint32_t x,
                 default: opaqueness = 0; break;
             }
         }
-        rem_width -= width;
+        draw_width -= width;
         // Use the series of pixels, rather than the rest of the line, if necessary.
-        cover_width(fixups, x_offset, width, opaqueness, true, (rem_width > 0));
+        cover_width(fixups, x_offset, width, opaqueness, true, (draw_width > 0));
     }
 }
 

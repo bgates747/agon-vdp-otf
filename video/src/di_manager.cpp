@@ -1776,7 +1776,7 @@ bool DiManager::handle_otf_cmd() {
         auto cmd = &cu->m_120_Create_primitive_Solid_Bitmap;
         if (m_incoming_command.size() == sizeof(*cmd)) {
           //debug_log("csb %hu %hu %04hX %u %u\n", cmd->m_id, cmd->m_pid, cmd->m_flags, cmd->m_w, cmd->m_h);
-          create_solid_bitmap(cmd->m_id, cmd->m_pid, cmd->m_flags, cmd->m_w, cmd->m_h);
+          create_solid_bitmap(cmd);
           //debug_log("csb done\n");
           m_incoming_command.clear();
           return true;
@@ -1786,7 +1786,7 @@ bool DiManager::handle_otf_cmd() {
       case 121: {
         auto cmd = &cu->m_121_Create_primitive_Masked_Bitmap;
         if (m_incoming_command.size() == sizeof(*cmd)) {
-          create_masked_bitmap(cmd->m_id, cmd->m_pid, cmd->m_flags, cmd->m_w, cmd->m_h, cmd->m_color);
+          create_masked_bitmap(cmd);
           m_incoming_command.clear();
           return true;
         }
@@ -1796,7 +1796,7 @@ bool DiManager::handle_otf_cmd() {
         auto cmd = &cu->m_122_Create_primitive_Transparent_Bitmap;
         if (m_incoming_command.size() == sizeof(*cmd)) {
           //debug_log("ctb %hu %hu %04hX %u %u %02hX\n", cmd->m_id, cmd->m_pid, cmd->m_flags, cmd->m_w, cmd->m_h, cmd->m_color);
-          create_transparent_bitmap(cmd->m_id, cmd->m_pid, cmd->m_flags, cmd->m_w, cmd->m_h, cmd->m_color);
+          create_transparent_bitmap(cmd);
           //debug_log("ctb done\n");
           m_incoming_command.clear();
           return true;
@@ -2298,39 +2298,36 @@ DiPrimitive* DiManager::create_solid_ellipse(uint16_t id, uint16_t parent, uint1
     return finish_create(id, prim, parent_prim);
 }
 
-DiBitmap* DiManager::create_solid_bitmap(uint16_t id, uint16_t parent, uint16_t flags,
-                        uint32_t width, uint32_t height) {
-    if (!validate_id(id)) return NULL;
-    DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(parent))) return NULL;
+DiBitmap* DiManager::create_solid_bitmap(OtfCmd_120_Create_primitive_Solid_Bitmap* cmd) {
+    if (!validate_id(cmd->m_id)) return NULL;
+    DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
-    flags |= PRIM_FLAGS_ALL_SAME;
-    auto prim = new DiBitmap(width, height, flags);
+    cmd->m_flags |= PRIM_FLAGS_ALL_SAME;
+    auto prim = new DiBitmap(cmd->m_w, cmd->m_h, cmd->m_flags);
 
-    finish_create(id, prim, parent_prim);
+    finish_create(cmd->m_id, prim, parent_prim);
     return prim;
 }
 
-DiBitmap* DiManager::create_masked_bitmap(uint16_t id, uint16_t parent, uint16_t flags,
-                        uint32_t width, uint32_t height, uint8_t color) {
-    if (!validate_id(id)) return NULL;
-    DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(parent))) return NULL;
+DiBitmap* DiManager::create_masked_bitmap(OtfCmd_121_Create_primitive_Masked_Bitmap* cmd) {
+    if (!validate_id(cmd->m_id)) return NULL;
+    DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
-    auto prim = new DiBitmap(width, height, flags);
-    prim->set_transparent_color(color);
+    auto prim = new DiBitmap(cmd->m_w, cmd->m_h, cmd->m_flags);
+    prim->set_transparent_color(cmd->m_color);
 
-    finish_create(id, prim, parent_prim);
+    finish_create(cmd->m_id, prim, parent_prim);
     return prim;
 }
 
-DiBitmap* DiManager::create_transparent_bitmap(uint16_t id, uint16_t parent, uint16_t flags,
-                        uint32_t width, uint32_t height, uint8_t color) {
-    if (!validate_id(id)) return NULL;
-    DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(parent))) return NULL;
+DiBitmap* DiManager::create_transparent_bitmap(OtfCmd_122_Create_primitive_Transparent_Bitmap* cmd) {
+    if (!validate_id(cmd->m_id)) return NULL;
+    DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
-    auto prim = new DiBitmap(width, height, flags);
-    prim->set_transparent_color(color);
+    auto prim = new DiBitmap(cmd->m_w, cmd->m_h, cmd->m_flags);
+    prim->set_transparent_color(cmd->m_color);
 
-    finish_create(id, prim, parent_prim);
+    finish_create(cmd->m_id, prim, parent_prim);
     return prim;
 }
 

@@ -106,14 +106,11 @@ class DiManager {
     DiTextArea* create_text_area(uint16_t id, uint16_t parent, uint16_t flags,
                             uint32_t x, uint32_t y, uint32_t columns, uint32_t rows, const uint8_t* font);
 
-    DiBitmap* create_solid_bitmap(uint16_t id, uint16_t parent, uint16_t flags,
-                            uint32_t width, uint32_t height);
+    DiBitmap* create_solid_bitmap(OtfCmd_120_Create_primitive_Solid_Bitmap* cmd);
 
-    DiBitmap* create_masked_bitmap(uint16_t id, uint16_t parent, uint16_t flags,
-                            uint32_t width, uint32_t height, uint8_t color);
+    DiBitmap* create_masked_bitmap(OtfCmd_121_Create_primitive_Masked_Bitmap* cmd);
 
-    DiBitmap* create_transparent_bitmap(uint16_t id, uint16_t parent, uint16_t flags,
-                            uint32_t width, uint32_t height, uint8_t color);
+    DiBitmap* create_transparent_bitmap(OtfCmd_122_Create_primitive_Transparent_Bitmap* cmd);
 
     DiBitmap* create_reference_solid_bitmap(uint16_t id, uint16_t parent, uint16_t flags, uint16_t bmid);
 
