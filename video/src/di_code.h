@@ -68,12 +68,12 @@ class EspFunction {
 
     // Pixel-level operations:
 
-    void draw_line(EspFixups& fixups, uint32_t draw_x, uint32_t x,
+    void draw_line(EspFixups& fixups, uint32_t x_offset,
                         uint32_t skip, uint32_t draw_width,
                         const DiLineSections* sections, uint16_t flags,
                         uint8_t opaqueness, bool outer_fcn);
 
-    void draw_line_loop(EspFixups& fixups, uint32_t draw_x, uint32_t x,
+    void draw_line_loop(EspFixups& fixups, uint32_t x_offset,
                         uint32_t skip, uint32_t draw_width,
                         const DiLineSections* sections, uint16_t flags, uint8_t opaqueness);
 

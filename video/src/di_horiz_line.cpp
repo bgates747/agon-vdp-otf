@@ -46,7 +46,8 @@ void DiHorizontalLine::generate_instructions() {
     auto width = (uint16_t)m_width;
     DiLineSections sections;
     sections.add_piece(1, 0, 1, false);
-    m_paint_code.draw_line(fixups, m_draw_x, m_draw_x, 0, m_width, &sections, m_flags, m_opaqueness, true);
+    auto x_offset = m_abs_x & 3;
+    m_paint_code.draw_line(fixups, x_offset, 0, m_width, &sections, m_flags, m_opaqueness, true);
     m_paint_code.do_fixups(fixups);
   }
 }

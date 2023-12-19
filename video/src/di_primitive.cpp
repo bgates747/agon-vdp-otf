@@ -253,16 +253,22 @@ uint8_t DiPrimitive::inverted_alpha_to_opaqueness(uint8_t &color) {
   primitive can be moved (scrolled), as indicated by its flag bits.
 */
 
-void DiPrimitive::generate_code_for_left_edge(EspFixups& fixups, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
-  debug_log("generate_code_for_left_edge(w%u h%u h%u v%u)\n", width, height, hidden, visible);
+void DiPrimitive::generate_code_for_left_edge(EspFixups& fixups, uint32_t x_offset, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
+  auto loc = m_paint_code.get_code_index();
+  auto idx = m_paint_ptrs.size();
+  debug_log("@%u [%u] generate_code_for_left_edge(xo%u w%u h%u h%u v%u)\n", loc, idx, x_offset, width, height, hidden, visible);
 }
 
-void DiPrimitive::generate_code_for_right_edge(EspFixups& fixups, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
-  debug_log("generate_code_for_right_edge(w%u h%u h%u v%u)\n", width, height, hidden, visible);
+void DiPrimitive::generate_code_for_right_edge(EspFixups& fixups, uint32_t x_offset, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
+  auto loc = m_paint_code.get_code_index();
+  auto idx = m_paint_ptrs.size();
+  debug_log("@%u [%u] generate_code_for_right_edge(xo%u w%u h%u h%u v%u)\n", loc, idx, x_offset, width, height, hidden, visible);
 }
 
-void DiPrimitive::generate_code_for_draw_area(EspFixups& fixups, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
-  debug_log("generate_code_for_draw_area(w%u h%u h%u v%u)\n", width, height, hidden, visible);
+void DiPrimitive::generate_code_for_draw_area(EspFixups& fixups, uint32_t x_offset, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
+  auto loc = m_paint_code.get_code_index();
+  auto idx = m_paint_ptrs.size();
+  debug_log("@%u [%u] generate_code_for_draw_area(xo%u w%u h%u h%u v%u)\n", loc, idx, x_offset, width, height, hidden, visible);
 }
 
 void DiPrimitive::generate_code_for_positions(EspFixups& fixups, uint32_t width, uint32_t height) {
@@ -274,37 +280,51 @@ void DiPrimitive::generate_code_for_positions(EspFixups& fixups, uint32_t width,
       // Support left edge being hidden
       for (uint32_t hidden = 1; hidden < width; hidden++) {
         uint32_t visible = width - hidden;
-        generate_code_for_left_edge(fixups, width, height, hidden, visible);
+        for (uint32_t pos = 0; pos < 4; pos++) {
+          generate_code_for_left_edge(fixups, pos, width, height, hidden, visible);
+        }
       }
     }
     if (m_flags & PRIM_FLAGS_RIGHT_EDGE) {
       // Support right edge being hidden
       for (uint32_t hidden = 1; hidden < width; hidden++) {
         uint32_t visible = width - hidden;
-        generate_code_for_right_edge(fixups, width, height, hidden, visible);
+        for (uint32_t pos = 0; pos < 4; pos++) {
+          generate_code_for_right_edge(fixups, pos, width, height, hidden, visible);
+        }
       }
+    }
+
+    // Support drawing full primitive
+    for (uint32_t pos = 0; pos < 4; pos++) {
+      generate_code_for_draw_area(fixups, pos, width, height, 0, width);
     }
   } else if (m_flags & PRIM_FLAG_H_SCROLL_4) {
     // Support scrolling by 4 pixels
+    uint32_t pos = m_abs_x & 3;
     if (m_flags & PRIM_FLAGS_LEFT_EDGE) {
       // Support left edge being hidden
       for (uint32_t hidden = 4; hidden < width + 3; hidden += 4) {
         uint32_t visible = width - hidden;
-        generate_code_for_left_edge(fixups, width, height, hidden, visible);
+        generate_code_for_left_edge(fixups, pos, width, height, hidden, visible);
       }
     }
     if (m_flags & PRIM_FLAGS_RIGHT_EDGE) {
       // Support right edge being hidden
       for (uint32_t hidden = 4; hidden < width + 3; hidden += 4) {
         uint32_t visible = width - hidden;
-        generate_code_for_right_edge(fixups, width, height, hidden, visible);
+        generate_code_for_right_edge(fixups, pos, width, height, hidden, visible);
       }
     }
+
+    // Support drawing full primitive
+    generate_code_for_draw_area(fixups, pos, width, height, 0, width);
   } else {
     // Primitive must be static (no scrolling)
+    uint32_t pos = m_abs_x & 3;
     uint32_t hidden = m_draw_x - m_abs_x;
     uint32_t visible = m_draw_x_extent - m_draw_x;
-    generate_code_for_draw_area(fixups, width, height, hidden, visible);
+    generate_code_for_draw_area(fixups, pos, width, height, hidden, visible);
   }
 
   debug_log("total paint ptrs %u\n", m_paint_ptrs.size());
@@ -321,26 +341,30 @@ void DiPrimitive::generate_code_for_positions(EspFixups& fixups, uint32_t width,
 void DiPrimitive::set_current_paint_pointer(uint32_t width, uint32_t height,
   uint32_t left_hidden, uint32_t right_hidden) {
   uint32_t index = 0;
+  uint32_t pos = m_abs_x & 3;
+
   if (m_flags & PRIM_FLAG_H_SCROLL_1) {
     // Support scrolling by 1 pixel
     if (m_flags & PRIM_FLAGS_LEFT_EDGE) {
       // Support left edge being hidden
       if (left_hidden) {
-        m_cur_paint_ptr = m_paint_ptrs[left_hidden - 1];
+        m_cur_paint_ptr = m_paint_ptrs[(left_hidden - 1) * 4 + pos];
         return;
       } else {
-        index += width - 1;
+        index += (width - 1) * 4;
       }
     }
     if (m_flags & PRIM_FLAGS_RIGHT_EDGE) {
       // Support right edge being hidden
       if (right_hidden) {
-        m_cur_paint_ptr = m_paint_ptrs[index + right_hidden - 1];
+        m_cur_paint_ptr = m_paint_ptrs[index + (right_hidden - 1) * 4 + pos];
         return;
       } else {
-        index += width - 1;
+        index += (width - 1) * 4;
       }
     }
+
+    index += pos;
   } else if (m_flags & PRIM_FLAG_H_SCROLL_4) {
     // Support scrolling by 4 pixels
     if (m_flags & PRIM_FLAGS_LEFT_EDGE) {
@@ -382,5 +406,5 @@ void DiPrimitive::start_paint_section() {
   EspFcnPtr p;
   p.m_address = m_paint_code.get_code_index();
   m_paint_ptrs.push_back(p);
-  debug_log("start_paint_section %X\n", p.m_address);
+  //debug_log("start_paint_section %X\n", p.m_address);
 }

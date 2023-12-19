@@ -248,24 +248,18 @@ void DiManager::clear() {
 }
 
 void DiManager::add_primitive(DiPrimitive* prim, DiPrimitive* parent) {
-debug_log("@%i\n",__LINE__);
     auto old_prim = m_primitives[prim->get_id()];
     if (old_prim) {
       remove_primitive(old_prim);
     }
-debug_log("@%i\n",__LINE__);
 
     parent->attach_child(prim);
-debug_log("@%i\n",__LINE__);
     while (parent != m_primitives[ROOT_PRIMITIVE_ID] && !(parent->get_flags() & PRIM_FLAG_CLIP_KIDS)) {
       parent = parent->get_parent();
     }
-debug_log("@%i\n",__LINE__);
 
     m_primitives[prim->get_id()] = prim;
-debug_log("@%i\n",__LINE__);
     recompute_primitive(prim, 0, -1, -1);
-debug_log("@%i\n",__LINE__);
 
     /*debug_log("\n-- Groups\n");
     for (int i = 0; i < 600; i++) {
@@ -412,11 +406,8 @@ void DiManager::recompute_primitive(DiPrimitive* prim, uint16_t old_flags,
 }
 
 DiPrimitive* DiManager::finish_create(uint16_t id, DiPrimitive* prim, DiPrimitive* parent_prim) {
-debug_log("@%i\n",__LINE__);
     prim->set_id(id);
-debug_log("@%i\n",__LINE__);
     add_primitive(prim, parent_prim);
-debug_log("@%i\n",__LINE__);
     return prim;
 }
 
@@ -2453,16 +2444,11 @@ DiRender* DiManager::create_transparent_render(uint16_t id, uint16_t parent, uin
 DiPrimitive* DiManager::create_primitive_group(OtfCmd_140_Create_primitive_Group* cmd) {
     if (!validate_id(cmd->m_id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
-debug_log("@%i\n",__LINE__);
 
     cmd->m_flags &= ~PRIM_FLAG_PAINT_THIS;
-debug_log("@%i\n",__LINE__);
     DiPrimitive* prim = new DiPrimitive(cmd->m_flags);
-debug_log("@%i\n",__LINE__);
     prim->set_relative_position(cmd->m_x, cmd->m_y);
-debug_log("@%i\n",__LINE__);
     prim->set_size(cmd->m_w, cmd->m_h);
-debug_log("@%i\n",__LINE__);
 
     return finish_create(cmd->m_id, prim, parent_prim);
 }

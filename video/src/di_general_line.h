@@ -129,9 +129,9 @@ class DiGeneralLine: public DiPrimitive {
   void make_solid_quad_strip(int16_t* coords,
             uint16_t n, uint8_t color, uint8_t opaqueness);
 
-  virtual void generate_code_for_left_edge(EspFixups& fixups, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible);
-  virtual void generate_code_for_right_edge(EspFixups& fixups, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible);
-  virtual void generate_code_for_draw_area(EspFixups& fixups, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible);
+  virtual void generate_code_for_left_edge(EspFixups& fixups, uint32_t x_offset, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible);
+  virtual void generate_code_for_right_edge(EspFixups& fixups, uint32_t x_offset, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible);
+  virtual void generate_code_for_draw_area(EspFixups& fixups, uint32_t x_offset, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible);
 
   // Reassemble the custom instructions needed to draw the primitive.
   virtual void generate_instructions();
