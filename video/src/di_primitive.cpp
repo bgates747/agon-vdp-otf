@@ -254,21 +254,24 @@ uint8_t DiPrimitive::inverted_alpha_to_opaqueness(uint8_t &color) {
 */
 
 void DiPrimitive::generate_code_for_left_edge(EspFixups& fixups, uint32_t x_offset, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
+  start_paint_section();
   auto loc = m_paint_code.get_code_index();
-  auto idx = m_paint_ptrs.size();
-  debug_log("@%u [%u] generate_code_for_left_edge(xo%u w%u h%u h%u v%u)\n", loc, idx, x_offset, width, height, hidden, visible);
+  auto idx = m_paint_ptrs.size() - 1;
+  debug_log("@%u [%u] generate_code_for_left_edge(xo%u w%u ht%u hid%u vis%u)\n", loc, idx, x_offset, width, height, hidden, visible);
 }
 
 void DiPrimitive::generate_code_for_right_edge(EspFixups& fixups, uint32_t x_offset, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
+  start_paint_section();
   auto loc = m_paint_code.get_code_index();
-  auto idx = m_paint_ptrs.size();
-  debug_log("@%u [%u] generate_code_for_right_edge(xo%u w%u h%u h%u v%u)\n", loc, idx, x_offset, width, height, hidden, visible);
+  auto idx = m_paint_ptrs.size() - 1;
+  debug_log("@%u [%u] generate_code_for_right_edge(xo%u w%u ht%u hid%u vis%u)\n", loc, idx, x_offset, width, height, hidden, visible);
 }
 
 void DiPrimitive::generate_code_for_draw_area(EspFixups& fixups, uint32_t x_offset, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
+  start_paint_section();
   auto loc = m_paint_code.get_code_index();
-  auto idx = m_paint_ptrs.size();
-  debug_log("@%u [%u] generate_code_for_draw_area(xo%u w%u h%u h%u v%u)\n", loc, idx, x_offset, width, height, hidden, visible);
+  auto idx = m_paint_ptrs.size() - 1;
+  debug_log("@%u [%u] generate_code_for_draw_area(xo%u w%u ht%u hid%u vis%u)\n", loc, idx, x_offset, width, height, hidden, visible);
 }
 
 void DiPrimitive::generate_code_for_positions(EspFixups& fixups, uint32_t width, uint32_t height) {
@@ -304,14 +307,14 @@ void DiPrimitive::generate_code_for_positions(EspFixups& fixups, uint32_t width,
     uint32_t pos = m_abs_x & 3;
     if (m_flags & PRIM_FLAGS_LEFT_EDGE) {
       // Support left edge being hidden
-      for (uint32_t hidden = 4; hidden < width + 3; hidden += 4) {
+      for (uint32_t hidden = 4; hidden < width; hidden += 4) {
         uint32_t visible = width - hidden;
         generate_code_for_left_edge(fixups, pos, width, height, hidden, visible);
       }
     }
     if (m_flags & PRIM_FLAGS_RIGHT_EDGE) {
       // Support right edge being hidden
-      for (uint32_t hidden = 4; hidden < width + 3; hidden += 4) {
+      for (uint32_t hidden = 4; hidden < width; hidden += 4) {
         uint32_t visible = width - hidden;
         generate_code_for_right_edge(fixups, pos, width, height, hidden, visible);
       }
@@ -340,6 +343,7 @@ void DiPrimitive::generate_code_for_positions(EspFixups& fixups, uint32_t width,
 
 void DiPrimitive::set_current_paint_pointer(uint32_t width, uint32_t height,
   uint32_t left_hidden, uint32_t right_hidden) {
+  debug_log("set_current_paint_pointer(w%hu ht%hu lf%hu rt%hu)\n", width, height, left_hidden, right_hidden);
   uint32_t index = 0;
   uint32_t pos = m_abs_x & 3;
 
@@ -373,16 +377,16 @@ void DiPrimitive::set_current_paint_pointer(uint32_t width, uint32_t height,
         m_cur_paint_ptr = m_paint_ptrs[index + ((left_hidden - 1) + 3) / 4];
         return;
       } else {
-        index += ((width - 1) + 3) / 4;
+        index += width / 4;
       }
     }
     if (m_flags & PRIM_FLAGS_RIGHT_EDGE) {
       // Support right edge being hidden
       if (right_hidden) {
-        m_cur_paint_ptr = m_paint_ptrs[index + ((left_hidden - 1) + 3) / 4];
+        m_cur_paint_ptr = m_paint_ptrs[index + ((right_hidden - 1) + 3) / 4];
         return;
       } else {
-        index += ((width - 1) + 3) / 4;
+        index += width / 4;
       }
     }
   }
@@ -403,6 +407,7 @@ void DiPrimitive::set_current_paint_pointer(uint32_t width, uint32_t height) {
 }
 
 void DiPrimitive::start_paint_section() {
+  m_paint_code.align32();
   EspFcnPtr p;
   p.m_address = m_paint_code.get_code_index();
   m_paint_ptrs.push_back(p);

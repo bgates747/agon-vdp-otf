@@ -341,7 +341,6 @@ void DiGeneralLine::create_functions() {
 
 void DiGeneralLine::generate_code_for_left_edge(EspFixups& fixups, uint32_t x_offset, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
   DiPrimitive::generate_code_for_left_edge(fixups, x_offset, width, height, hidden, visible); // DEBUG
-  start_paint_section();
   auto num_sections = (uint32_t)m_line_details.m_sections.size();
   uint32_t at_jump_table = m_paint_code.init_jump_table(num_sections);
   for (uint32_t i = 0; i < num_sections; i++) {
@@ -354,7 +353,6 @@ void DiGeneralLine::generate_code_for_left_edge(EspFixups& fixups, uint32_t x_of
 
 void DiGeneralLine::generate_code_for_right_edge(EspFixups& fixups, uint32_t x_offset, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
   DiPrimitive::generate_code_for_right_edge(fixups, x_offset, width, height, hidden, visible); // DEBUG
-  start_paint_section();
   auto num_sections = (uint32_t)m_line_details.m_sections.size();
   uint32_t at_jump_table = m_paint_code.init_jump_table(num_sections);
   for (uint32_t i = 0; i < num_sections; i++) {
@@ -367,7 +365,6 @@ void DiGeneralLine::generate_code_for_right_edge(EspFixups& fixups, uint32_t x_o
 
 void DiGeneralLine::generate_code_for_draw_area(EspFixups& fixups, uint32_t x_offset, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
   DiPrimitive::generate_code_for_draw_area(fixups, x_offset, width, height, hidden, visible); // DEBUG
-  start_paint_section();
   auto num_sections = (uint32_t)m_line_details.m_sections.size();
   uint32_t at_jump_table = m_paint_code.init_jump_table(num_sections);
   for (uint32_t i = 0; i < num_sections; i++) {
