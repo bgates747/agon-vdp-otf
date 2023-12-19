@@ -43,14 +43,36 @@ void DiHorizontalLine::generate_instructions() {
   delete_instructions();
   if (m_flags & PRIM_FLAGS_CAN_DRAW) {
     EspFixups fixups;
-    DiLineSections sections;
-    sections.add_piece(1, 0, m_width, false);
-    auto x_offset = m_abs_x & 3;
-    m_paint_code.draw_line(fixups, x_offset, 0, m_width, &sections, m_flags, m_opaqueness, true);
+    generate_code_for_positions(fixups, m_width, m_height);
     m_paint_code.do_fixups(fixups);
+    set_current_paint_pointer(m_width, m_height);
   }
 }
 
+void DiHorizontalLine::generate_code_for_left_edge(EspFixups& fixups, uint32_t x_offset, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
+  DiPrimitive::generate_code_for_left_edge(fixups, x_offset, width, height, hidden, visible);
+  auto draw_width = (m_draw_x_extent - m_draw_x) - hidden;
+  DiLineSections sections;
+  sections.add_piece(1, 0, (uint16_t)draw_width, false);
+  m_paint_code.draw_line(fixups, x_offset, hidden, visible, &sections, m_flags, m_opaqueness, true);
+}
+
+void DiHorizontalLine::generate_code_for_right_edge(EspFixups& fixups, uint32_t x_offset, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
+  DiPrimitive::generate_code_for_right_edge(fixups, x_offset, width, height, hidden, visible);
+  auto draw_width = (m_draw_x_extent - m_draw_x) - hidden;
+  DiLineSections sections;
+  sections.add_piece(1, 0, (uint16_t)draw_width, false);
+  m_paint_code.draw_line(fixups, x_offset, 0, visible, &sections, m_flags, m_opaqueness, true);
+}
+
+void DiHorizontalLine::generate_code_for_draw_area(EspFixups& fixups, uint32_t x_offset, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
+  DiPrimitive::generate_code_for_draw_area(fixups, x_offset, width, height, hidden, visible);
+  auto draw_width = m_draw_x_extent - m_draw_x;
+  DiLineSections sections;
+  sections.add_piece(1, 0, (uint16_t)draw_width, false);
+  m_paint_code.draw_line(fixups, x_offset, 0, draw_width, &sections, m_flags, m_opaqueness, true);
+}
+
 void IRAM_ATTR DiHorizontalLine::paint(volatile uint32_t* p_scan_line, uint32_t line_index) {
-  m_paint_code.call_x(this, p_scan_line, line_index, m_draw_x);
+  (*(m_cur_paint_ptr.m_a5))(this, p_scan_line, line_index, m_abs_x);
 }

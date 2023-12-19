@@ -29,20 +29,20 @@ void otf(void * pvParameters) {
 	//text_area->clear_screen();
 	//di_manager->generate_code_for_primitive(1);
 
-	OtfCmd_41_Create_primitive_Solid_Rectangle cmd;
-	cmd.m_color = 0xC0;
-	cmd.m_flags = PRIM_FLAGS_DEFAULT;
-	cmd.m_w = 800;
-	cmd.m_h = 600;
-	cmd.m_id = 3;
-	cmd.m_pid = 0;
-	cmd.m_x = 0;
-	cmd.m_y = 0;
-	auto rect = di_manager->create_solid_rectangle(&cmd);
-	di_manager->generate_code_for_primitive(cmd.m_id);
+    {
+		OtfCmd_41_Create_primitive_Solid_Rectangle cmd;
+		cmd.m_color = 0xC0;
+		cmd.m_flags = PRIM_FLAGS_DEFAULT;
+		cmd.m_w = 800;
+		cmd.m_h = 600;
+		cmd.m_id = 3;
+		cmd.m_pid = 0;
+		cmd.m_x = 0;
+		cmd.m_y = 0;
+		auto rect = di_manager->create_solid_rectangle(&cmd);
+		di_manager->generate_code_for_primitive(cmd.m_id);
+	}
 
-/*
-debug_log("@%i\n",__LINE__);
 	OtfCmd_140_Create_primitive_Group gcmd;
 	gcmd.m_flags = PRIM_FLAGS_DEFAULT;
 	gcmd.m_w = 40;
@@ -51,12 +51,24 @@ debug_log("@%i\n",__LINE__);
 	gcmd.m_pid = 0;
 	gcmd.m_x = 400-20;
 	gcmd.m_y = 300-15;
-debug_log("@%i\n",__LINE__);
 	di_manager->create_primitive_group(&gcmd);
-debug_log("@%i\n",__LINE__);
 	di_manager->generate_code_for_primitive(gcmd.m_id);
-debug_log("@%i\n",__LINE__);
 
+    {
+		OtfCmd_41_Create_primitive_Solid_Rectangle cmd;
+		cmd.m_color = 0xD5;
+		cmd.m_flags = PRIM_FLAGS_DEFAULT;
+		cmd.m_w = 40;
+		cmd.m_h = 30;
+		cmd.m_id = 6;
+		cmd.m_pid = gcmd.m_id;
+		cmd.m_x = 0;
+		cmd.m_y = 0;
+		auto rect = di_manager->create_solid_rectangle(&cmd);
+		di_manager->generate_code_for_primitive(cmd.m_id);
+	}
+
+/*
 	cmd.m_color = 0xD0;
 	cmd.m_flags = PRIM_FLAGS_DEFAULT;
 	cmd.m_w = 80;
@@ -74,15 +86,16 @@ debug_log("@%i\n",__LINE__);
     {
 		OtfCmd_20_Create_primitive_Line cmd;
 		cmd.m_color = 0xC1;
-		cmd.m_flags = PRIM_FLAGS_DEFAULT|PRIM_FLAG_H_SCROLL_4|PRIM_FLAGS_LEFT_EDGE;
+		cmd.m_flags = PRIM_FLAGS_DEFAULT|PRIM_FLAG_H_SCROLL_1|PRIM_FLAGS_RIGHT_EDGE;
 		cmd.m_id = 7;
-		cmd.m_pid = 0;
-		cmd.m_x1 = 400;
-		cmd.m_y1 = 400;
-		cmd.m_x2 = 410;
-		cmd.m_y2 = 402;
+		cmd.m_pid = gcmd.m_id;
+		cmd.m_x1 = 0;
+		cmd.m_y1 = 0;
+		cmd.m_x2 = 10;
+		cmd.m_y2 = 2;
 		auto line = di_manager->create_line(&cmd);
 		di_manager->generate_code_for_primitive(cmd.m_id);
+		di_manager->move_primitive_absolute(cmd.m_id, 35, 15);
 	}
 
 	/*{

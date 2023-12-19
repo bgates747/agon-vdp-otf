@@ -35,9 +35,13 @@ class DiHorizontalLine: public DiPrimitive {
   // The line is horizontal, covering the given number of pixels.
   void make_line(int32_t x, int32_t y, uint32_t width, uint8_t color);
 
+  virtual void generate_code_for_left_edge(EspFixups& fixups, uint32_t x_offset, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible);
+  virtual void generate_code_for_right_edge(EspFixups& fixups, uint32_t x_offset, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible);
+  virtual void generate_code_for_draw_area(EspFixups& fixups, uint32_t x_offset, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible);
+
   // Reassemble the custom instructions needed to draw the primitive.
   virtual void generate_instructions();
-   
+    
   virtual void paint(volatile uint32_t* p_scan_line, uint32_t line_index);
 
   protected:

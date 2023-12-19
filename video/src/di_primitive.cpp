@@ -149,10 +149,15 @@ void IRAM_ATTR DiPrimitive::compute_absolute_geometry(
   m_draw_x_word = m_draw_x & 0xFFFFFFFC;
   m_draw_x_word_offset = m_draw_x_word - m_abs_x_word;
 
-  if (m_id>2) debug_log(" GEO id %hu rel(%i,%i) abs(%i,%i), w=%hu, h=%hu, d(%i,%i), de(%i,%i), aw=%i, dxo=%i, dyo=%i, dxw=%i, dxwo=%o\n",
-    m_id, m_rel_x, m_rel_y, m_abs_x, m_abs_y, m_width, m_height,
+  if (m_id>2) debug_log(" GEO id %hu rel(%i,%i) abs(%i,%i), ext(%i,%i), w=%hu, h=%hu, d(%i,%i), de(%i,%i), aw=%i, dxo=%i, dyo=%i, dxw=%i, dxwo=%o\n",
+    m_id, m_rel_x, m_rel_y, m_abs_x, m_abs_y,
+    m_x_extent, m_y_extent, m_width, m_height,
     m_draw_x, m_draw_y, m_draw_x_extent, m_draw_y_extent,
     m_abs_x_word, m_draw_left_trunc, m_draw_y_offset, m_draw_x_word, m_draw_x_word_offset);
+
+  if (m_paint_ptrs.size()) {
+    set_current_paint_pointer();
+  }
 
   DiPrimitive* child = m_first_child;
   while (child) {
@@ -347,49 +352,51 @@ void DiPrimitive::set_current_paint_pointer(uint32_t width, uint32_t height,
   uint32_t index = 0;
   uint32_t pos = m_abs_x & 3;
 
-  if (m_flags & PRIM_FLAG_H_SCROLL_1) {
-    // Support scrolling by 1 pixel
-    if (m_flags & PRIM_FLAGS_LEFT_EDGE) {
-      // Support left edge being hidden
-      if (left_hidden) {
-        m_cur_paint_ptr = m_paint_ptrs[(left_hidden - 1) * 4 + pos];
-        return;
-      } else {
-        index += (width - 1) * 4;
+  do {
+    if (m_flags & PRIM_FLAG_H_SCROLL_1) {
+      // Support scrolling by 1 pixel
+      if (m_flags & PRIM_FLAGS_LEFT_EDGE) {
+        // Support left edge being hidden
+        if (left_hidden) {
+          index = (left_hidden - 1) * 4 + pos;
+          break;
+        } else {
+          index += (width - 1) * 4;
+        }
       }
-    }
-    if (m_flags & PRIM_FLAGS_RIGHT_EDGE) {
-      // Support right edge being hidden
-      if (right_hidden) {
-        m_cur_paint_ptr = m_paint_ptrs[index + (right_hidden - 1) * 4 + pos];
-        return;
-      } else {
-        index += (width - 1) * 4;
+      if (m_flags & PRIM_FLAGS_RIGHT_EDGE) {
+        // Support right edge being hidden
+        if (right_hidden) {
+          index += (right_hidden - 1) * 4 + pos;
+          break;
+        } else {
+          index += (width - 1) * 4;
+        }
       }
-    }
 
-    index += pos;
-  } else if (m_flags & PRIM_FLAG_H_SCROLL_4) {
-    // Support scrolling by 4 pixels
-    if (m_flags & PRIM_FLAGS_LEFT_EDGE) {
-      // Support left edge being hidden
-      if (left_hidden) {
-        m_cur_paint_ptr = m_paint_ptrs[index + ((left_hidden - 1) + 3) / 4];
-        return;
-      } else {
-        index += width / 4;
+      index += pos;
+    } else if (m_flags & PRIM_FLAG_H_SCROLL_4) {
+      // Support scrolling by 4 pixels
+      if (m_flags & PRIM_FLAGS_LEFT_EDGE) {
+        // Support left edge being hidden
+        if (left_hidden) {
+          index += left_hidden / 4;
+          break;
+        } else {
+          index += width / 4;
+        }
+      }
+      if (m_flags & PRIM_FLAGS_RIGHT_EDGE) {
+        // Support right edge being hidden
+        if (right_hidden) {
+          index += right_hidden / 4;
+          break;
+        } else {
+          index += width / 4;
+        }
       }
     }
-    if (m_flags & PRIM_FLAGS_RIGHT_EDGE) {
-      // Support right edge being hidden
-      if (right_hidden) {
-        m_cur_paint_ptr = m_paint_ptrs[index + ((right_hidden - 1) + 3) / 4];
-        return;
-      } else {
-        index += width / 4;
-      }
-    }
-  }
+  } while (false);
 
   m_cur_paint_ptr = m_paint_ptrs[index];
   debug_log("cur index %u, ptr %X\n", index, m_cur_paint_ptr.m_address);
@@ -401,9 +408,13 @@ void DiPrimitive::set_current_paint_pointer(uint32_t width, uint32_t height) {
   if (m_abs_x < m_draw_x) {
     hidden_left = m_draw_x - m_abs_x;
   } else if (m_draw_x_extent < m_x_extent) {
-    hidden_right = m_x_extent < m_draw_x_extent;
+    hidden_right = m_x_extent - m_draw_x_extent;
   }
   set_current_paint_pointer(width, height, hidden_left, hidden_right);
+}
+
+void DiPrimitive::set_current_paint_pointer() {
+  set_current_paint_pointer(m_width, m_height);
 }
 
 void DiPrimitive::start_paint_section() {

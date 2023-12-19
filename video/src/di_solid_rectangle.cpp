@@ -50,7 +50,7 @@ void DiSolidRectangle::generate_instructions() {
 }
 
 void DiSolidRectangle::generate_code_for_left_edge(EspFixups& fixups, uint32_t x_offset, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
-  start_paint_section();
+  DiPrimitive::generate_code_for_left_edge(fixups, x_offset, width, height, hidden, visible);
   auto draw_width = (m_draw_x_extent - m_draw_x) - hidden;
   DiLineSections sections;
   sections.add_piece(1, 0, (uint16_t)draw_width, false);
@@ -58,7 +58,7 @@ void DiSolidRectangle::generate_code_for_left_edge(EspFixups& fixups, uint32_t x
 }
 
 void DiSolidRectangle::generate_code_for_right_edge(EspFixups& fixups, uint32_t x_offset, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
-  start_paint_section();
+  DiPrimitive::generate_code_for_right_edge(fixups, x_offset, width, height, hidden, visible);
   auto draw_width = (m_draw_x_extent - m_draw_x) - hidden;
   DiLineSections sections;
   sections.add_piece(1, 0, (uint16_t)draw_width, false);
@@ -66,7 +66,7 @@ void DiSolidRectangle::generate_code_for_right_edge(EspFixups& fixups, uint32_t 
 }
 
 void DiSolidRectangle::generate_code_for_draw_area(EspFixups& fixups, uint32_t x_offset, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
-  start_paint_section();
+  DiPrimitive::generate_code_for_draw_area(fixups, x_offset, width, height, hidden, visible);
   auto draw_width = m_draw_x_extent - m_draw_x;
   DiLineSections sections;
   sections.add_piece(1, 0, (uint16_t)draw_width, false);

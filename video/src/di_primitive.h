@@ -88,7 +88,7 @@ class DiPrimitive {
   // Convert inverted alpha bits of color to opaqueness percentage.  
   // This will also remove the alpha bits from the color.
   static uint8_t inverted_alpha_to_opaqueness(uint8_t &color);
-
+ 
   // Gets various data members.
   inline uint16_t get_id() { return m_id; }
   inline uint16_t get_flags() { return m_flags; }
@@ -127,10 +127,6 @@ class DiPrimitive {
     return (uint8_t*)line;
   }
 
-  // Recompute the geometry and paint list membership of a primitive.
-  void recompute_primitive(DiPrimitive* prim, uint16_t old_flags,
-                            int32_t old_min_group, int32_t old_max_group);
-
   // Generically generate the drawing instructions for various X/Y positions.
   virtual void generate_code_for_left_edge(EspFixups& fixups, uint32_t x_offset, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible);
   virtual void generate_code_for_right_edge(EspFixups& fixups, uint32_t x_offset, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible);
@@ -138,6 +134,7 @@ class DiPrimitive {
   void generate_code_for_positions(EspFixups& fixups, uint32_t width, uint32_t height);
   void set_current_paint_pointer(uint32_t width, uint32_t height, uint32_t left_hidden, uint32_t right_hidden);
   void set_current_paint_pointer(uint32_t width, uint32_t height);
+  void set_current_paint_pointer();
   void start_paint_section();
 
   int32_t   m_view_x;       // upper-left x coordinate of the enclosing viewport, relative to the screen
