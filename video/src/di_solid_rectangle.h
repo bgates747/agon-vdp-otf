@@ -32,10 +32,10 @@ class DiSolidRectangle: public DiPrimitive {
   uint8_t   m_opaqueness;
 
   // Construct a solid rectangle. This requires calling init_params() afterward.
-  DiSolidRectangle();
+  DiSolidRectangle(uint16_t flags);
   
   // Draws a solid (filled) rectangle on the screen.
-  void make_rectangle(uint16_t flags, int32_t x, int32_t y, uint32_t width, uint32_t height, uint8_t color);
+  void make_rectangle(int32_t x, int32_t y, uint32_t width, uint32_t height, uint8_t color);
 
   virtual void generate_code_for_left_edge(EspFixups& fixups, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible);
   virtual void generate_code_for_right_edge(EspFixups& fixups, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible);

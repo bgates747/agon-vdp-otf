@@ -29,10 +29,10 @@
 class DiEllipse: public DiPrimitive {
   public:
   // Construct an ellipse outline. This requires calling init_params() afterward.
-  DiEllipse();
+  DiEllipse(uint16_t flags);
   
   // Draws an ellipse outline on the screen.
-  void init_params(uint16_t flags, int32_t x, int32_t y, uint32_t width, uint32_t height, uint8_t color);
+  void init_params(int32_t x, int32_t y, uint32_t width, uint32_t height, uint8_t color);
 
   virtual void IRAM_ATTR paint(volatile uint32_t* p_scan_line, uint32_t line_index);
 };

@@ -30,10 +30,10 @@
 class DiHorizontalLine: public DiPrimitive {
   public:
   // Construct a horizontal line. This requires calling init_params() afterward.
-  DiHorizontalLine();
+  DiHorizontalLine(uint16_t flags);
   
   // The line is horizontal, covering the given number of pixels.
-  void make_line(uint16_t flags, int32_t x, int32_t y, uint32_t width, uint8_t color);
+  void make_line(int32_t x, int32_t y, uint32_t width, uint8_t color);
 
   // Reassemble the custom instructions needed to draw the primitive.
   virtual void generate_instructions();

@@ -34,7 +34,8 @@
 #include <cstring>
 //extern void debug_log(const char* fmt, ...);
 
-DiBitmap::DiBitmap(uint32_t width, uint32_t height, uint16_t flags) {
+DiBitmap::DiBitmap(uint32_t width, uint32_t height, uint16_t flags) : DiPrimitive(flags) {
+  m_flags |= PRIM_FLAGS_X_SRC;
   /*
   //debug_log(" @%i ",__LINE__);
   m_width = width;
@@ -67,12 +68,12 @@ DiBitmap::DiBitmap(uint32_t width, uint32_t height, uint16_t flags) {
   //debug_log(" @%i ",__LINE__);
 }
 
-DiBitmap::DiBitmap(uint16_t flags, DiBitmap* ref_bitmap) {
+DiBitmap::DiBitmap(uint16_t flags, DiBitmap* ref_bitmap) : DiPrimitive(flags) {
   //debug_log(" @%i ",__LINE__);
   m_width = ref_bitmap->m_width;
   m_height = ref_bitmap->m_height;
   m_save_height = ref_bitmap->m_save_height;
-  m_flags = flags | (ref_bitmap->m_flags & (PRIM_FLAG_H_SCROLL_1|PRIM_FLAGS_BLENDED)) | PRIM_FLAGS_REF_DATA;
+  m_flags |= (ref_bitmap->m_flags & (PRIM_FLAG_H_SCROLL_1|PRIM_FLAGS_BLENDED)) | (PRIM_FLAGS_X_SRC|PRIM_FLAGS_REF_DATA);
   m_transparent_color = ref_bitmap->m_transparent_color;
   m_words_per_line = ref_bitmap->m_words_per_line;
   m_bytes_per_line = ref_bitmap->m_bytes_per_line;

@@ -246,7 +246,7 @@ class DiManager {
     void recompute_primitive(DiPrimitive* prim, uint16_t old_flags,
                              int32_t old_min_group, int32_t old_max_group);
     // Finish creating a primitive.
-    DiPrimitive* finish_create(uint16_t id, uint16_t flags, DiPrimitive* prim, DiPrimitive* parent_prim);
+    DiPrimitive* finish_create(uint16_t id, DiPrimitive* prim, DiPrimitive* parent_prim);
 
     // Draw all primitives that belong to the active scan line group.
     void IRAM_ATTR draw_primitives(volatile uint32_t* p_scan_line, uint32_t line_index);

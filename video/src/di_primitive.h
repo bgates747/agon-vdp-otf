@@ -36,7 +36,7 @@
 class DiPrimitive {
   public:
   // An object to be drawn on the screen.
-  DiPrimitive();
+  DiPrimitive(uint16_t flags);
 
   // Destroys an allocated RAM required by the primitive.
   virtual ~DiPrimitive();

@@ -26,10 +26,10 @@
 #include "di_primitive.h"
 #include <cstring>
 
-DiPrimitive::DiPrimitive() {
+DiPrimitive::DiPrimitive(uint16_t flags) {
   // Zero out everything but the vtable pointer.
   memset(((uint8_t*)this)+sizeof(DiPrimitive*), 0, sizeof(DiPrimitive)-sizeof(DiPrimitive*));
-  m_flags = PRIM_FLAGS_DEFAULT;
+  m_flags = flags;
 }
 
 DiPrimitive::~DiPrimitive() {

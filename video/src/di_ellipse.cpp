@@ -25,11 +25,10 @@
 
 #include "di_ellipse.h"
 
-DiEllipse::DiEllipse() {
+DiEllipse::DiEllipse(uint16_t flags) : DiPrimitive(flags) {
 }
 
-void DiEllipse::init_params(uint16_t flags, int32_t x, int32_t y, uint32_t width, uint32_t height, uint8_t color) {
-  m_flags = flags;
+void DiEllipse::init_params(int32_t x, int32_t y, uint32_t width, uint32_t height, uint8_t color) {
   m_rel_x = x;
   m_rel_y = y;
   m_width = width;

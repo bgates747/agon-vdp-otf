@@ -101,7 +101,7 @@ void DiManager::create_root() {
   // The application should define what the base layer of the screen
   // is (e.g., solid rectangle, text_area, tile map, etc.).
 
-  DiPrimitive* root = new DiPrimitive;
+  DiPrimitive* root = new DiPrimitive(0);
   root->init_root();
   m_primitives[ROOT_PRIMITIVE_ID] = root;
 }
@@ -411,11 +411,9 @@ void DiManager::recompute_primitive(DiPrimitive* prim, uint16_t old_flags,
   //if (prim->get_id()>2) debug_log(" computed id %hu f %04hX g %i %i\n", prim->get_id(), prim->get_flags(), new_min_group, new_max_group);
 }
 
-DiPrimitive* DiManager::finish_create(uint16_t id, uint16_t flags, DiPrimitive* prim, DiPrimitive* parent_prim) {
+DiPrimitive* DiManager::finish_create(uint16_t id, DiPrimitive* prim, DiPrimitive* parent_prim) {
 debug_log("@%i\n",__LINE__);
     prim->set_id(id);
-debug_log("@%i\n",__LINE__);
-    prim->set_flags(flags);
 debug_log("@%i\n",__LINE__);
     add_primitive(prim, parent_prim);
 debug_log("@%i\n",__LINE__);
@@ -427,86 +425,85 @@ DiPrimitive* DiManager::create_point(uint16_t id, uint16_t parent, uint16_t flag
     if (!validate_id(id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(parent))) return NULL;
 
-    DiPrimitive* prim = new DiSetPixel(x, y, color);
+    DiPrimitive* prim = new DiSetPixel(flags, x, y, color);
 
-    return finish_create(id, flags, prim, parent_prim);
+    return finish_create(id, prim, parent_prim);
 }
 
 DiPrimitive* DiManager::create_line(OtfCmd_20_Create_primitive_Line* cmd) {
     if (!validate_id(cmd->m_id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
-    cmd->m_flags |= PRIM_FLAGS_X;
     auto sep_color = cmd->m_color;
     uint8_t opaqueness = DiPrimitive::normal_alpha_to_opaqueness(sep_color);
     DiPrimitive* prim;
     if (cmd->m_x1 == cmd->m_x2) {
         if (cmd->m_y1 == cmd->m_y2) {
-            prim = new DiSetPixel(cmd->m_x1, cmd->m_y1, cmd->m_color);
+            prim = new DiSetPixel(cmd->m_flags, cmd->m_x1, cmd->m_y1, cmd->m_color);
         } else if (cmd->m_y1 < cmd->m_y2) {
-            auto line = new DiVerticalLine();
-            line->make_line(cmd->m_flags, cmd->m_x1, cmd->m_y1, cmd->m_y2 - cmd->m_y1 + 1, cmd->m_color);
+            auto line = new DiVerticalLine(cmd->m_flags);
+            line->make_line(cmd->m_x1, cmd->m_y1, cmd->m_y2 - cmd->m_y1 + 1, cmd->m_color);
             prim = line;
         } else {
-            auto line = new DiVerticalLine();
-            line->make_line(cmd->m_flags, cmd->m_x1, cmd->m_y2, cmd->m_y1 - cmd->m_y2 + 1, cmd->m_color);
+            auto line = new DiVerticalLine(cmd->m_flags);
+            line->make_line(cmd->m_x1, cmd->m_y2, cmd->m_y1 - cmd->m_y2 + 1, cmd->m_color);
             prim = line;
         }
     } else if (cmd->m_x1 < cmd->m_x2) {
         if (cmd->m_y1 == cmd->m_y2) {
-            auto line = new DiHorizontalLine();
-            line->make_line(cmd->m_flags, cmd->m_x1, cmd->m_y1, cmd->m_x2 - cmd->m_x1 + 1, cmd->m_color);
+            auto line = new DiHorizontalLine(cmd->m_flags);
+            line->make_line(cmd->m_x1, cmd->m_y1, cmd->m_x2 - cmd->m_x1 + 1, cmd->m_color);
             prim = line;
         } else if (cmd->m_y1 < cmd->m_y2) {
             if (cmd->m_y2 - cmd->m_y1 == cmd->m_x2 - cmd->m_x1) {
-                auto line = new DiGeneralLine();
-                line->make_line(cmd->m_flags, cmd->m_x1, cmd->m_y1, cmd->m_x2, cmd->m_y2, sep_color, opaqueness);
+                auto line = new DiGeneralLine(cmd->m_flags);
+                line->make_line(cmd->m_x1, cmd->m_y1, cmd->m_x2, cmd->m_y2, sep_color, opaqueness);
                 prim = line;
             } else {
-                auto line = new DiGeneralLine();
-                line->make_line(cmd->m_flags, cmd->m_x1, cmd->m_y1, cmd->m_x2, cmd->m_y2, sep_color, opaqueness);
+                auto line = new DiGeneralLine(cmd->m_flags);
+                line->make_line(cmd->m_x1, cmd->m_y1, cmd->m_x2, cmd->m_y2, sep_color, opaqueness);
                 prim = line;
             }
         } else {
             if (cmd->m_y2 - cmd->m_y1 == cmd->m_x2 - cmd->m_x1) {
-                auto line = new DiGeneralLine();
-                line->make_line(cmd->m_flags, cmd->m_x1, cmd->m_y1, cmd->m_x2, cmd->m_y2, sep_color, opaqueness);
+                auto line = new DiGeneralLine(cmd->m_flags);
+                line->make_line(cmd->m_x1, cmd->m_y1, cmd->m_x2, cmd->m_y2, sep_color, opaqueness);
                 prim = line;
             } else {
-                auto line = new DiGeneralLine();
-                line->make_line(cmd->m_flags, cmd->m_x1, cmd->m_y1, cmd->m_x2, cmd->m_y2, sep_color, opaqueness);
+                auto line = new DiGeneralLine(cmd->m_flags);
+                line->make_line(cmd->m_x1, cmd->m_y1, cmd->m_x2, cmd->m_y2, sep_color, opaqueness);
                 prim = line;
             }
         }
     } else {
         if (cmd->m_y1 == cmd->m_y2) {
-            auto line = new DiHorizontalLine();
-            line->make_line(cmd->m_flags, cmd->m_x2, cmd->m_y1, cmd->m_x1 - cmd->m_x2 + 1, cmd->m_color);
+            auto line = new DiHorizontalLine(cmd->m_flags);
+            line->make_line(cmd->m_x2, cmd->m_y1, cmd->m_x1 - cmd->m_x2 + 1, cmd->m_color);
             prim = line;
         } else if (cmd->m_y1 < cmd->m_y2) {
             if (cmd->m_y2 - cmd->m_y1 == cmd->m_x1 - cmd->m_x2) {
-                auto line = new DiGeneralLine();
-                line->make_line(cmd->m_flags, cmd->m_x1, cmd->m_y1, cmd->m_x2, cmd->m_y2, sep_color, opaqueness);
+                auto line = new DiGeneralLine(cmd->m_flags);
+                line->make_line(cmd->m_x1, cmd->m_y1, cmd->m_x2, cmd->m_y2, sep_color, opaqueness);
                 prim = line;
             } else {
-                auto line = new DiGeneralLine();
-                line->make_line(cmd->m_flags, cmd->m_x1, cmd->m_y1, cmd->m_x2, cmd->m_y2, sep_color, opaqueness);
+                auto line = new DiGeneralLine(cmd->m_flags);
+                line->make_line(cmd->m_x1, cmd->m_y1, cmd->m_x2, cmd->m_y2, sep_color, opaqueness);
                 prim = line;
             }
         } else {
             if (cmd->m_y2 - cmd->m_y1 == cmd->m_x1 - cmd->m_x2) {
-                auto line = new DiGeneralLine();
-                line->make_line(cmd->m_flags, cmd->m_x1, cmd->m_y1, cmd->m_x2, cmd->m_y2, sep_color, opaqueness);
+                auto line = new DiGeneralLine(cmd->m_flags);
+                line->make_line(cmd->m_x1, cmd->m_y1, cmd->m_x2, cmd->m_y2, sep_color, opaqueness);
                 prim = line;
             } else {
-                auto line = new DiGeneralLine();
-                line->make_line(cmd->m_flags, cmd->m_x1, cmd->m_y1, cmd->m_x2, cmd->m_y2, sep_color, opaqueness);
+                auto line = new DiGeneralLine(cmd->m_flags);
+                line->make_line(cmd->m_x1, cmd->m_y1, cmd->m_x2, cmd->m_y2, sep_color, opaqueness);
                 prim = line;
             }
         }
     }
 
-    return finish_create(cmd->m_id, cmd->m_flags, prim, parent_prim);
+    return finish_create(cmd->m_id, prim, parent_prim);
 }
 
 DiSolidRectangle* DiManager::create_solid_rectangle(OtfCmd_41_Create_primitive_Solid_Rectangle* cmd) {
@@ -514,10 +511,10 @@ DiSolidRectangle* DiManager::create_solid_rectangle(OtfCmd_41_Create_primitive_S
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
     cmd->m_flags |= PRIM_FLAGS_ALL_SAME;
-    auto prim = new DiSolidRectangle();
-    prim->make_rectangle(cmd->m_flags, cmd->m_x, cmd->m_y, cmd->m_w, cmd->m_h, cmd->m_color);
+    auto prim = new DiSolidRectangle(cmd->m_flags);
+    prim->make_rectangle(cmd->m_x, cmd->m_y, cmd->m_w, cmd->m_h, cmd->m_color);
 
-    finish_create(cmd->m_id, cmd->m_flags, prim, parent_prim);
+    finish_create(cmd->m_id, prim, parent_prim);
     return prim;
 }
 
@@ -525,182 +522,168 @@ DiPrimitive* DiManager::create_triangle_outline(OtfCmd_30_Create_primitive_Trian
     if (!validate_id(cmd->m_id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
-    cmd->m_flags |= PRIM_FLAGS_X;
-    auto prim = new DiGeneralLine();
+    auto prim = new DiGeneralLine(cmd->m_flags);
     auto color = cmd->m_color;
     uint8_t opaqueness = DiPrimitive::normal_alpha_to_opaqueness(color);
-    prim->make_triangle_outline(cmd->m_flags, &cmd->m_x1, color, opaqueness);
+    prim->make_triangle_outline(&cmd->m_x1, color, opaqueness);
 
-    return finish_create(cmd->m_id, cmd->m_flags, prim, parent_prim);
+    return finish_create(cmd->m_id, prim, parent_prim);
 }
 
 DiPrimitive* DiManager::create_solid_triangle(OtfCmd_31_Create_primitive_Solid_Triangle* cmd) {
     if (!validate_id(cmd->m_id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
-    cmd->m_flags |= PRIM_FLAGS_X;
-    auto prim = new DiGeneralLine();
+    auto prim = new DiGeneralLine(cmd->m_flags);
     auto color = cmd->m_color;
     uint8_t opaqueness = DiPrimitive::normal_alpha_to_opaqueness(color);
-    prim->make_solid_triangle(cmd->m_flags, &cmd->m_x1, color, opaqueness);
+    prim->make_solid_triangle(&cmd->m_x1, color, opaqueness);
 
-    return finish_create(cmd->m_id, cmd->m_flags, prim, parent_prim);
+    return finish_create(cmd->m_id, prim, parent_prim);
 }
 
 DiPrimitive* DiManager::create_triangle_list_outline(OtfCmd_32_Create_primitive_Triangle_List_Outline* cmd) {
     if (!validate_id(cmd->m_id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
-    cmd->m_flags |= PRIM_FLAGS_X;
-    auto prim = new DiGeneralLine();
+    auto prim = new DiGeneralLine(cmd->m_flags);
     auto color = cmd->m_color;
     uint8_t opaqueness = DiPrimitive::normal_alpha_to_opaqueness(color);
-    prim->make_triangle_list_outline(cmd->m_flags, cmd->m_coords, cmd->m_n, color, opaqueness);
+    prim->make_triangle_list_outline(cmd->m_coords, cmd->m_n, color, opaqueness);
 
-    return finish_create(cmd->m_id, cmd->m_flags, prim, parent_prim);
+    return finish_create(cmd->m_id, prim, parent_prim);
 }
 
 DiPrimitive* DiManager::create_solid_triangle_list(OtfCmd_33_Create_primitive_Solid_Triangle_List* cmd) {
     if (!validate_id(cmd->m_id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
-    cmd->m_flags |= PRIM_FLAGS_X;
-    auto prim = new DiGeneralLine();
+    auto prim = new DiGeneralLine(cmd->m_flags);
     auto color = cmd->m_color;
     uint8_t opaqueness = DiPrimitive::normal_alpha_to_opaqueness(color);
-    prim->make_solid_triangle_list(cmd->m_flags, cmd->m_coords, cmd->m_n, color, opaqueness);
+    prim->make_solid_triangle_list(cmd->m_coords, cmd->m_n, color, opaqueness);
 
-    return finish_create(cmd->m_id, cmd->m_flags, prim, parent_prim);
+    return finish_create(cmd->m_id, prim, parent_prim);
 }
 
 DiPrimitive* DiManager::create_triangle_fan_outline(OtfCmd_34_Create_primitive_Triangle_Fan_Outline* cmd) {
     if (!validate_id(cmd->m_id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
-    cmd->m_flags |= PRIM_FLAGS_X;
-    auto prim = new DiGeneralLine();
+    auto prim = new DiGeneralLine(cmd->m_flags);
     auto color = cmd->m_color;
     uint8_t opaqueness = DiPrimitive::normal_alpha_to_opaqueness(color);
-    prim->make_triangle_fan_outline(cmd->m_flags, &cmd->m_sx0, cmd->m_n, color, opaqueness);
+    prim->make_triangle_fan_outline(&cmd->m_sx0, cmd->m_n, color, opaqueness);
 
-    return finish_create(cmd->m_id, cmd->m_flags, prim, parent_prim);
+    return finish_create(cmd->m_id, prim, parent_prim);
 }
 
 DiPrimitive* DiManager::create_solid_triangle_fan(OtfCmd_35_Create_primitive_Solid_Triangle_Fan* cmd) {
     if (!validate_id(cmd->m_id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
-    cmd->m_flags |= PRIM_FLAGS_X;
-    auto prim = new DiGeneralLine();
+    auto prim = new DiGeneralLine(cmd->m_flags);
     auto color = cmd->m_color;
     uint8_t opaqueness = DiPrimitive::normal_alpha_to_opaqueness(color);
-    prim->make_solid_triangle_fan(cmd->m_flags, &cmd->m_sx0, cmd->m_n, color, opaqueness);
+    prim->make_solid_triangle_fan(&cmd->m_sx0, cmd->m_n, color, opaqueness);
 
-    return finish_create(cmd->m_id, cmd->m_flags, prim, parent_prim);
+    return finish_create(cmd->m_id, prim, parent_prim);
 }
 
 DiPrimitive* DiManager::create_triangle_strip_outline(OtfCmd_36_Create_primitive_Triangle_Strip_Outline* cmd) {
     if (!validate_id(cmd->m_id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
-    cmd->m_flags |= PRIM_FLAGS_X;
-    auto prim = new DiGeneralLine();
+    auto prim = new DiGeneralLine(cmd->m_flags);
     auto color = cmd->m_color;
     uint8_t opaqueness = DiPrimitive::normal_alpha_to_opaqueness(color);
-    prim->make_triangle_strip_outline(cmd->m_flags, &cmd->m_sx0, cmd->m_n, color, opaqueness);
+    prim->make_triangle_strip_outline(&cmd->m_sx0, cmd->m_n, color, opaqueness);
 
-    return finish_create(cmd->m_id, cmd->m_flags, prim, parent_prim);
+    return finish_create(cmd->m_id, prim, parent_prim);
 }
 
 DiPrimitive* DiManager::create_solid_triangle_strip(OtfCmd_37_Create_primitive_Solid_Triangle_Strip* cmd) {
     if (!validate_id(cmd->m_id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
-    cmd->m_flags |= PRIM_FLAGS_X;
-    auto prim = new DiGeneralLine();
+    auto prim = new DiGeneralLine(cmd->m_flags);
     auto color = cmd->m_color;
     uint8_t opaqueness = DiPrimitive::normal_alpha_to_opaqueness(color);
-    prim->make_solid_triangle_strip(cmd->m_flags, &cmd->m_sx0, cmd->m_n, color, opaqueness);
+    prim->make_solid_triangle_strip(&cmd->m_sx0, cmd->m_n, color, opaqueness);
 
-    return finish_create(cmd->m_id, cmd->m_flags, prim, parent_prim);
+    return finish_create(cmd->m_id, prim, parent_prim);
 }
 
 DiPrimitive* DiManager::create_quad_outline(OtfCmd_60_Create_primitive_Quad_Outline* cmd) {
     if (!validate_id(cmd->m_id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
-    cmd->m_flags |= PRIM_FLAGS_X;
-    auto prim = new DiGeneralLine();
+    auto prim = new DiGeneralLine(cmd->m_flags);
     auto color = cmd->m_color;
     uint8_t opaqueness = DiPrimitive::normal_alpha_to_opaqueness(color);
-    prim->make_quad_outline(cmd->m_flags, &cmd->m_x1, color, opaqueness);
+    prim->make_quad_outline(&cmd->m_x1, color, opaqueness);
 
-    return finish_create(cmd->m_id, cmd->m_flags, prim, parent_prim);
+    return finish_create(cmd->m_id, prim, parent_prim);
 }
 
 DiPrimitive* DiManager::create_solid_quad(OtfCmd_61_Create_primitive_Solid_Quad* cmd) {
     if (!validate_id(cmd->m_id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
-    cmd->m_flags |= PRIM_FLAGS_X;
-    auto prim = new DiGeneralLine();
+    auto prim = new DiGeneralLine(cmd->m_flags);
     auto color = cmd->m_color;
     uint8_t opaqueness = DiPrimitive::normal_alpha_to_opaqueness(color);
-    prim->make_solid_quad(cmd->m_flags, &cmd->m_x1, color, opaqueness);
+    prim->make_solid_quad(&cmd->m_x1, color, opaqueness);
 
-    return finish_create(cmd->m_id, cmd->m_flags, prim, parent_prim);
+    return finish_create(cmd->m_id, prim, parent_prim);
 }
 
 DiPrimitive* DiManager::create_quad_list_outline(OtfCmd_62_Create_primitive_Quad_List_Outline* cmd) {
     if (!validate_id(cmd->m_id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
-    cmd->m_flags |= PRIM_FLAGS_X;
-    auto prim = new DiGeneralLine();
+    auto prim = new DiGeneralLine(cmd->m_flags);
     auto color = cmd->m_color;
     uint8_t opaqueness = DiPrimitive::normal_alpha_to_opaqueness(color);
-    prim->make_quad_list_outline(cmd->m_flags, cmd->m_coords, cmd->m_n, color, opaqueness);
+    prim->make_quad_list_outline(cmd->m_coords, cmd->m_n, color, opaqueness);
 
-    return finish_create(cmd->m_id, cmd->m_flags, prim, parent_prim);
+    return finish_create(cmd->m_id, prim, parent_prim);
 }
 
 DiPrimitive* DiManager::create_solid_quad_list(OtfCmd_63_Create_primitive_Solid_Quad_List* cmd) {
     if (!validate_id(cmd->m_id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
-    cmd->m_flags |= PRIM_FLAGS_X;
-    auto prim = new DiGeneralLine();
+    auto prim = new DiGeneralLine(cmd->m_flags);
     auto color = cmd->m_color;
     uint8_t opaqueness = DiPrimitive::normal_alpha_to_opaqueness(color);
-    prim->make_solid_quad_list(cmd->m_flags, cmd->m_coords, cmd->m_n, color, opaqueness);
+    prim->make_solid_quad_list(cmd->m_coords, cmd->m_n, color, opaqueness);
 
-    return finish_create(cmd->m_id, cmd->m_flags, prim, parent_prim);
+    return finish_create(cmd->m_id, prim, parent_prim);
 }
 
 DiPrimitive* DiManager::create_quad_strip_outline(OtfCmd_64_Create_primitive_Quad_Strip_Outline* cmd) {
     if (!validate_id(cmd->m_id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
-    cmd->m_flags |= PRIM_FLAGS_X;
-    auto prim = new DiGeneralLine();
+    auto prim = new DiGeneralLine(cmd->m_flags);
     auto color = cmd->m_color;
     uint8_t opaqueness = DiPrimitive::normal_alpha_to_opaqueness(color);
-    prim->make_quad_strip_outline(cmd->m_flags, &cmd->m_sx0, cmd->m_n, color, opaqueness);
+    prim->make_quad_strip_outline(&cmd->m_sx0, cmd->m_n, color, opaqueness);
 
-    return finish_create(cmd->m_id, cmd->m_flags, prim, parent_prim);
+    return finish_create(cmd->m_id, prim, parent_prim);
 }
 
 DiPrimitive* DiManager::create_solid_quad_strip(OtfCmd_65_Create_primitive_Solid_Quad_Strip* cmd) {
     if (!validate_id(cmd->m_id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
-    cmd->m_flags |= PRIM_FLAGS_X;
-    auto prim = new DiGeneralLine();
+    auto prim = new DiGeneralLine(cmd->m_flags);
     auto color = cmd->m_color;
     uint8_t opaqueness = DiPrimitive::normal_alpha_to_opaqueness(color);
-    prim->make_solid_quad_strip(cmd->m_flags, &cmd->m_sx0, cmd->m_n, color, opaqueness);
+    prim->make_solid_quad_strip(&cmd->m_sx0, cmd->m_n, color, opaqueness);
 
-    return finish_create(cmd->m_id, cmd->m_flags, prim, parent_prim);
+    return finish_create(cmd->m_id, prim, parent_prim);
 }
 
 DiTileMap* DiManager::create_tile_map(uint16_t id, uint16_t parent, uint16_t flags,
@@ -710,11 +693,10 @@ DiTileMap* DiManager::create_tile_map(uint16_t id, uint16_t parent, uint16_t fla
     if (!validate_id(id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(parent))) return NULL;
 
-    flags |= PRIM_FLAGS_X_SRC;
     DiTileMap* tile_map =
       new DiTileMap(screen_width, screen_height, columns, rows, width, height, flags);
 
-    finish_create(id, flags, tile_map, parent_prim);
+    finish_create(id, tile_map, parent_prim);
     return tile_map;
 }
 
@@ -725,11 +707,10 @@ DiTileArray* DiManager::create_tile_array(uint16_t id, uint16_t parent, uint16_t
     if (!validate_id(id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(parent))) return NULL;
 
-    flags |= PRIM_FLAGS_X_SRC;
     DiTileArray* tile_array =
       new DiTileArray(screen_width, screen_height, columns, rows, width, height, flags);
 
-    finish_create(id, flags, tile_array, parent_prim);
+    finish_create(id, tile_array, parent_prim);
     return tile_array;
 }
 
@@ -738,10 +719,9 @@ DiTextArea* DiManager::create_text_area(uint16_t id, uint16_t parent, uint16_t f
     if (!validate_id(id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(parent))) return NULL;
 
-    flags |= PRIM_FLAGS_X_SRC|PRIM_FLAGS_ALL_SAME;
     DiTextArea* text_area = new DiTextArea(x, y, flags, columns, rows, font);
 
-    finish_create(id, flags, text_area, parent_prim);
+    finish_create(id, text_area, parent_prim);
     m_text_area = text_area;
 
     // Create a child rectangle as a text cursor.
@@ -2298,11 +2278,11 @@ DiPrimitive* DiManager::create_rectangle_outline(OtfCmd_40_Create_primitive_Rect
     if (!validate_id(cmd->m_id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
-    auto prim = new DiRectangle();
+    auto prim = new DiRectangle(cmd->m_flags);
     //debug_log("%hX %hi %hi %hu %hu %02hX\n",cmd->m_flags, cmd->m_x, cmd->m_y, cmd->m_w, cmd->m_h, cmd->m_color);
-    prim->make_rectangle_outline(cmd->m_flags, cmd->m_x, cmd->m_y, cmd->m_w, cmd->m_h, cmd->m_color);
+    prim->make_rectangle_outline(cmd->m_x, cmd->m_y, cmd->m_w, cmd->m_h, cmd->m_color);
 
-    return finish_create(cmd->m_id, cmd->m_flags, prim, parent_prim);
+    return finish_create(cmd->m_id, prim, parent_prim);
 }
 
 DiPrimitive* DiManager::create_ellipse(uint16_t id, uint16_t parent, uint16_t flags,
@@ -2310,10 +2290,10 @@ DiPrimitive* DiManager::create_ellipse(uint16_t id, uint16_t parent, uint16_t fl
     if (!validate_id(id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(parent))) return NULL;
 
-    auto prim = new DiEllipse();
-    prim->init_params(flags, x, y, width, height, color);
+    auto prim = new DiEllipse(flags);
+    prim->init_params(x, y, width, height, color);
 
-    return finish_create(id, flags, prim, parent_prim);
+    return finish_create(id, prim, parent_prim);
 }
 
 DiPrimitive* DiManager::create_solid_ellipse(uint16_t id, uint16_t parent, uint16_t flags,
@@ -2321,10 +2301,10 @@ DiPrimitive* DiManager::create_solid_ellipse(uint16_t id, uint16_t parent, uint1
     if (!validate_id(id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(parent))) return NULL;
 
-    auto prim = new DiSolidEllipse();
-    prim->init_params(flags, x, y, width, height, color);
+    auto prim = new DiSolidEllipse(flags);
+    prim->init_params(x, y, width, height, color);
 
-    return finish_create(id, flags, prim, parent_prim);
+    return finish_create(id, prim, parent_prim);
 }
 
 DiBitmap* DiManager::create_solid_bitmap(uint16_t id, uint16_t parent, uint16_t flags,
@@ -2332,10 +2312,10 @@ DiBitmap* DiManager::create_solid_bitmap(uint16_t id, uint16_t parent, uint16_t 
     if (!validate_id(id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(parent))) return NULL;
 
-    flags |= PRIM_FLAGS_X_SRC|PRIM_FLAGS_ALL_SAME;
+    flags |= PRIM_FLAGS_ALL_SAME;
     auto prim = new DiBitmap(width, height, flags);
 
-    finish_create(id, flags, prim, parent_prim);
+    finish_create(id, prim, parent_prim);
     return prim;
 }
 
@@ -2344,11 +2324,10 @@ DiBitmap* DiManager::create_masked_bitmap(uint16_t id, uint16_t parent, uint16_t
     if (!validate_id(id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(parent))) return NULL;
 
-    flags |= PRIM_FLAGS_X_SRC;
     auto prim = new DiBitmap(width, height, flags);
     prim->set_transparent_color(color);
 
-    finish_create(id, flags, prim, parent_prim);
+    finish_create(id, prim, parent_prim);
     return prim;
 }
 
@@ -2357,11 +2336,10 @@ DiBitmap* DiManager::create_transparent_bitmap(uint16_t id, uint16_t parent, uin
     if (!validate_id(id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(parent))) return NULL;
 
-    flags |= PRIM_FLAGS_X_SRC;
     auto prim = new DiBitmap(width, height, flags);
     prim->set_transparent_color(color);
 
-    finish_create(id, flags, prim, parent_prim);
+    finish_create(id, prim, parent_prim);
     return prim;
 }
 
@@ -2372,7 +2350,7 @@ DiBitmap* DiManager::create_reference_solid_bitmap(uint16_t id, uint16_t parent,
 
     auto prim = new DiBitmap(flags, ref_prim);
 
-    finish_create(id, flags, prim, parent_prim);
+    finish_create(id, prim, parent_prim);
     return prim;
 }
 
@@ -2383,7 +2361,7 @@ DiBitmap* DiManager::create_reference_masked_bitmap(uint16_t id, uint16_t parent
 
     auto prim = new DiBitmap(flags, ref_prim);
 
-    finish_create(id, flags, prim, parent_prim);
+    finish_create(id, prim, parent_prim);
     return prim;
 }
 
@@ -2394,7 +2372,7 @@ DiBitmap* DiManager::create_reference_transparent_bitmap(uint16_t id, uint16_t p
 
     auto prim = new DiBitmap(flags, ref_prim);
 
-    finish_create(id, flags, prim, parent_prim);
+    finish_create(id, prim, parent_prim);
     return prim;
 }
 
@@ -2445,7 +2423,7 @@ DiRender* DiManager::create_solid_render(uint16_t id, uint16_t parent, uint16_t 
 
     auto prim = new DiRender(width, height, flags);
 
-    finish_create(id, flags, prim, parent_prim);
+    finish_create(id, prim, parent_prim);
     return prim;
 }
 
@@ -2456,7 +2434,7 @@ DiRender* DiManager::create_masked_render(uint16_t id, uint16_t parent, uint16_t
 
     auto prim = new DiRender(width, height, flags);
 
-    finish_create(id, flags, prim, parent_prim);
+    finish_create(id, prim, parent_prim);
     return prim;
 }
 
@@ -2468,7 +2446,7 @@ DiRender* DiManager::create_transparent_render(uint16_t id, uint16_t parent, uin
     auto prim = new DiRender(width, height, flags);
     prim->set_transparent_color(color);
 
-    finish_create(id, flags, prim, parent_prim);
+    finish_create(id, prim, parent_prim);
     return prim;
 }
 
@@ -2479,14 +2457,14 @@ debug_log("@%i\n",__LINE__);
 
     cmd->m_flags &= ~PRIM_FLAG_PAINT_THIS;
 debug_log("@%i\n",__LINE__);
-    DiPrimitive* prim = new DiPrimitive();
+    DiPrimitive* prim = new DiPrimitive(cmd->m_flags);
 debug_log("@%i\n",__LINE__);
     prim->set_relative_position(cmd->m_x, cmd->m_y);
 debug_log("@%i\n",__LINE__);
     prim->set_size(cmd->m_w, cmd->m_h);
 debug_log("@%i\n",__LINE__);
 
-    return finish_create(cmd->m_id, cmd->m_flags, prim, parent_prim);
+    return finish_create(cmd->m_id, prim, parent_prim);
 }
 
 void DiManager::slice_solid_bitmap_absolute(uint16_t id, int32_t x, int32_t y, int32_t start_line, int32_t height) {

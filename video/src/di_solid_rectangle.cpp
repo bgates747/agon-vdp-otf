@@ -25,11 +25,11 @@
 
 #include "di_solid_rectangle.h"
 
-DiSolidRectangle::DiSolidRectangle() {
+DiSolidRectangle::DiSolidRectangle(uint16_t flags) : DiPrimitive(flags) {
+  m_flags |= PRIM_FLAGS_X;
 }
 
-void DiSolidRectangle::make_rectangle(uint16_t flags, int32_t x, int32_t y, uint32_t width, uint32_t height, uint8_t color) {
-  m_flags = flags | PRIM_FLAGS_X;
+void DiSolidRectangle::make_rectangle(int32_t x, int32_t y, uint32_t width, uint32_t height, uint8_t color) {
   m_opaqueness = DiPrimitive::normal_alpha_to_opaqueness(color);
   m_rel_x = x;
   m_rel_y = y;

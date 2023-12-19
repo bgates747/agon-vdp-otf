@@ -36,97 +36,97 @@ class DiGeneralLine: public DiPrimitive {
   uint8_t       m_opaqueness;
 
   // Construct a general line. This requires calling init_params() afterward.
-  DiGeneralLine();
+  DiGeneralLine(uint16_t flags);
 
   // This function constructs a line from two points. The upper 2 bits of
   // the color must be zeros.
-  void make_line(uint16_t flags, int16_t x1, int16_t y1, int16_t x2, int16_t y2,
+  void make_line(int16_t x1, int16_t y1, int16_t x2, int16_t y2,
                   uint8_t color, uint8_t opaqueness);
 
   // This function constructs a line from two points. The upper 2 bits of
   // the color must be zeros. There must be 2 points (4 coordinates) given.
-  void make_line(uint16_t flags, int16_t* coords, uint8_t color, uint8_t opaqueness);
+  void make_line(int16_t* coords, uint8_t color, uint8_t opaqueness);
 
   // This function constructs a triangle outline from three points.
   // The upper 2 bits of the color must be zeros.
   // There must be 3 points (6 coordinates) given.
-  void make_triangle_outline(uint16_t flags, int16_t* coords, uint8_t color, uint8_t opaqueness);
+  void make_triangle_outline(int16_t* coords, uint8_t color, uint8_t opaqueness);
 
   // This function constructs a solid (filled) triangle from three points.
   // The upper 2 bits of the color must be zeros.
   // There must be 3 points (6 coordinates) given.
-  void make_solid_triangle(uint16_t flags, int16_t* coords, uint8_t color, uint8_t opaqueness);
+  void make_solid_triangle(int16_t* coords, uint8_t color, uint8_t opaqueness);
 
   // This function constructs a triangle list outline from multiple points.
   // The upper 2 bits of the color must be zeros.
   // There must be n*3 points (n*6 coordinates) given.
-  void make_triangle_list_outline(uint16_t flags, int16_t* coords,
+  void make_triangle_list_outline(int16_t* coords,
             uint16_t n, uint8_t color, uint8_t opaqueness);
 
   // This function constructs a solid triangle list from multiple points.
   // The upper 2 bits of the color must be zeros.
   // There must be n*3 points (n*6 coordinates) given.
-  void make_solid_triangle_list(uint16_t flags, int16_t* coords,
+  void make_solid_triangle_list(int16_t* coords,
             uint16_t n, uint8_t color, uint8_t opaqueness);
 
   // This function constructs a triangle fan outline from multiple points.
   // The upper 2 bits of the color must be zeros.
   // There must be n+2 points ((n+2)*2 coordinates) given.
-  void make_triangle_fan_outline(uint16_t flags, int16_t* coords,
+  void make_triangle_fan_outline(int16_t* coords,
             uint16_t n, uint8_t color, uint8_t opaqueness);
 
   // This function constructs a solid triangle fan from multiple points.
   // The upper 2 bits of the color must be zeros.
   // There must be n+2 points ((n+2)*2 coordinates) given.
-  void make_solid_triangle_fan(uint16_t flags, int16_t* coords,
+  void make_solid_triangle_fan(int16_t* coords,
             uint16_t n, uint8_t color, uint8_t opaqueness);
 
   // This function constructs a triangle strip outline from multiple points.
   // The upper 2 bits of the color must be zeros.
   // There must be n+2 points ((n+2)*2 coordinates) given.
-  void make_triangle_strip_outline(uint16_t flags, int16_t* coords,
+  void make_triangle_strip_outline(int16_t* coords,
             uint16_t n, uint8_t color, uint8_t opaqueness);
 
   // This function constructs a solid triangle outline from multiple points.
   // The upper 2 bits of the color must be zeros.
   // There must be n+2 points ((n+2)*2 coordinates) given.
-  void make_solid_triangle_strip(uint16_t flags, int16_t* coords,
+  void make_solid_triangle_strip(int16_t* coords,
             uint16_t n, uint8_t color, uint8_t opaqueness);
 
   // This function constructs a quad outline from four points.
   // The upper 2 bits of the color must be zeros.
   // There must be 4 points (8 coordinates) given.
-  void make_quad_outline(uint16_t flags, int16_t* coords, 
+  void make_quad_outline(int16_t* coords, 
             uint8_t color, uint8_t opaqueness);
 
   // This function constructs a solid (filled) quad from four points.
   // The upper 2 bits of the color must be zeros.
   // There must be 4 points (8 coordinates) given.
-  void make_solid_quad(uint16_t flags, int16_t* coords,
+  void make_solid_quad(int16_t* coords,
             uint8_t color, uint8_t opaqueness);
 
   // This function constructs a quad list outline from multiple points.
   // The upper 2 bits of the color must be zeros.
   // There must be n*4 points (n*8 coordinates) given.
-  void make_quad_list_outline(uint16_t flags, int16_t* coords,
+  void make_quad_list_outline(int16_t* coords,
             uint16_t n, uint8_t color, uint8_t opaqueness);
 
   // This function constructs a solid quad list from multiple points.
   // The upper 2 bits of the color must be zeros.
   // There must be n*4 points (n*8 coordinates) given.
-  void make_solid_quad_list(uint16_t flags, int16_t* coords,
+  void make_solid_quad_list(int16_t* coords,
             uint16_t n, uint8_t color, uint8_t opaqueness);
 
   // This function constructs a quad strip outline from multiple points.
   // The upper 2 bits of the color must be zeros.
   // There must be n+2 points ((n+2)*2 coordinates) given.
-  void make_quad_strip_outline(uint16_t flags, int16_t* coords,
+  void make_quad_strip_outline(int16_t* coords,
             uint16_t n, uint8_t color, uint8_t opaqueness);
 
   // This function constructs a solid quad outline from multiple points.
   // The upper 2 bits of the color must be zeros.
   // There must be n+2 points ((n+2)*2 coordinates) given.
-  void make_solid_quad_strip(uint16_t flags, int16_t* coords,
+  void make_solid_quad_strip(int16_t* coords,
             uint16_t n, uint8_t color, uint8_t opaqueness);
 
   virtual void generate_code_for_left_edge(EspFixups& fixups, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible);
@@ -139,6 +139,6 @@ class DiGeneralLine: public DiPrimitive {
   virtual void paint(volatile uint32_t* p_scan_line, uint32_t line_index);
 
   protected:
-  void init_from_coords(uint16_t flags, int16_t* coords, uint16_t n, uint8_t color, uint8_t opaqueness);
+  void init_from_coords(int16_t* coords, uint16_t n, uint8_t color, uint8_t opaqueness);
   void create_functions();
 };

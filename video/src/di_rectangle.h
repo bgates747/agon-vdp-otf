@@ -29,10 +29,10 @@
 class DiRectangle: public DiPrimitive {
   public:
   // Construct a rectangle outline. This requires calling init_params() afterward.
-  DiRectangle();
+  DiRectangle(uint16_t flags);
   
   // Draws a rectangle outline on the screen.
-  void make_rectangle_outline(uint16_t flags, int32_t x, int32_t y, uint32_t width, uint32_t height, uint8_t color);
+  void make_rectangle_outline(int32_t x, int32_t y, uint32_t width, uint32_t height, uint8_t color);
 
   // Reassemble the custom instructions needed to draw the primitive.
   virtual void generate_instructions();

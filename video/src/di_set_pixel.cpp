@@ -25,7 +25,7 @@
 
 #include "di_set_pixel.h"
 
-DiSetPixel::DiSetPixel(int32_t x, int32_t y, uint8_t color) {
+DiSetPixel::DiSetPixel(uint16_t flags, int32_t x, int32_t y, uint8_t color) : DiPrimitive(flags) {
   m_opaqueness = DiPrimitive::normal_alpha_to_opaqueness(color);
   m_rel_x = x;
   m_rel_y = y;

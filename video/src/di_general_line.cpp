@@ -57,40 +57,41 @@ static int16_t max_of_pairs(const int16_t* coords, uint16_t n) {
   return m;
 }
 
-DiGeneralLine::DiGeneralLine() {}
+DiGeneralLine::DiGeneralLine(uint16_t flags) : DiPrimitive(flags) {
+  m_flags |= PRIM_FLAGS_X;
+}
 
-void DiGeneralLine::make_line(uint16_t flags, int16_t x1, int16_t y1, int16_t x2, int16_t y2,
+void DiGeneralLine::make_line(int16_t x1, int16_t y1, int16_t x2, int16_t y2,
                 uint8_t color, uint8_t opaqueness) {
   int16_t coords[4];
   coords[0] = x1;
   coords[1] = y1;
   coords[2] = x2;
   coords[3] = y2;
-  make_line(flags, coords, color, opaqueness);
+  make_line(coords, color, opaqueness);
 }
 
-void DiGeneralLine::make_line(uint16_t flags, int16_t* coords, uint8_t color, uint8_t opaqueness) {
-  init_from_coords(flags, coords, 2, color, opaqueness);
+void DiGeneralLine::make_line(int16_t* coords, uint8_t color, uint8_t opaqueness) {
+  init_from_coords(coords, 2, color, opaqueness);
   m_line_details.make_line(1, coords[0], coords[1], coords[2], coords[3], false);
   create_functions();
 }
 
-void DiGeneralLine::make_triangle_outline(uint16_t flags, int16_t* coords, uint8_t color, uint8_t opaqueness) {
-  init_from_coords(flags, coords, 3, color, opaqueness);
+void DiGeneralLine::make_triangle_outline(int16_t* coords, uint8_t color, uint8_t opaqueness) {
+  init_from_coords(coords, 3, color, opaqueness);
   m_line_details.make_triangle_outline(1, coords[0], coords[1], coords[2], coords[3], coords[4], coords[5]);
   create_functions();
 }
 
-void DiGeneralLine::make_solid_triangle(uint16_t flags, int16_t* coords, uint8_t color, uint8_t opaqueness) {
-  init_from_coords(flags, coords, 3, color, opaqueness);
+void DiGeneralLine::make_solid_triangle(int16_t* coords, uint8_t color, uint8_t opaqueness) {
+  init_from_coords(coords, 3, color, opaqueness);
   m_line_details.make_solid_triangle(1, coords[0], coords[1], coords[2], coords[3], coords[4], coords[5]);
   create_functions();
 }
 extern void debug_log(const char* fmt, ...);
 
-void DiGeneralLine::init_from_coords(uint16_t flags, int16_t* coords,
+void DiGeneralLine::init_from_coords(int16_t* coords,
           uint16_t n, uint8_t color, uint8_t opaqueness) {
-  m_flags = flags;
   debug_log(" DiGeneralLine::init_from_coords: flags %04hX\n", m_flags);
   m_opaqueness = opaqueness;
   m_rel_x = min_of_pairs(coords, n);
@@ -107,9 +108,9 @@ void DiGeneralLine::init_from_coords(uint16_t flags, int16_t* coords,
   }
 }
 
-void DiGeneralLine::make_triangle_list_outline(uint16_t flags, int16_t* coords,
+void DiGeneralLine::make_triangle_list_outline(int16_t* coords,
           uint16_t n, uint8_t color, uint8_t opaqueness) {
-  init_from_coords(flags, coords, n*3, color, opaqueness);
+  init_from_coords(coords, n*3, color, opaqueness);
 
   uint8_t id = 1;
   while (n--) {
@@ -123,9 +124,9 @@ void DiGeneralLine::make_triangle_list_outline(uint16_t flags, int16_t* coords,
   debug_log("prim x %i y %i w %u h %u ld %u\n", m_rel_x, m_rel_y, m_width, m_height, m_line_details.m_sections.size());
 }
 
-void DiGeneralLine::make_solid_triangle_list(uint16_t flags, int16_t* coords,
+void DiGeneralLine::make_solid_triangle_list(int16_t* coords,
           uint16_t n, uint8_t color, uint8_t opaqueness) {
-  init_from_coords(flags, coords, n*3, color, opaqueness);
+  init_from_coords(coords, n*3, color, opaqueness);
 
   uint8_t id = 1;
   while (n--) {
@@ -138,14 +139,14 @@ void DiGeneralLine::make_solid_triangle_list(uint16_t flags, int16_t* coords,
   create_functions();
 }
 
-void DiGeneralLine::make_triangle_fan_outline(uint16_t flags,
+void DiGeneralLine::make_triangle_fan_outline(
           int16_t* coords, uint16_t n, uint8_t color, uint8_t opaqueness) {
 
   debug_log("init (%hu) %hi %hi %hi %hi\n", n, coords[0], coords[1], coords[2], coords[3]);
   for (uint16_t i = 4; i<n*2+4; i+=2) {
     debug_log(" %hi %hi\n", coords[i], coords[i+1]);
   }
-  init_from_coords(flags, coords, n+2, color, opaqueness);
+  init_from_coords(coords, n+2, color, opaqueness);
 
   
   auto sx0 = coords[0];
@@ -165,9 +166,9 @@ void DiGeneralLine::make_triangle_fan_outline(uint16_t flags,
   create_functions();
 }
 
-void DiGeneralLine::make_solid_triangle_fan(uint16_t flags,
+void DiGeneralLine::make_solid_triangle_fan(
           int16_t* coords, uint16_t n, uint8_t color, uint8_t opaqueness) {
-  init_from_coords(flags, coords, n+2, color, opaqueness);
+  init_from_coords(coords, n+2, color, opaqueness);
 
   auto sx0 = coords[0];
   auto sy0 = coords[1];
@@ -187,9 +188,9 @@ void DiGeneralLine::make_solid_triangle_fan(uint16_t flags,
   create_functions();
 }
 
-void DiGeneralLine::make_triangle_strip_outline(uint16_t flags,
+void DiGeneralLine::make_triangle_strip_outline(
           int16_t* coords, uint16_t n, uint8_t color, uint8_t opaqueness) {
-  init_from_coords(flags, coords, n+2, color, opaqueness);
+  init_from_coords(coords, n+2, color, opaqueness);
 
   auto sx0 = coords[0];
   auto sy0 = coords[1];
@@ -209,9 +210,9 @@ void DiGeneralLine::make_triangle_strip_outline(uint16_t flags,
   create_functions();
 }
 
-void DiGeneralLine::make_solid_triangle_strip(uint16_t flags,
+void DiGeneralLine::make_solid_triangle_strip(
           int16_t* coords, uint16_t n, uint8_t color, uint8_t opaqueness) {
-  init_from_coords(flags, coords, n+2, color, opaqueness);
+  init_from_coords(coords, n+2, color, opaqueness);
 
   auto sx0 = coords[0];
   auto sy0 = coords[1];
@@ -233,25 +234,25 @@ void DiGeneralLine::make_solid_triangle_strip(uint16_t flags,
   create_functions();
 }
 
-void DiGeneralLine::make_quad_outline(uint16_t flags, int16_t* coords, 
+void DiGeneralLine::make_quad_outline(int16_t* coords, 
           uint8_t color, uint8_t opaqueness) {
-  init_from_coords(flags, coords, 4, color, opaqueness);
+  init_from_coords(coords, 4, color, opaqueness);
   m_line_details.make_quad_outline(1, coords[0], coords[1], coords[2], coords[3],
     coords[4], coords[5], coords[6], coords[7]);
   create_functions();
 }
 
-void DiGeneralLine::make_solid_quad(uint16_t flags, int16_t* coords,
+void DiGeneralLine::make_solid_quad(int16_t* coords,
           uint8_t color, uint8_t opaqueness) {
-  init_from_coords(flags, coords, 4, color, opaqueness);
+  init_from_coords(coords, 4, color, opaqueness);
   m_line_details.make_solid_quad(1, coords[0], coords[1], coords[2], coords[3],
     coords[4], coords[5], coords[6], coords[7]);
   create_functions();
 }
 
-void DiGeneralLine::make_quad_list_outline(uint16_t flags, int16_t* coords,
+void DiGeneralLine::make_quad_list_outline(int16_t* coords,
           uint16_t n, uint8_t color, uint8_t opaqueness) {
-  init_from_coords(flags, coords, n*4, color, opaqueness);
+  init_from_coords(coords, n*4, color, opaqueness);
 
   uint8_t id = 1;
   while (n--) {
@@ -262,9 +263,9 @@ void DiGeneralLine::make_quad_list_outline(uint16_t flags, int16_t* coords,
   create_functions();
 }
 
-void DiGeneralLine::make_solid_quad_list(uint16_t flags, int16_t* coords,
+void DiGeneralLine::make_solid_quad_list(int16_t* coords,
           uint16_t n, uint8_t color, uint8_t opaqueness) {
-  init_from_coords(flags, coords, n*4, color, opaqueness);
+  init_from_coords(coords, n*4, color, opaqueness);
 
   uint8_t id = 1;
   while (n--) {
@@ -277,9 +278,9 @@ void DiGeneralLine::make_solid_quad_list(uint16_t flags, int16_t* coords,
   create_functions();
 }
 
-void DiGeneralLine::make_quad_strip_outline(uint16_t flags,
+void DiGeneralLine::make_quad_strip_outline(
           int16_t* coords, uint16_t n, uint8_t color, uint8_t opaqueness) {
-  init_from_coords(flags, coords, n*2+2, color, opaqueness);
+  init_from_coords(coords, n*2+2, color, opaqueness);
 
   auto sx0 = coords[0];
   auto sy0 = coords[1];
@@ -299,9 +300,9 @@ void DiGeneralLine::make_quad_strip_outline(uint16_t flags,
   create_functions();
 }
 
-void DiGeneralLine::make_solid_quad_strip(uint16_t flags,
+void DiGeneralLine::make_solid_quad_strip(
           int16_t* coords, uint16_t n, uint8_t color, uint8_t opaqueness) {
-  init_from_coords(flags, coords, n*2+2, color, opaqueness);
+  init_from_coords(coords, n*2+2, color, opaqueness);
 
   auto sx0 = coords[0];
   auto sy0 = coords[1];

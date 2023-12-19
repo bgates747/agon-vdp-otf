@@ -25,11 +25,11 @@
 
 #include "di_vert_line.h"
 
-DiVerticalLine::DiVerticalLine() {
+DiVerticalLine::DiVerticalLine(uint16_t flags) : DiPrimitive(flags) {
+  m_flags |= PRIM_FLAGS_X;
 }
 
-void DiVerticalLine::make_line(uint16_t flags, int32_t x, int32_t y, uint32_t height, uint8_t color) {
-  m_flags = flags;
+void DiVerticalLine::make_line(int32_t x, int32_t y, uint32_t height, uint8_t color) {
   m_opaqueness = DiPrimitive::normal_alpha_to_opaqueness(color);
   m_rel_x = x;
   m_rel_y = y;

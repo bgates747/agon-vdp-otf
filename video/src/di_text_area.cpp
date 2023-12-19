@@ -30,6 +30,7 @@
 DiTextArea::DiTextArea(uint32_t x, uint32_t y, uint8_t flags,
                         uint32_t columns, uint32_t rows, const uint8_t* font) :
   DiTileArray(ACT_PIXELS, ACT_LINES, columns, rows, 8, 8, flags) {
+  m_flags |= PRIM_FLAGS_ALL_SAME;
   m_current_column = 0;
   m_current_row = 0;
   m_fg_color = PIXEL_COLOR_ARGB(3, 1, 1, 0);

@@ -25,11 +25,10 @@
 
 #include "di_rectangle.h"
 
-DiRectangle::DiRectangle() {
+DiRectangle::DiRectangle(uint16_t flags) : DiPrimitive(flags) {
 }
 
-void DiRectangle::make_rectangle_outline(uint16_t flags, int32_t x, int32_t y, uint32_t width, uint32_t height, uint8_t color) {
-  m_flags = flags;
+void DiRectangle::make_rectangle_outline(int32_t x, int32_t y, uint32_t width, uint32_t height, uint8_t color) {
   m_rel_x = x;
   m_rel_y = y;
   m_width = width;

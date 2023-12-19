@@ -30,7 +30,7 @@
 class DiSetPixel: public DiPrimitive {
   public:
   // Draws a single pixel on the screen.
-  DiSetPixel(int32_t x, int32_t y, uint8_t color);
+  DiSetPixel(uint16_t flags, int32_t x, int32_t y, uint8_t color);
 
   // Reassemble the custom instructions needed to draw the primitive.
   virtual void generate_instructions();

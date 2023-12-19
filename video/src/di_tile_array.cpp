@@ -32,12 +32,12 @@
 
 DiTileArray::DiTileArray(uint32_t screen_width, uint32_t screen_height,
                       uint32_t columns, uint32_t rows,
-                      uint32_t tile_width, uint32_t tile_height, uint16_t flags) {
+                      uint32_t tile_width, uint32_t tile_height, uint16_t flags) : DiPrimitive(flags) {
+  m_flags |= PRIM_FLAGS_X_SRC;
   m_tile_width = tile_width;
   m_tile_height = tile_height;
   m_rows = rows;
   m_columns = columns;
-  m_flags = flags;
   uint32_t draw_words_per_line = (tile_width + sizeof(uint32_t) - 1) / sizeof(uint32_t);
   uint32_t words_per_line = draw_words_per_line;
 
