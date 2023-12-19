@@ -43,9 +43,8 @@ void DiHorizontalLine::generate_instructions() {
   delete_instructions();
   if (m_flags & PRIM_FLAGS_CAN_DRAW) {
     EspFixups fixups;
-    auto width = (uint16_t)m_width;
     DiLineSections sections;
-    sections.add_piece(1, 0, 1, false);
+    sections.add_piece(1, 0, m_width, false);
     auto x_offset = m_abs_x & 3;
     m_paint_code.draw_line(fixups, x_offset, 0, m_width, &sections, m_flags, m_opaqueness, true);
     m_paint_code.do_fixups(fixups);
@@ -53,5 +52,5 @@ void DiHorizontalLine::generate_instructions() {
 }
 
 void IRAM_ATTR DiHorizontalLine::paint(volatile uint32_t* p_scan_line, uint32_t line_index) {
-  m_paint_code.call(this, p_scan_line, line_index);
+  m_paint_code.call_x(this, p_scan_line, line_index, m_draw_x);
 }
