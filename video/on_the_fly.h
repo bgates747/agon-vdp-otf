@@ -87,16 +87,16 @@ debug_log("@%i\n",__LINE__);
 
 	{
 		OtfCmd_30_Create_primitive_Triangle_Outline cmd;
-		cmd.m_color = 0xD0;
+		cmd.m_color = 0xD2;
 		cmd.m_flags = PRIM_FLAGS_DEFAULT;
 		cmd.m_id = 8;
 		cmd.m_pid = 0;
 		cmd.m_x1 = 420;
 		cmd.m_y1 = 200;
 		cmd.m_x2 = 450;
-		cmd.m_y2 = 206;
+		cmd.m_y2 = 216;
 		cmd.m_x3 = 390;
-		cmd.m_y3 = 203;
+		cmd.m_y3 = 209;
 		auto triangle = di_manager->create_triangle_outline(&cmd);
 		di_manager->generate_code_for_primitive(cmd.m_id);
 	}
