@@ -2304,19 +2304,13 @@ DiPrimitive* DiManager::create_solid_ellipse(uint16_t id, uint16_t parent, uint1
 }
 
 DiBitmap* DiManager::create_solid_bitmap(OtfCmd_120_Create_primitive_Solid_Bitmap* cmd) {
-debug_log("@%i\n",__LINE__);
     if (!validate_id(cmd->m_id)) return NULL;
-debug_log("@%i\n",__LINE__);
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
-debug_log("@%i\n",__LINE__);
 
     cmd->m_flags |= PRIM_FLAGS_ALL_SAME;
-debug_log("@%i\n",__LINE__);
     auto prim = new DiBitmap(cmd->m_w, cmd->m_h, cmd->m_flags);
-debug_log("@%i\n",__LINE__);
 
     finish_create(cmd->m_id, prim, parent_prim);
-debug_log("@%i\n",__LINE__);
     return prim;
 }
 

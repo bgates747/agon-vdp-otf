@@ -328,14 +328,14 @@ void DiPrimitive::generate_code_for_positions(EspFixups& fixups, uint32_t width,
     generate_code_for_draw_area(fixups, pos, width, height, hidden, visible);
   }
 
-  debug_log("total paint ptrs %u\n", m_paint_ptrs.size());
+  //debug_log("total paint ptrs %u\n", m_paint_ptrs.size());
 
   // Convert function offsets to function pointers.
-  debug_log("paint fcns at %X\n", m_paint_code.get_real_address(0));
+  //debug_log("paint fcns at %X\n", m_paint_code.get_real_address(0));
   for (auto ptr = m_paint_ptrs.begin(); ptr != m_paint_ptrs.end(); ptr++) {
-    debug_log("fcn offset %X --> fcn ptr ", ptr->m_address);
+    //debug_log("fcn offset %X --> fcn ptr ", ptr->m_address);
     ptr->m_address = m_paint_code.get_real_address(ptr->m_address);
-    debug_log("%X\n", ptr->m_address);
+    //debug_log("%X\n", ptr->m_address);
   }
 }
 
