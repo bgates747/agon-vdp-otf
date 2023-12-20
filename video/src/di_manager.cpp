@@ -807,6 +807,9 @@ void IRAM_ATTR DiManager::loop() {
         }
       }
 
+      do_keyboard();
+      do_mouse();
+
       loop_state = LoopState::ProcessingIncomingData;
       
     } else if (loop_state == LoopState::ProcessingIncomingData) {
@@ -832,12 +835,9 @@ void IRAM_ATTR DiManager::loop() {
     } else {
       // LoopState::NearNewFrameStart
       // Keep storing incoming characters
-      if (stream_byte_available() > 0) {
-        store_character(stream_read_byte());
-      }
-
-      do_keyboard();
-      do_mouse();
+      //if (stream_byte_available() > 0) {
+      //  store_character(stream_read_byte());
+      //}
     }
   }
 }
