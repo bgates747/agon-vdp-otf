@@ -79,15 +79,16 @@ void DiTileMap::delete_instructions() {
 }
 
 void DiTileMap::generate_instructions() {
-  for (auto bitmap = m_id_to_bitmap_map.begin(); bitmap != m_id_to_bitmap_map.end(); bitmap++) {
-    bitmap->second->generate_instructions(m_draw_x, 0, m_tile_width);
-  }
+  //for (auto bitmap = m_id_to_bitmap_map.begin(); bitmap != m_id_to_bitmap_map.end(); bitmap++) {
+  //  bitmap->second->generate_instructions(m_draw_x, 0, m_tile_width);
+  //}
 }
 
-DiTileBitmap* DiTileMap::create_bitmap(DiTileBitmapID bm_id) {
+DiBitmap* DiTileMap::create_bitmap(DiTileBitmapID bm_id) {
   auto bitmap_item = m_id_to_bitmap_map.find(bm_id);
   if (bitmap_item == m_id_to_bitmap_map.end()) {
-    auto bitmap = new DiPaintableTileBitmap(bm_id, m_tile_width, m_tile_height, m_flags);
+    auto bitmap = new DiBitmap(m_tile_width, m_tile_height, m_flags);
+    bitmap->set_custom(bm_id);
     m_id_to_bitmap_map[bm_id] = bitmap;
     return bitmap;
   } else {
@@ -135,7 +136,7 @@ DiTileBitmapID DiTileMap::get_tile(int16_t column, int16_t row) {
     auto cb_map = row_item->second;
     auto bitmap_item = cb_map->find(column);
     if (bitmap_item != cb_map->end()) {
-      return bitmap_item->second->get_id();
+      return bitmap_item->second->get_custom();
     }
   }
   return 0;
@@ -160,7 +161,7 @@ void IRAM_ATTR DiTileMap::paint(volatile uint32_t* p_scan_line, uint32_t line_in
         auto bitmap_item = cb_map->find(column);
         if (bitmap_item != cb_map->end()) {
           auto bitmap = bitmap_item->second;
-          bitmap->paint(this, fcn_index, p_scan_line, y_offset_within_tile, draw_x, src_pixels_offset);
+          //bitmap->paint(this, fcn_index, p_scan_line, y_offset_within_tile, draw_x, src_pixels_offset);
         }
         draw_x += m_tile_width;
       }

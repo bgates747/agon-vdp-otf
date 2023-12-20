@@ -2364,40 +2364,40 @@ DiBitmap* DiManager::create_reference_transparent_bitmap(uint16_t id, uint16_t p
     return prim;
 }
 
-DiTileBitmap* DiManager::create_solid_bitmap_for_tile_array(uint16_t id, uint16_t bm_id) {
+DiBitmap* DiManager::create_solid_bitmap_for_tile_array(uint16_t id, uint16_t bm_id) {
     DiTileArray* prim; if (!(prim = (DiTileArray*)get_safe_primitive(id))) return NULL;
     auto bitmap = prim->create_bitmap(bm_id);
     return bitmap;
 }
 
-DiTileBitmap* DiManager::create_masked_bitmap_for_tile_array(uint16_t id, uint16_t bm_id, uint8_t color) {
-    DiTileArray* prim; if (!(prim = (DiTileArray*)get_safe_primitive(id))) return NULL;
-    auto bitmap = prim->create_bitmap(bm_id);
-    bitmap->set_transparent_color(color);
-    return bitmap;
-}
-
-DiTileBitmap* DiManager::create_transparent_bitmap_for_tile_array(uint16_t id, uint16_t bm_id, uint8_t color) {
+DiBitmap* DiManager::create_masked_bitmap_for_tile_array(uint16_t id, uint16_t bm_id, uint8_t color) {
     DiTileArray* prim; if (!(prim = (DiTileArray*)get_safe_primitive(id))) return NULL;
     auto bitmap = prim->create_bitmap(bm_id);
     bitmap->set_transparent_color(color);
     return bitmap;
 }
 
-DiTileBitmap* DiManager::create_solid_bitmap_for_tile_map(uint16_t id, uint16_t bm_id) {
+DiBitmap* DiManager::create_transparent_bitmap_for_tile_array(uint16_t id, uint16_t bm_id, uint8_t color) {
+    DiTileArray* prim; if (!(prim = (DiTileArray*)get_safe_primitive(id))) return NULL;
+    auto bitmap = prim->create_bitmap(bm_id);
+    bitmap->set_transparent_color(color);
+    return bitmap;
+}
+
+DiBitmap* DiManager::create_solid_bitmap_for_tile_map(uint16_t id, uint16_t bm_id) {
     DiTileMap* prim; if (!(prim = (DiTileMap*)get_safe_primitive(id))) return NULL;
     auto bitmap = prim->create_bitmap(bm_id);
     return bitmap;
 }
 
-DiTileBitmap* DiManager::create_masked_bitmap_for_tile_map(uint16_t id, uint16_t bm_id, uint8_t color) {
+DiBitmap* DiManager::create_masked_bitmap_for_tile_map(uint16_t id, uint16_t bm_id, uint8_t color) {
     DiTileMap* prim; if (!(prim = (DiTileMap*)get_safe_primitive(id))) return NULL;
     auto bitmap = prim->create_bitmap(bm_id);
     bitmap->set_transparent_color(color);
     return bitmap;
 }
 
-DiTileBitmap* DiManager::create_transparent_bitmap_for_tile_map(uint16_t id, uint16_t bm_id, uint8_t color) {
+DiBitmap* DiManager::create_transparent_bitmap_for_tile_map(uint16_t id, uint16_t bm_id, uint8_t color) {
     DiTileMap* prim; if (!(prim = (DiTileMap*)get_safe_primitive(id))) return NULL;
     auto bitmap = prim->create_bitmap(bm_id);
     bitmap->set_transparent_color(color);

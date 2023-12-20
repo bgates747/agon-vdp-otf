@@ -24,12 +24,12 @@ void otf(void * pvParameters) {
 	di_manager = new DiManager();
 	di_manager->create_root();
 
-	//auto text_area = di_manager->create_text_area(1, ROOT_PRIMITIVE_ID, PRIM_FLAGS_DEFAULT, 0, 0, 100, 75, fabgl::FONT_AGON_DATA);
-	//text_area->define_character_range(0x20, 0x7E, PIXEL_ALPHA_100_MASK|0x05, PIXEL_ALPHA_100_MASK|0x00);
-	//text_area->clear_screen();
-	//di_manager->generate_code_for_primitive(1);
+	auto text_area = di_manager->create_text_area(1, ROOT_PRIMITIVE_ID, PRIM_FLAGS_DEFAULT, 0, 0, 100, 75, fabgl::FONT_AGON_DATA);
+	text_area->define_character_range(0x20, 0x7E, PIXEL_ALPHA_100_MASK|0x05, PIXEL_ALPHA_100_MASK|0x00);
+	text_area->clear_screen();
+	di_manager->generate_code_for_primitive(1);
 
-    {
+    /*{
 		OtfCmd_41_Create_primitive_Solid_Rectangle cmd;
 		cmd.m_color = 0xC0;
 		cmd.m_flags = PRIM_FLAGS_DEFAULT;
@@ -41,9 +41,9 @@ void otf(void * pvParameters) {
 		cmd.m_y = 0;
 		auto rect = di_manager->create_solid_rectangle(&cmd);
 		di_manager->generate_code_for_primitive(cmd.m_id);
-	}
+	}*/
 
-	OtfCmd_140_Create_primitive_Group gcmd;
+	/*OtfCmd_140_Create_primitive_Group gcmd;
 	gcmd.m_flags = PRIM_FLAGS_DEFAULT;
 	gcmd.m_w = 40;
 	gcmd.m_h = 30;
@@ -52,9 +52,9 @@ void otf(void * pvParameters) {
 	gcmd.m_x = 400-20;
 	gcmd.m_y = 300-15;
 	di_manager->create_primitive_group(&gcmd);
-	di_manager->generate_code_for_primitive(gcmd.m_id);
+	di_manager->generate_code_for_primitive(gcmd.m_id);*/
 
-    {
+    /*{
 		OtfCmd_41_Create_primitive_Solid_Rectangle cmd;
 		cmd.m_color = 0xD5;
 		cmd.m_flags = PRIM_FLAGS_DEFAULT;
@@ -66,7 +66,7 @@ void otf(void * pvParameters) {
 		cmd.m_y = 0;
 		auto rect = di_manager->create_solid_rectangle(&cmd);
 		di_manager->generate_code_for_primitive(cmd.m_id);
-	}
+	}*/
 
 /*
 	cmd.m_color = 0xD0;
@@ -83,7 +83,7 @@ void otf(void * pvParameters) {
 	auto dot = di_manager->create_point(10, 0, PRIM_FLAGS_DEFAULT, 400, 300, 0xFF);
 	di_manager->generate_code_for_primitive(dot->get_id());
 */
-    {
+    /*{
 		OtfCmd_20_Create_primitive_Line cmd;
 		cmd.m_color = 0xC1;
 		cmd.m_flags = PRIM_FLAGS_DEFAULT|PRIM_FLAG_H_SCROLL_1|PRIM_FLAGS_RIGHT_EDGE;
@@ -96,7 +96,7 @@ void otf(void * pvParameters) {
 		auto line = di_manager->create_line(&cmd);
 		di_manager->generate_code_for_primitive(cmd.m_id);
 		di_manager->move_primitive_absolute(cmd.m_id, 35, 15);
-	}
+	}*/
 
 	/*{
 		OtfCmd_30_Create_primitive_Triangle_Outline cmd;
@@ -114,7 +114,7 @@ void otf(void * pvParameters) {
 		di_manager->generate_code_for_primitive(cmd.m_id);
 	}*/
 
-	{
+	/*{
 		OtfCmd_120_Create_primitive_Solid_Bitmap cmd;
 		cmd.m_flags = PRIM_FLAGS_DEFAULT|PRIM_FLAG_H_SCROLL_1|PRIM_FLAGS_RIGHT_EDGE;
 		cmd.m_id = 11;
@@ -129,7 +129,7 @@ void otf(void * pvParameters) {
 		}
 		di_manager->generate_code_for_primitive(cmd.m_id);
 		di_manager->move_primitive_absolute(cmd.m_id, 37, 20);
-	}
+	}*/
 
 	debug_log("Running OTF manager...\r\n");
 	di_manager->run();

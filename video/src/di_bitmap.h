@@ -74,6 +74,9 @@ class DiBitmap : public DiPrimitive {
    
   virtual void paint(volatile uint32_t* p_scan_line, uint32_t line_index);
 
+  // Get a pointer to the pixel data.
+  inline uint32_t* get_pixels() { return m_pixels; }
+
   protected:
   // Set a single pixel with an adjusted color value.
   void set_pixel(int32_t x, int32_t y, uint8_t color);

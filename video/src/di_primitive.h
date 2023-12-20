@@ -111,12 +111,14 @@ class DiPrimitive {
   inline DiPrimitive* get_next_sibling() { return m_next_sibling; }
   inline uint8_t get_color() { return (uint8_t)m_color; }
   inline uint32_t get_color32() { return m_color; }
+  inline uint32_t get_custom() { return m_custom; }
 
   // Sets some data members.
   inline void set_flags(uint16_t flags) { m_flags = flags; }
   inline void add_flags(uint16_t flags) { m_flags |= flags; }
   inline void remove_flags(uint16_t flags) { m_flags &= ~flags; }
   inline void set_color32(uint32_t color) { m_color = color; }
+  inline void set_custom(uint32_t custom) { m_custom = custom; }
 
   // Clear the pointers to children.
   void clear_child_ptrs();
@@ -147,7 +149,6 @@ class DiPrimitive {
   int32_t   m_rel_dy;       // auto-delta-y as a 16-bit fraction, relative to the parent
   int32_t   m_auto_moves;   // number of times to move this primitive automatically
   int32_t   m_abs_x;        // upper-left x coordinate, relative to the screen
-  int32_t   m_abs_x_word;   // m_abs_x & 0xFFFFFFFC (word boundary)
   int32_t   m_abs_y;        // upper-left y coordinate, relative to the screen
   int32_t   m_width;        // coverage width in pixels
   int32_t   m_height;       // coverage height in pixels
@@ -157,13 +158,8 @@ class DiPrimitive {
   int32_t   m_draw_y;       // max of m_abs_y and m_view_y
   int32_t   m_draw_x_extent; // min of m_x_extent and m_view_x_extent
   int32_t   m_draw_y_extent; // min of m_y_extent and m_view_y_extent
-  int32_t   m_draw_left_trunc; // difference of m_draw_x - m_abs_x
-  int32_t   m_draw_right_trunc; // difference of m_x_extent - m_draw_x_extent
-  int32_t   m_draw_y_offset; // difference of m_draw_y - m_abs_y
-  int32_t   m_draw_x_word;  // m_draw_x & 0xFFFFFFFC (word boundary)
-  int32_t   m_draw_x_word_offset; // difference of m_draw_x_word - m_abs_x_word
   uint32_t  m_color;        // applies to some primitives, but not to others
-  uint32_t  m_future32;     // for potential future use
+  uint32_t  m_custom;       // for custom use
   DiPrimitive* m_parent;       // id of parent primitive
   DiPrimitive* m_first_child;  // id of first child primitive
   DiPrimitive* m_last_child;   // id of last child primitive

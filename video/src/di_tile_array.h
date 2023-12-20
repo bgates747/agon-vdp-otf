@@ -30,14 +30,15 @@
 #pragma once
 #include "di_primitive.h"
 #include "di_code.h"
-#include "di_tile_bitmap.h"
+#include "di_bitmap.h"
 #include <map>
 
 typedef uint32_t DiRowColumn;
 
 #ifndef _DiTileBitmapID
 #define _DiTileBitmapID
-typedef std::map<DiTileBitmapID, DiTileBitmap*> DiTileIdToBitmapMap;
+typedef uint32_t DiTileBitmapID;
+typedef std::map<DiTileBitmapID, DiBitmap*> DiTileIdToBitmapMap;
 #endif
 
 class DiTileArray: public DiPrimitive {
@@ -54,7 +55,7 @@ class DiTileArray: public DiPrimitive {
   virtual void generate_instructions();
 
   // Create the array of pixels for the tile bitmap.
-  DiTileBitmap* create_bitmap(DiTileBitmapID bm_id);
+  DiBitmap* create_bitmap(DiTileBitmapID bm_id);
 
   // Save the pixel value of a particular pixel in a specific tile bitmap. A tile bitmap
   // may appear many times on the screen, based on the use of the bitmap ID.
@@ -92,5 +93,5 @@ class DiTileArray: public DiPrimitive {
   uint32_t  m_tile_height;          // height of 1 tile in pixels
   uint8_t   m_transparent_color;    // value indicating not to draw the pixel
   DiTileIdToBitmapMap m_id_to_bitmap_map; // caches bitmaps based on bitmap ID
-  uint32_t** m_tile_pixels;         // 2D array of tile bitmap IDs
+  uint32_t** m_tile_pixels;         // 2D array of addresses of tile bitmap pixels
 };

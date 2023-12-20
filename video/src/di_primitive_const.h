@@ -26,6 +26,6 @@
 
 // Offsets into DiPrimitive base class structure:
 
-#define FLD_color   104
-#define FLD_abs_y   48
-#define FLD_draw_x  68
+#define FLD_color   80 // 20 * 4
+#define FLD_abs_y   44 // 11 * 4
+#define FLD_draw_x  64 // 16 * 4

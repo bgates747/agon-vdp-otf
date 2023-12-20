@@ -114,7 +114,7 @@ void IRAM_ATTR DiPrimitive::set_size(uint32_t width, uint32_t height) {
 extern void debug_log(const char* fmt, ...);
 void IRAM_ATTR DiPrimitive::compute_absolute_geometry(
   int32_t view_x, int32_t view_y, int32_t view_x_extent, int32_t view_y_extent) {
-  debug_log("Compute %hu: vx %i vy %i vxe %i vye %i\n", m_id, view_x, view_y, view_x_extent, view_y_extent);
+  //debug_log("Compute %hu: vx %i vy %i vxe %i vye %i\n", m_id, view_x, view_y, view_x_extent, view_y_extent);
   if (m_flags & PRIM_FLAG_ABSOLUTE) {
     m_abs_x = m_rel_x;
     m_abs_y = m_rel_y;
@@ -143,17 +143,10 @@ void IRAM_ATTR DiPrimitive::compute_absolute_geometry(
   m_draw_x_extent = MIN(m_x_extent, m_view_x_extent);
   m_draw_y_extent = MIN(m_y_extent, m_view_y_extent);
 
-  m_abs_x_word = m_abs_x & 0xFFFFFFFC;
-  m_draw_left_trunc = m_draw_x - m_abs_x;
-  m_draw_y_offset = m_draw_y - m_abs_y;
-  m_draw_x_word = m_draw_x & 0xFFFFFFFC;
-  m_draw_x_word_offset = m_draw_x_word - m_abs_x_word;
-
-  if (m_id>2) debug_log(" GEO id %hu rel(%i,%i) abs(%i,%i), ext(%i,%i), w=%hu, h=%hu, d(%i,%i), de(%i,%i), aw=%i, dxo=%i, dyo=%i, dxw=%i, dxwo=%o\n",
+  if (m_id>2) debug_log(" GEO id %hu rel(%i,%i) abs(%i,%i), ext(%i,%i), w=%hu, h=%hu, d(%i,%i), de(%i,%i)\n",
     m_id, m_rel_x, m_rel_y, m_abs_x, m_abs_y,
     m_x_extent, m_y_extent, m_width, m_height,
-    m_draw_x, m_draw_y, m_draw_x_extent, m_draw_y_extent,
-    m_abs_x_word, m_draw_left_trunc, m_draw_y_offset, m_draw_x_word, m_draw_x_word_offset);
+    m_draw_x, m_draw_y, m_draw_x_extent, m_draw_y_extent);
 
   if (m_paint_ptrs.size()) {
     set_current_paint_pointer();
@@ -348,7 +341,7 @@ void DiPrimitive::generate_code_for_positions(EspFixups& fixups, uint32_t width,
 
 void DiPrimitive::set_current_paint_pointer(uint32_t width, uint32_t height,
   uint32_t left_hidden, uint32_t right_hidden) {
-  debug_log("set_current_paint_pointer(w%hu ht%hu lf%hu rt%hu)\n", width, height, left_hidden, right_hidden);
+  //debug_log("set_current_paint_pointer(w%hu ht%hu lf%hu rt%hu)\n", width, height, left_hidden, right_hidden);
   uint32_t index = 0;
   uint32_t pos = m_abs_x & 3;
 
@@ -399,7 +392,7 @@ void DiPrimitive::set_current_paint_pointer(uint32_t width, uint32_t height,
   } while (false);
 
   m_cur_paint_ptr = m_paint_ptrs[index];
-  debug_log("cur index %u, ptr %X\n", index, m_cur_paint_ptr.m_address);
+  //debug_log("cur index %u, ptr %X\n", index, m_cur_paint_ptr.m_address);
 }
 
 void DiPrimitive::set_current_paint_pointer(uint32_t width, uint32_t height) {
