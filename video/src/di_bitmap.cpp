@@ -32,7 +32,7 @@
 #include "di_bitmap.h"
 #include "esp_heap_caps.h"
 #include <cstring>
-//extern void debug_log(const char* fmt, ...);
+extern void debug_log(const char* fmt, ...);
 
 DiBitmap::DiBitmap(uint32_t width, uint32_t height, uint16_t flags) : DiPrimitive(flags) {
   //debug_log(" @%i ",__LINE__);
@@ -129,12 +129,10 @@ void DiBitmap::set_pixel(int32_t x, int32_t y, uint8_t color) {
 
 void DiBitmap::generate_instructions() {
   delete_instructions();
-  if (m_flags & PRIM_FLAGS_CAN_DRAW) {
-    EspFixups fixups;
-    generate_code_for_positions(fixups, m_width, m_height);
-    m_paint_code.do_fixups(fixups);
-    set_current_paint_pointer(m_width, m_height);
-  }
+  EspFixups fixups;
+  generate_code_for_positions(fixups, m_width, m_height);
+  m_paint_code.do_fixups(fixups);
+  set_current_paint_pointer(m_width, m_height);
 }
 
 void DiBitmap::generate_code_for_left_edge(EspFixups& fixups, uint32_t x_offset, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {
@@ -156,5 +154,9 @@ void DiBitmap::generate_code_for_draw_area(EspFixups& fixups, uint32_t x_offset,
 }
 
 void IRAM_ATTR DiBitmap::paint(volatile uint32_t* p_scan_line, uint32_t line_index) {
-  (*(m_cur_paint_ptr.m_a5a6))(this, p_scan_line, line_index, m_abs_x, (uint32_t)m_visible_start);
+  //debug_log("id %hu, p %X\n", m_id, m_cur_paint_ptr.m_address);
+  if (!m_cur_paint_ptr.m_address) return;
+  auto line_offset = line_index - m_abs_y;
+  uint32_t pixels = (uint32_t)(m_visible_start + (m_words_per_line * line_offset));
+  (*(m_cur_paint_ptr.m_a5a6))(this, p_scan_line, line_index, m_abs_x, pixels);
 }

@@ -41,12 +41,10 @@ void DiHorizontalLine::make_line(int32_t x, int32_t y, uint32_t width, uint8_t c
 
 void DiHorizontalLine::generate_instructions() {
   delete_instructions();
-  if (m_flags & PRIM_FLAGS_CAN_DRAW) {
-    EspFixups fixups;
-    generate_code_for_positions(fixups, m_width, m_height);
-    m_paint_code.do_fixups(fixups);
-    set_current_paint_pointer(m_width, m_height);
-  }
+  EspFixups fixups;
+  generate_code_for_positions(fixups, m_width, m_height);
+  m_paint_code.do_fixups(fixups);
+  set_current_paint_pointer(m_width, m_height);
 }
 
 void DiHorizontalLine::generate_code_for_left_edge(EspFixups& fixups, uint32_t x_offset, uint32_t width, uint32_t height, uint32_t hidden, uint32_t visible) {

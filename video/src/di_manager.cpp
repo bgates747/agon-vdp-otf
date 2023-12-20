@@ -58,6 +58,8 @@ extern void sendTime();
 extern void sendKeyboardState();
 extern void sendPlayNote(int channel, int success);
 extern void setKeyboardLayout(uint8_t region);
+extern void do_keyboard();
+extern void do_mouse();
 extern bool initialised;
 extern bool logicalCoords;
 extern bool cursorEnabled;
@@ -833,6 +835,9 @@ void IRAM_ATTR DiManager::loop() {
       if (stream_byte_available() > 0) {
         store_character(stream_read_byte());
       }
+
+      do_keyboard();
+      do_mouse();
     }
   }
 }
@@ -2259,10 +2264,10 @@ void DiManager::delete_primitive(uint16_t id) {
 
 void DiManager::generate_code_for_primitive(uint16_t id) {
   DiPrimitive* prim; if (!(prim = (DiPrimitive*)get_safe_primitive(id))) return;
-  debug_log("\nGEN CODE FOR %hu at x %i y %i dx %i dy %i, flags %04hX\n", id, prim->get_absolute_x(), prim->get_absolute_y(), prim->get_draw_x(), prim->get_draw_y(), prim->get_flags());
+  //debug_log("\nGEN CODE FOR %hu at x %i y %i dx %i dy %i, flags %04hX\n", id, prim->get_absolute_x(), prim->get_absolute_y(), prim->get_draw_x(), prim->get_draw_y(), prim->get_flags());
   prim->delete_instructions();
   prim->generate_instructions();
-  debug_log("\n gen end\n");
+  //debug_log("\n gen end\n");
 }
 
 DiPrimitive* DiManager::create_rectangle_outline(OtfCmd_40_Create_primitive_Rectangle_Outline* cmd) {
@@ -2299,13 +2304,19 @@ DiPrimitive* DiManager::create_solid_ellipse(uint16_t id, uint16_t parent, uint1
 }
 
 DiBitmap* DiManager::create_solid_bitmap(OtfCmd_120_Create_primitive_Solid_Bitmap* cmd) {
+debug_log("@%i\n",__LINE__);
     if (!validate_id(cmd->m_id)) return NULL;
+debug_log("@%i\n",__LINE__);
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
+debug_log("@%i\n",__LINE__);
 
     cmd->m_flags |= PRIM_FLAGS_ALL_SAME;
+debug_log("@%i\n",__LINE__);
     auto prim = new DiBitmap(cmd->m_w, cmd->m_h, cmd->m_flags);
+debug_log("@%i\n",__LINE__);
 
     finish_create(cmd->m_id, prim, parent_prim);
+debug_log("@%i\n",__LINE__);
     return prim;
 }
 

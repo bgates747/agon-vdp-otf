@@ -328,12 +328,10 @@ void DiGeneralLine::make_solid_quad_strip(
 void DiGeneralLine::generate_instructions() {
   debug_log(" DiGeneralLine::generate_instructions: flags %04hX\n", m_flags);
   delete_instructions();
-  if (m_flags & PRIM_FLAGS_CAN_DRAW) {
-    EspFixups fixups;
-    generate_code_for_positions(fixups, m_width, m_height);
-    m_paint_code.do_fixups(fixups);
-    set_current_paint_pointer(m_width, m_height);
-  }
+  EspFixups fixups;
+  generate_code_for_positions(fixups, m_width, m_height);
+  m_paint_code.do_fixups(fixups);
+  set_current_paint_pointer(m_width, m_height);
 }
 
 void DiGeneralLine::create_functions() {

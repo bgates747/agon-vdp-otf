@@ -37,15 +37,13 @@ DiSetPixel::DiSetPixel(uint16_t flags, int32_t x, int32_t y, uint8_t color) : Di
 
 void DiSetPixel::generate_instructions() {
   delete_instructions();
-  if (m_flags & PRIM_FLAGS_CAN_DRAW) {
-    EspFixups fixups;
-    uint16_t width = 1;
-    DiLineSections sections;
-    sections.add_piece(1, 0, 1, false);
-    auto x_offset = m_abs_x & 3;
-    m_paint_code.draw_line(fixups, x_offset, 0, width, &sections, m_flags, m_opaqueness, true);
-    m_paint_code.do_fixups(fixups);
-  }
+  EspFixups fixups;
+  uint16_t width = 1;
+  DiLineSections sections;
+  sections.add_piece(1, 0, 1, false);
+  auto x_offset = m_abs_x & 3;
+  m_paint_code.draw_line(fixups, x_offset, 0, width, &sections, m_flags, m_opaqueness, true);
+  m_paint_code.do_fixups(fixups);
 }
 
 void IRAM_ATTR DiSetPixel::paint(volatile uint32_t* p_scan_line, uint32_t line_index) {

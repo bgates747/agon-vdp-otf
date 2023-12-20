@@ -143,10 +143,10 @@ void IRAM_ATTR DiPrimitive::compute_absolute_geometry(
   m_draw_x_extent = MIN(m_x_extent, m_view_x_extent);
   m_draw_y_extent = MIN(m_y_extent, m_view_y_extent);
 
-  if (m_id>2) debug_log(" GEO id %hu rel(%i,%i) abs(%i,%i), ext(%i,%i), w=%hu, h=%hu, d(%i,%i), de(%i,%i)\n",
+  /*if (m_id>2) debug_log(" GEO id %hu rel(%i,%i) abs(%i,%i), ext(%i,%i), w=%hu, h=%hu, d(%i,%i), de(%i,%i)\n",
     m_id, m_rel_x, m_rel_y, m_abs_x, m_abs_y,
     m_x_extent, m_y_extent, m_width, m_height,
-    m_draw_x, m_draw_y, m_draw_x_extent, m_draw_y_extent);
+    m_draw_x, m_draw_y, m_draw_x_extent, m_draw_y_extent);*/
 
   if (m_paint_ptrs.size()) {
     set_current_paint_pointer();

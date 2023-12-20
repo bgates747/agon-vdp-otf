@@ -230,14 +230,14 @@ void DiLineDetails::make_triangle_outline(uint8_t id, int16_t x1, int16_t y1, in
   make_line(id, x2, y2, x3, y3, false);
   make_line(id, x3, y3, x1, y1, false);
 
-  debug_log("\n%hi,%hi to %hi,%hi\n", m_min_x, m_min_y, m_max_x, m_max_y);
+  //debug_log("\n%hi,%hi to %hi,%hi\n", m_min_x, m_min_y, m_max_x, m_max_y);
   auto y = m_min_y;
   for (auto sections = m_sections.begin(); sections != m_sections.end(); sections++) {
-    debug_log(" -- y %hi --\n", y);
+    //debug_log(" -- y %hi --\n", y);
     for (auto piece = sections->m_pieces.begin();
           piece != sections->m_pieces.end();
           piece++) {
-      debug_log("  %hi,%hi %hu\n", piece->m_x, y, piece->m_width);
+      //debug_log("  %hi,%hi %hu\n", piece->m_x, y, piece->m_width);
     }
     y++;
   }
@@ -256,17 +256,17 @@ void DiLineDetails::make_quad_outline(uint8_t id, int16_t x1, int16_t y1, int16_
   make_line(id, x3, y3, x4, y4, false);
   make_line(id, x4, y4, x1, y1, false);
 
-  //debug_log("\n%hi,%hi to %hi,%hi\n", m_min_x, m_min_y, m_max_x, m_max_y);
+  /*debug_log("\n%hi,%hi to %hi,%hi\n", m_min_x, m_min_y, m_max_x, m_max_y);
   auto y = m_min_y;
   for (auto sections = m_sections.begin(); sections != m_sections.end(); sections++) {
-    //debug_log(" -- y %hi --\n", y);
+    debug_log(" -- y %hi --\n", y);
     for (auto piece = sections->m_pieces.begin();
           piece != sections->m_pieces.end();
           piece++) {
-      //debug_log("  %hi,%hi %hu\n", piece->m_x, y, piece->m_width);
+      debug_log("  %hi,%hi %hu\n", piece->m_x, y, piece->m_width);
     }
     y++;
-  }
+  }*/
 }
 
 void DiLineDetails::make_solid_quad(uint8_t id, int16_t x1, int16_t y1, int16_t x2, int16_t y2,
