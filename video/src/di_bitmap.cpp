@@ -32,7 +32,7 @@
 #include "di_bitmap.h"
 #include "esp_heap_caps.h"
 #include <cstring>
-extern void debug_log(const char* fmt, ...);
+//extern void debug_log(const char* fmt, ...);
 
 DiBitmap::DiBitmap(uint32_t width, uint32_t height, uint16_t flags) : DiPrimitive(flags) {
   //debug_log(" @%i ",__LINE__);

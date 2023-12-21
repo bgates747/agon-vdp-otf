@@ -24,7 +24,7 @@
 #include "di_line_pieces.h"
 #include <cstddef>
 #include <string.h>
-extern void debug_log(const char* fmt, ...);
+//extern void debug_log(const char* fmt, ...);
 
 typedef union {
   int64_t value64;
