@@ -207,10 +207,10 @@ class DiManager {
     protected:
     // Structures used to support DMA for video.
     volatile lldesc_t *         m_dma_descriptor; // [DMA_TOTAL_DESCR]
-    volatile DiVideoBuffer *    m_video_buffer; // [NUM_ACTIVE_BUFFERS]
-    volatile DiVideoScanLine *  m_front_porch;
-    volatile DiVideoBuffer *    m_vertical_sync;
-    volatile DiVideoScanLine *  m_back_porch;
+    DiVideoBuffer *             m_video_buffer; // [NUM_ACTIVE_BUFFERS]
+    DiVideoScanLine *           m_front_porch;
+    DiVideoBuffer *             m_vertical_sync;
+    DiVideoScanLine *           m_back_porch;
     DiVoidCallback              m_on_vertical_blank_cb;
     uint32_t                    m_next_buffer_write;
     uint32_t                    m_next_buffer_read;
@@ -222,7 +222,7 @@ class DiManager {
     uint8_t                     m_incoming_data[INCOMING_DATA_BUFFER_SIZE];
     std::vector<uint8_t>        m_incoming_command;
     DiPrimitive *               m_primitives[MAX_NUM_PRIMITIVES]; // Indexes of array are primitive IDs
-    std::vector<DiPrimitive*>   m_groups[ACT_LINES]; // Vertical scan groups (for optimizing paint calls)
+    std::vector<DiPrimitive*>*  m_groups; // Vertical scan groups (for optimizing paint calls)
 
     // Setup the DMA stuff.
     void initialize();

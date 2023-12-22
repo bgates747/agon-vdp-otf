@@ -156,7 +156,7 @@ const T & tmin(const T & a, const T & b)
 //  MAX 7575757Hz - sdm0 = 0 sdm1 = 128 sdm2 = 8 o_div = 31
 void APLLCalcParams(double freq, APLLParams * params, uint8_t * a, uint8_t * b, double * out_freq, double * error)
 {
-  double FXTAL = DMA_CLOCK_FREQ;
+  double FXTAL = otf_video_params->m_dma_clock_freq;
 
   *error = 999999999;
 

@@ -59,42 +59,7 @@
 #define VGA_HSYNC_BIT  6
 #define VGA_VSYNC_BIT  7
 
-#define HSYNC_ON  (1<<VGA_HSYNC_BIT)
-#define HSYNC_OFF (0<<VGA_HSYNC_BIT)
-#define VSYNC_ON  (1<<VGA_VSYNC_BIT)
-#define VSYNC_OFF (0<<VGA_VSYNC_BIT)
-#define SYNCS_ON  (HSYNC_ON|VSYNC_ON)
-#define SYNCS_OFF (HSYNC_OFF|VSYNC_OFF)
-#define SYNCS_OFF_32  ((uint32_t)SYNCS_OFF)
-#define SYNCS_OFF_X4  ((SYNCS_OFF_32 << 24)|(SYNCS_OFF_32 << 16)|(SYNCS_OFF_32 << 8)|(SYNCS_OFF_32))
-
 #define MASK_RGB(r,g,b) (((r)<<VGA_RED_BIT)|((g)<<VGA_GREEN_BIT)|((b)<<VGA_BLUE_BIT))
-
-#define ACT_LINES     600   // visible lines
-#define VFP_LINES     1     // vertical front porch lines
-#define VS_LINES      4     // vertical sync lines
-#define VBP_LINES     23    // vertical back porch lines
-
-#define HFP_PIXELS    40    // horizontal front porch pixels
-#define HS_PIXELS     128   // horizontal sync pixels
-#define ACT_PIXELS    800   // visible pixels
-#define HBP_PIXELS    88    // horizontal back porch pixels
-
-#define DMA_CLOCK_FREQ ((uint32_t)40000000) // 40 MHz
-
-// Used by certain test code to show diamonds.
-#define CENTER_X            (ACT_PIXELS/2)
-#define CENTER_Y            (ACT_LINES/2)
-#define DIAMOND_SIZE        400
-#define HALF_DIAMOND_SIZE   (DIAMOND_SIZE/2)
-#define DIAMOND_START_LINE  (CENTER_Y-HALF_DIAMOND_SIZE)
-#define DIAMOND_END_LINE    (DIAMOND_START_LINE+DIAMOND_SIZE)
-
-#define SMALL_DIAMOND_SIZE  100
-#define HALF_SMALL_DIAMOND_SIZE (SMALL_DIAMOND_SIZE/2)
-
-#define TINY_DIAMOND_SIZE  50
-#define HALF_TINY_DIAMOND_SIZE (TINY_DIAMOND_SIZE/2)
 
 // This formula handles arranging the pixel bytes in the correct DMA order.
 // 0x12345678, normally stored as 78, 56, 34, 12, is sent as 34 12 78 56.
@@ -103,12 +68,6 @@
 // Used to control the few DMA scan line buffers.
 #define NUM_LINES_PER_BUFFER  2
 #define NUM_ACTIVE_BUFFERS    4 // must be a power of 2 and multiple of NUM_LINES_PER_BUFFER
-#define ACT_BUFFERS_WRITTEN   (ACT_LINES/NUM_LINES_PER_BUFFER)
-#define VS_BUFFERS_WRITTEN    (VS_LINES/NUM_LINES_PER_BUFFER)
-
-#define DMA_ACT_LINES         (NUM_ACTIVE_BUFFERS*NUM_LINES_PER_BUFFER)
-#define DMA_TOTAL_LINES       (ACT_LINES+VFP_LINES+VS_LINES+VBP_LINES)
-#define DMA_TOTAL_DESCR       (ACT_BUFFERS_WRITTEN+VFP_LINES+VS_BUFFERS_WRITTEN+VBP_LINES)
 
 // This number determines how many primitives may exist simultaneously.
 // Some may exist without being drawn. Primitive #0 is the root primitive,

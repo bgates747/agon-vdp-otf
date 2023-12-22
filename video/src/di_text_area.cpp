@@ -26,10 +26,11 @@
 
 #include "di_text_area.h"
 #include <cstring>
+#include "di_timing.h"
 
 DiTextArea::DiTextArea(uint32_t x, uint32_t y, uint8_t flags,
                         uint32_t columns, uint32_t rows, const uint8_t* font) :
-  DiTileArray(ACT_PIXELS, ACT_LINES, columns, rows, 8, 8, flags) {
+  DiTileArray(otf_video_params->m_active_pixels, otf_video_params->m_active_lines, columns, rows, 8, 8, flags) {
   m_flags |= PRIM_FLAGS_ALL_SAME;
   m_current_column = 0;
   m_current_row = 0;

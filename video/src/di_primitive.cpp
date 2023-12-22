@@ -25,6 +25,7 @@
 
 #include "di_primitive.h"
 #include <cstring>
+#include "di_timing.h"
 
 DiPrimitive::DiPrimitive(uint16_t flags) {
   // Zero out everything but the vtable pointer.
@@ -41,14 +42,14 @@ void DiPrimitive::init_root() {
   // is (e.g., solid rectangle, text area, tile map, etc.).
 
   m_flags = PRIM_FLAG_PAINT_KIDS|PRIM_FLAG_CLIP_KIDS;
-  m_width = ACT_PIXELS;
-  m_height = ACT_LINES;
-  m_x_extent = ACT_PIXELS;
-  m_y_extent = ACT_LINES;
-  m_view_x_extent = ACT_PIXELS;
-  m_view_y_extent = ACT_LINES;
-  m_draw_x_extent = ACT_PIXELS;
-  m_draw_y_extent = ACT_LINES;
+  m_width = otf_video_params->m_active_pixels;
+  m_height = otf_video_params->m_active_lines;
+  m_x_extent = otf_video_params->m_active_pixels;
+  m_y_extent = otf_video_params->m_active_lines;
+  m_view_x_extent = otf_video_params->m_active_pixels;
+  m_view_y_extent = otf_video_params->m_active_lines;
+  m_draw_x_extent = otf_video_params->m_active_pixels;
+  m_draw_y_extent = otf_video_params->m_active_lines;
 }
 
 void DiPrimitive::set_id(uint16_t id) {
@@ -134,8 +135,8 @@ void IRAM_ATTR DiPrimitive::compute_absolute_geometry(
   } else {
     m_view_x = 0;
     m_view_y = 0;
-    m_view_x_extent = ACT_PIXELS;
-    m_view_y_extent = ACT_LINES;
+    m_view_x_extent = otf_video_params->m_active_pixels;
+    m_view_y_extent = otf_video_params->m_active_lines;
   }
 
   m_draw_x = MAX(m_abs_x, m_view_x);

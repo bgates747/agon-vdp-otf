@@ -26,39 +26,45 @@
 // 
 
 #pragma once
-#include "di_constants.h"
+#include "di_timing.h"
 
 // Holds the DMA scan line buffer for a single visible line.
 class DiVideoScanLine {
   protected:
 
-  volatile uint32_t m_act[ACT_PIXELS/4];
-  volatile uint32_t m_hfp[HFP_PIXELS/4];
-  volatile uint32_t m_hs[HS_PIXELS/4];
-  volatile uint32_t m_hbp[HBP_PIXELS/4];
+  uint32_t* m_scan_line;
 
   public:
 
-  inline uint32_t get_buffer_size() volatile {
-    return sizeof(m_act) + sizeof(m_hfp) + sizeof(m_hs) + sizeof(m_hbp);
-  }
+  DiVideoScanLine();
+  ~DiVideoScanLine();
+
+  static uint32_t get_buffer_size();
+
+  volatile uint32_t* get_active_pixels();
+  volatile uint32_t* get_hfp_pixels();
+  volatile uint32_t* get_hs_pixels();
+  volatile uint32_t* get_hbp_pixels();
 
   inline volatile uint32_t * get_buffer_ptr() volatile {
-    return (volatile uint32_t *) m_act;
+    return (volatile uint32_t *) m_scan_line;
   }
 
-  void init_to_black() volatile;
+  void init_to_black();
 
-  void init_for_vsync() volatile;
+  void init_for_vsync();
 };
 
 // Holds the DMA scan line buffers for two visible lines.
 class DiVideoBuffer {
   protected:
 
-  volatile DiVideoScanLine m_line[NUM_LINES_PER_BUFFER];
+  DiVideoScanLine m_line[NUM_LINES_PER_BUFFER];
 
   public:
+
+  DiVideoBuffer();
+  ~DiVideoBuffer();
 
   inline int32_t get_buffer_size() volatile {
     return sizeof(m_line);
@@ -72,7 +78,7 @@ class DiVideoBuffer {
     return m_line[1].get_buffer_ptr();
   }
 
-  void init_to_black() volatile;
+  void init_to_black();
 
-  void init_for_vsync() volatile;
+  void init_for_vsync();
 };
