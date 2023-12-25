@@ -93,14 +93,19 @@ DiManager::DiManager() {
   m_groups = new std::vector<DiPrimitive*>[otf_video_params->m_active_lines];
 
   logicalCoords = false; // this mode always uses regular coordinates
+/*  m_incoming_command.push_back('A');
+  m_incoming_command.push_back('b');
+  m_incoming_command.push_back('C');
+  m_incoming_command.push_back('d');
+debug_log("@%i m_incoming_command size %u\n", __LINE__, m_incoming_command.size());*/
 }
 
 DiManager::~DiManager() {
-    clear();
-    delete [] m_groups;
+  clear();
+  delete [] m_groups;
 
-  if (m_video_buffer) {
-    delete [] m_video_buffer;
+  if (m_video_lines) {
+    delete m_video_lines;
   }
   if (m_front_porch) {
     delete m_front_porch;
@@ -124,41 +129,48 @@ void DiManager::create_root() {
 }
 
 void DiManager::initialize() {
+  debug_log("otf_video_params->m_dma_total_descr %u\n", otf_video_params->m_dma_total_descr);
   size_t new_size = (size_t)(sizeof(lldesc_t) * otf_video_params->m_dma_total_descr);
   void* p = heap_caps_malloc(new_size, MALLOC_CAP_32BIT|MALLOC_CAP_8BIT|MALLOC_CAP_DMA);
   m_dma_descriptor = (volatile lldesc_t *)p;
 
-  m_video_buffer = new DiVideoBuffer[NUM_ACTIVE_BUFFERS];
-  m_front_porch = new DiVideoScanLine;
-  m_vertical_sync = new DiVideoBuffer;
-  m_back_porch = new DiVideoScanLine;
-
+  m_video_lines = new DiVideoScanLine(NUM_ACTIVE_BUFFERS * NUM_LINES_PER_BUFFER);
+  m_front_porch = new DiVideoScanLine(1);
+  m_vertical_sync = new DiVideoScanLine(NUM_LINES_PER_BUFFER);
+  m_back_porch = new DiVideoScanLine(1);
+debug_log("@%i\n",__LINE__);
   // DMA buffer chain: ACT
   uint32_t descr_index = 0;
-  for (uint32_t i = 0; i < NUM_ACTIVE_BUFFERS; i++) {
-    m_video_buffer[i].init_to_black();
-  }
+  m_video_lines->init_to_black();
+debug_log("@%i\n",__LINE__);
   for (uint32_t i = 0; i < otf_video_params->m_active_buffers_written; i++) {
-    init_dma_descriptor(&m_video_buffer[i & (NUM_ACTIVE_BUFFERS - 1)], descr_index++);
+    init_dma_descriptor_pair(m_video_lines, (i & (NUM_ACTIVE_BUFFERS - 1)) * 2, descr_index++);
   }
+debug_log("@%i\n",__LINE__);
 
   // DMA buffer chain: VFP
   m_front_porch->init_to_black();
-  for (uint i = 0; i < otf_video_params->m_vbp_lines; i++) {
-    init_dma_descriptor(m_front_porch, descr_index++);
+debug_log("@%i\n",__LINE__);
+  for (uint i = 0; i < otf_video_params->m_vfp_lines; i++) {
+    init_dma_descriptor(m_front_porch, 0, descr_index++);
   }
+debug_log("@%i\n",__LINE__);
 
   // DMA buffer chain: VS
   m_vertical_sync->init_for_vsync();
+debug_log("@%i\n",__LINE__);
   for (uint i = 0; i < otf_video_params->m_vs_buffers_written; i++) {
-    init_dma_descriptor(m_vertical_sync, descr_index++);
+    init_dma_descriptor(m_vertical_sync, 0, descr_index++);
   }
+debug_log("@%i\n",__LINE__);
   
   // DMA buffer chain: VBP
   m_back_porch->init_to_black();
+debug_log("@%i\n",__LINE__);
   for (uint i = 0; i < otf_video_params->m_vbp_lines; i++) {
-    init_dma_descriptor(m_back_porch, descr_index++);
+    init_dma_descriptor(m_back_porch, 0, descr_index++);
   }
+debug_log("@%i di %u ------\n",__LINE__,descr_index);
 
   // GPIO configuration for color bits
   setupGPIO(GPIO_RED_0,   VGA_RED_BIT,   GPIO_MODE_OUTPUT);
@@ -223,13 +235,14 @@ void DiManager::initialize() {
   I2S1.lc_conf.ahbm_fifo_rst = 1;
   I2S1.lc_conf.ahbm_rst      = 0;
   I2S1.lc_conf.ahbm_fifo_rst = 0;
-
+debug_log("@%i aa %X ======\n",__LINE__,m_dma_descriptor);
   // Start DMA
   I2S1.lc_conf.val = I2S_OUT_DATA_BURST_EN;// | I2S_OUTDSCR_BURST_EN;
   I2S1.out_link.addr = (uint32_t)m_dma_descriptor;
   I2S1.int_clr.val = 0xFFFFFFFF;
   I2S1.out_link.start = 1;
   I2S1.conf.tx_start  = 1;
+debug_log("@%i\n",__LINE__);
 }
 
 void DiManager::clear() {
@@ -247,10 +260,6 @@ void DiManager::clear() {
     m_primitives[ROOT_PRIMITIVE_ID]->clear_child_ptrs();
 
     heap_caps_free((void*)m_dma_descriptor);
-    heap_caps_free((void*)m_video_buffer);
-    heap_caps_free((void*)m_front_porch);
-    heap_caps_free((void*)m_vertical_sync);
-    heap_caps_free((void*)m_back_porch);
 }
 
 void DiManager::add_primitive(DiPrimitive* prim, DiPrimitive* parent) {
@@ -749,6 +758,7 @@ void IRAM_ATTR DiManager::run() {
 }
 
 void IRAM_ATTR DiManager::loop() {
+//debug_log("@%i\n",__LINE__);
   uint32_t current_line_index = 0;//NUM_ACTIVE_BUFFERS * NUM_LINES_PER_BUFFER;
   uint32_t current_buffer_index = 0;
   LoopState loop_state = LoopState::NearNewFrameStart;
@@ -756,33 +766,47 @@ void IRAM_ATTR DiManager::loop() {
   while (true) {
     uint32_t descr_addr = (uint32_t) I2S1.out_link_dscr;
     uint32_t descr_index = (descr_addr - (uint32_t)m_dma_descriptor) / sizeof(lldesc_t);
+//debug_log("@%i da %X aa %X di %u\n",__LINE__,descr_addr,m_dma_descriptor,descr_index);
+if ((uint32_t)descr_addr == 0xc0c0c0c0) while(1);
     if (descr_index <= otf_video_params->m_active_buffers_written) {
       //uint32_t dma_line_index = descr_index * NUM_LINES_PER_BUFFER;
       uint32_t dma_buffer_index = descr_index & (NUM_ACTIVE_BUFFERS-1);
 
       // Draw enough lines to stay ahead of DMA.
       while (current_line_index < otf_video_params->m_active_lines && current_buffer_index != dma_buffer_index) {
-        volatile DiVideoBuffer* vbuf = &m_video_buffer[current_buffer_index];
-        draw_primitives(vbuf->get_buffer_ptr_0(), current_line_index);
-        draw_primitives(vbuf->get_buffer_ptr_1(), ++current_line_index);
+        auto buf_inx = current_line_index & (NUM_ACTIVE_BUFFERS * NUM_LINES_PER_BUFFER - 1);
+//debug_log("@%i di%u dbi%u cli%u bi%u\n",__LINE__,descr_index,dma_buffer_index,current_line_index,buf_inx);
+        draw_primitives(m_video_lines->get_buffer_ptr(buf_inx), current_line_index);
+//debug_log("@%i\n",__LINE__);
+        draw_primitives(m_video_lines->get_buffer_ptr(buf_inx+1), ++current_line_index);
+//debug_log("@%i\n",__LINE__);
         ++current_line_index;
         if (++current_buffer_index >= NUM_ACTIVE_BUFFERS) {
           current_buffer_index = 0;
         }
+//debug_log("@%i\n",__LINE__);
       }
 
+//debug_log("@%i\n",__LINE__);
       loop_state = LoopState::WritingActiveLines;
 
       while (stream_byte_available() > 0) {
         store_character(stream_read_byte());
       }
+//debug_log("@%i\n",__LINE__);
     } else if (loop_state == LoopState::WritingActiveLines) {
       // Timing just moved into the vertical blanking area.
+//debug_log("@%i\n",__LINE__);
       process_stored_characters();
+//debug_log("@%i\n",__LINE__);
       while (stream_byte_available() > 0) {
+//debug_log("@%i\n",__LINE__);
         process_character(stream_read_byte());
+//debug_log("@%i\n",__LINE__);
       }
+//debug_log("@%i\n",__LINE__);
       (*m_on_vertical_blank_cb)();
+//debug_log("@%i\n",__LINE__);
 
       if (cursorEnabled && m_cursor) {
         auto flags = m_cursor->get_flags();
@@ -811,30 +835,35 @@ void IRAM_ATTR DiManager::loop() {
         }
       }
 
+//debug_log("@%i\n",__LINE__);
       do_keyboard();
       do_mouse();
+//debug_log("@%i\n",__LINE__);
 
       loop_state = LoopState::ProcessingIncomingData;
       
     } else if (loop_state == LoopState::ProcessingIncomingData) {
-      if (descr_index >= otf_video_params->m_dma_total_descr - otf_video_params->m_active_lines - 1) {
+//debug_log("@%i di %u td %u\n",__LINE__,descr_index,otf_video_params->m_dma_total_descr);
+      if (descr_index >= otf_video_params->m_dma_total_descr - otf_video_params->m_dma_active_lines - 1) {
         // Prepare the start of the next frame.
         for (current_line_index = 0, current_buffer_index = 0;
               current_buffer_index < NUM_ACTIVE_BUFFERS;
-              current_line_index++, current_buffer_index++) {
-          volatile DiVideoBuffer* vbuf = &m_video_buffer[current_buffer_index];
-          draw_primitives(vbuf->get_buffer_ptr_0(), current_line_index);
-          draw_primitives(vbuf->get_buffer_ptr_1(), ++current_line_index);
+              current_line_index+=2, current_buffer_index++) {
+          draw_primitives(m_video_lines->get_buffer_ptr(current_line_index), current_line_index);
+          draw_primitives(m_video_lines->get_buffer_ptr(current_line_index+1), current_line_index+1);
         }
+//debug_log("@%i\n",__LINE__);
 
         loop_state = LoopState::NearNewFrameStart;
         current_line_index = 0;
         current_buffer_index = 0;
       } else {
+//debug_log("@%i\n",__LINE__);
         // Keep handling incoming characters
         if (stream_byte_available() > 0) {
           process_character(stream_read_byte());
         }
+//debug_log("@%i\n",__LINE__);
       }
     } else {
       // LoopState::NearNewFrameStart
@@ -861,36 +890,44 @@ void DiManager::set_on_vertical_blank_cb(DiVoidCallback callback_fcn) {
   }
 }
 
-void DiManager::init_dma_descriptor(volatile DiVideoScanLine* vline, uint32_t descr_index) {
+void DiManager::init_dma_descriptor(DiVideoScanLine* vscan, uint32_t scan_index, uint32_t descr_index) {
   volatile lldesc_t * dd = &m_dma_descriptor[descr_index];
 
   if (descr_index == 0) {
+    debug_log("a. idd vscan %X si %u di %u dd %X prior %X\n",vscan,scan_index,descr_index,dd,
+    &m_dma_descriptor[otf_video_params->m_dma_total_descr - 1]);
     m_dma_descriptor[otf_video_params->m_dma_total_descr - 1].qe.stqe_next = (lldesc_t*)dd;
   } else {
+    debug_log("b. idd vscan %X si %u di %u dd %X prior %X\n",vscan,scan_index,descr_index,dd,
+    &m_dma_descriptor[descr_index - 1]);
     m_dma_descriptor[descr_index - 1].qe.stqe_next = (lldesc_t*)dd;
   }
 
   dd->sosf = dd->offset = dd->eof = 0;
   dd->owner = 1;
-  dd->size = vline->get_buffer_size();
-  dd->length = vline->get_buffer_size();
-  dd->buf = (uint8_t volatile *)vline->get_buffer_ptr();
+  dd->size = vscan->get_buffer_size();
+  dd->length = vscan->get_buffer_size();
+  dd->buf = (uint8_t volatile *)vscan->get_buffer_ptr(scan_index);
 }
 
-void DiManager::init_dma_descriptor(volatile DiVideoBuffer* vbuf, uint32_t descr_index) {
+void DiManager::init_dma_descriptor_pair(DiVideoScanLine* vscan, uint32_t scan_index, uint32_t descr_index) {
   volatile lldesc_t * dd = &m_dma_descriptor[descr_index];
 
   if (descr_index == 0) {
+    debug_log("c. idd vscan %X si %u di %u dd %X prior %X\n",vscan,scan_index,descr_index,dd,
+    &m_dma_descriptor[otf_video_params->m_dma_total_descr - 1]);
     m_dma_descriptor[otf_video_params->m_dma_total_descr - 1].qe.stqe_next = (lldesc_t*)dd;
   } else {
+    debug_log("d. idd vscan %X si %u di %u dd %X prior %X\n",vscan,scan_index,descr_index,dd,
+    &m_dma_descriptor[descr_index - 1]);
     m_dma_descriptor[descr_index - 1].qe.stqe_next = (lldesc_t*)dd;
   }
 
   dd->sosf = dd->offset = dd->eof = 0;
   dd->owner = 1;
-  dd->size = vbuf->get_buffer_size();
-  dd->length = vbuf->get_buffer_size();
-  dd->buf = (uint8_t volatile *)vbuf->get_buffer_ptr_0();
+  dd->size = vscan->get_total_size();
+  dd->length = vscan->get_total_size();
+  dd->buf = (uint8_t volatile *)vscan->get_buffer_ptr(scan_index);
 }
 
 void DiManager::store_character(uint8_t character) {
@@ -910,12 +947,17 @@ void DiManager::store_string(const uint8_t* string) {
 }
 
 void DiManager::process_stored_characters() {
+//debug_log("@%i\n",__LINE__);
   while (m_num_buffer_chars > 0) {
+//debug_log("@%i\n",__LINE__);
     bool rc = process_character(m_incoming_data[m_next_buffer_read++]);
+//debug_log("@%i\n",__LINE__);
     if (m_next_buffer_read >= INCOMING_DATA_BUFFER_SIZE) {
       m_next_buffer_read = 0;
     }
+//debug_log("@%i\n",__LINE__);
     m_num_buffer_chars--;
+//debug_log("@%i\n",__LINE__);
     //if (!rc && !m_num_buffer_chars) {
     //  break; // need to wait for more data
     //}
@@ -948,7 +990,9 @@ VDU 31, x, y: TAB(x, y)
 VDU 127: Backspace
 */
 bool DiManager::process_character(uint8_t character) {
-  //debug_log("[%02hX]", character);
+//debug_log("@%i\n",__LINE__);
+  debug_log("[%02hX]", character);
+//debug_log("@%i m_incoming_command size %u\n", __LINE__, m_incoming_command.size());
   if (m_incoming_command.size()) {
     switch (m_incoming_command[0]) {
       case 0x11: return ignore_cmd(character, 2);
@@ -1100,10 +1144,15 @@ From this page: https://www.bbcbasic.co.uk/bbcwin/manual/bbcwin8.html#vdu23
 VDU 23, 1, 0; 0; 0; 0;: Text Cursor Control
 */
 bool DiManager::handle_udg_sys_cmd(uint8_t character) {
+debug_log("@%i\n",__LINE__);
+debug_log("@%i this %X, m_incoming_command size %u\n", __LINE__, (void*)this, m_incoming_command.size());
   m_incoming_command.push_back(character);
+debug_log("@%i\n",__LINE__);
   if (m_incoming_command.size() >= 2 && get_param_8(1) == 30) {
+debug_log("@%i\n",__LINE__);
     return handle_otf_cmd();
   }
+debug_log("@%i\n",__LINE__);
   if (m_incoming_command.size() >= 2 && get_param_8(1) == 1) {
     // VDU 23, 1, enable; 0; 0; 0;: Text Cursor Control
     if (m_incoming_command.size() >= 10) {

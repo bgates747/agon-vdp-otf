@@ -31,11 +31,14 @@
 #include "di_video_buffer.h"
 #include "di_timing.h"
 #include "freertos/FreeRTOS.h"
-
-DiVideoScanLine::DiVideoScanLine() {
-  auto new_size = (size_t)get_buffer_size();
+extern void debug_log(const char* fmt, ...);
+DiVideoScanLine::DiVideoScanLine(uint32_t num_lines) {
+  debug_log("DiVideoScanLine::DiVideoScanLine x %u\n", num_lines);
+  m_num_lines = num_lines;
+  auto new_size = (size_t)(get_buffer_size() * num_lines);
   auto p = heap_caps_malloc(new_size, MALLOC_CAP_32BIT|MALLOC_CAP_8BIT|MALLOC_CAP_DMA);
   m_scan_line = (uint32_t *)p;
+  debug_log("%X: alloc at %X of %u\n", this, m_scan_line, new_size);
 }
 
 DiVideoScanLine::~DiVideoScanLine() {
@@ -44,11 +47,21 @@ DiVideoScanLine::~DiVideoScanLine() {
   }
 }
 
-uint32_t DiVideoScanLine::get_buffer_size() {
+volatile uint32_t * DiVideoScanLine::get_buffer_ptr(uint32_t index) volatile {
+  uint32_t offset = get_buffer_size() * index;
+  return (volatile uint32_t *) (((uint8_t*) m_scan_line) + offset);
+}
+
+uint32_t DiVideoScanLine::get_buffer_size()
+{
   return otf_video_params->m_active_pixels +
     otf_video_params->m_hfp_pixels +
     otf_video_params->m_hs_pixels +
     otf_video_params->m_hbp_pixels;
+}
+
+uint32_t DiVideoScanLine::get_total_size() {
+  return get_buffer_size() * m_num_lines;
 }
 
 volatile uint32_t* DiVideoScanLine::get_active_pixels() {
@@ -76,38 +89,48 @@ volatile uint32_t* DiVideoScanLine::get_hbp_pixels() {
       otf_video_params->m_hs_pixels);
 }
 
+volatile uint32_t* DiVideoScanLine::get_active_pixels(uint32_t index) {
+  uint32_t offset = get_buffer_size() * index;
+  return (volatile uint32_t*)(((volatile uint8_t*)get_active_pixels()) + offset);
+}
+
+volatile uint32_t* DiVideoScanLine::get_hfp_pixels(uint32_t index) {
+  uint32_t offset = get_buffer_size() * index;
+  return (volatile uint32_t*)(((volatile uint8_t*)get_hfp_pixels()) + offset);
+}
+
+volatile uint32_t* DiVideoScanLine::get_hs_pixels(uint32_t index) {
+  uint32_t offset = get_buffer_size() * index;
+  return (volatile uint32_t*)(((volatile uint8_t*)get_hs_pixels()) + offset);
+}
+
+volatile uint32_t* DiVideoScanLine::get_hbp_pixels(uint32_t index) {
+  uint32_t offset = get_buffer_size() * index;
+  return (volatile uint32_t*)(((volatile uint8_t*)get_hbp_pixels()) + offset);
+}
+extern void debug_log(const char* fmt, ...);
 void DiVideoScanLine::init_to_black() {
-  memset((void*)get_active_pixels(), otf_video_params->m_syncs_off, otf_video_params->m_active_pixels);
-  memset((void*)get_hfp_pixels(), otf_video_params->m_syncs_off, otf_video_params->m_hfp_pixels);
-  memset((void*)get_hs_pixels(), (otf_video_params->m_hs_on|otf_video_params->m_vs_off), otf_video_params->m_hs_pixels);
-  memset((void*)get_hbp_pixels(), otf_video_params->m_syncs_off, otf_video_params->m_hbp_pixels);
-}
-
-void DiVideoScanLine::init_for_vsync() {
-  memset((void*)get_active_pixels(), (otf_video_params->m_hs_off|otf_video_params->m_vs_on), otf_video_params->m_active_pixels);
-  memset((void*)get_hfp_pixels(), (otf_video_params->m_hs_off|otf_video_params->m_vs_on), otf_video_params->m_hfp_pixels);
-  memset((void*)get_hs_pixels(), otf_video_params->m_syncs_off, otf_video_params->m_hs_pixels);
-  memset((void*)get_hbp_pixels(), (otf_video_params->m_hs_off|otf_video_params->m_vs_on), otf_video_params->m_hbp_pixels);
-}
-
-//---------------------------------------
-
-DiVideoBuffer::DiVideoBuffer() {
-
-}
-
-DiVideoBuffer::~DiVideoBuffer() {
-
-}
-
-void DiVideoBuffer::init_to_black() {
-  for (int i = 0; i < NUM_LINES_PER_BUFFER; i++) {
-    m_line[i].init_to_black();
+  for (uint32_t i = 0; i < m_num_lines; i++) {
+    debug_log("\n%X DiVideoScanLine::init_to_black() get_active_pixels(i) %X\n", this, get_active_pixels(i));
+    debug_log("%X DiVideoScanLine::init_to_black() get_hfp_pixels(i) %X\n", this, get_hfp_pixels(i));
+    debug_log("%X DiVideoScanLine::init_to_black() get_hs_pixels(i) %X\n", this, get_hs_pixels(i));
+    debug_log("%X DiVideoScanLine::init_to_black() get_hbp_pixels(i) %X\n", this, get_hbp_pixels(i));
+    memset((void*)get_active_pixels(i), otf_video_params->m_syncs_off, otf_video_params->m_active_pixels);
+    memset((void*)get_hfp_pixels(i), otf_video_params->m_syncs_off, otf_video_params->m_hfp_pixels);
+    memset((void*)get_hs_pixels(i), (otf_video_params->m_hs_on|otf_video_params->m_vs_off), otf_video_params->m_hs_pixels);
+    memset((void*)get_hbp_pixels(i), otf_video_params->m_syncs_off, otf_video_params->m_hbp_pixels);
   }
 }
 
-void DiVideoBuffer::init_for_vsync() {
-  for (int i = 0; i < NUM_LINES_PER_BUFFER; i++) {
-    m_line[i].init_for_vsync();
+void DiVideoScanLine::init_for_vsync() {
+  for (uint32_t i = 0; i < m_num_lines; i++) {
+    debug_log("\n%X DiVideoScanLine::init_for_vsync() get_active_pixels(i) %X\n", this, get_active_pixels(i));
+    debug_log("%X DiVideoScanLine::init_for_vsync() get_hfp_pixels(i) %X\n", this, get_hfp_pixels(i));
+    debug_log("%X DiVideoScanLine::init_for_vsync() get_hs_pixels(i) %X\n", this, get_hs_pixels(i));
+    debug_log("%X DiVideoScanLine::init_for_vsync() get_hbp_pixels(i) %X\n", this, get_hbp_pixels(i));
+    memset((void*)get_active_pixels(i), (otf_video_params->m_hs_off|otf_video_params->m_vs_on), otf_video_params->m_active_pixels);
+    memset((void*)get_hfp_pixels(i), (otf_video_params->m_hs_off|otf_video_params->m_vs_on), otf_video_params->m_hfp_pixels);
+    memset((void*)get_hs_pixels(i), otf_video_params->m_syncs_on, otf_video_params->m_hs_pixels);
+    memset((void*)get_hbp_pixels(i), (otf_video_params->m_hs_off|otf_video_params->m_vs_on), otf_video_params->m_hbp_pixels);
   }
 }

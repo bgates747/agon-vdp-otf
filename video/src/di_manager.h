@@ -207,9 +207,9 @@ class DiManager {
     protected:
     // Structures used to support DMA for video.
     volatile lldesc_t *         m_dma_descriptor; // [DMA_TOTAL_DESCR]
-    DiVideoBuffer *             m_video_buffer; // [NUM_ACTIVE_BUFFERS]
+    DiVideoScanLine *           m_video_lines; // [NUM_ACTIVE_BUFFERS]
     DiVideoScanLine *           m_front_porch;
-    DiVideoBuffer *             m_vertical_sync;
+    DiVideoScanLine *           m_vertical_sync;
     DiVideoScanLine *           m_back_porch;
     DiVoidCallback              m_on_vertical_blank_cb;
     uint32_t                    m_next_buffer_write;
@@ -249,10 +249,10 @@ class DiManager {
     void IRAM_ATTR draw_primitives(volatile uint32_t* p_scan_line, uint32_t line_index);
 
     // Setup a single DMA descriptor.
-    void init_dma_descriptor(volatile DiVideoScanLine* vbuf, uint32_t descr_index);
+    void init_dma_descriptor(DiVideoScanLine* vscan, uint32_t scan_index, uint32_t descr_index);
 
     // Setup a pair of DMA descriptors.
-    void init_dma_descriptor(volatile DiVideoBuffer* vbuf, uint32_t descr_index);
+    void init_dma_descriptor_pair(DiVideoScanLine* vscan, uint32_t scan_index, uint32_t descr_index);
 
   // Process all stored characters.
   void process_stored_characters();

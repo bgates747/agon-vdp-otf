@@ -24,10 +24,10 @@ void otf(void * pvParameters) {
 	di_manager = new DiManager();
 	di_manager->create_root();
 
-	auto text_area = di_manager->create_text_area(1, ROOT_PRIMITIVE_ID, PRIM_FLAGS_DEFAULT, 0, 0, 100, 75, fabgl::FONT_AGON_DATA);
+	/*auto text_area = di_manager->create_text_area(1, ROOT_PRIMITIVE_ID, PRIM_FLAGS_DEFAULT, 0, 0, 100, 75, fabgl::FONT_AGON_DATA);
 	text_area->define_character_range(0x20, 0x7E, PIXEL_ALPHA_100_MASK|0x05, PIXEL_ALPHA_100_MASK|0x00);
 	text_area->clear_screen();
-	di_manager->generate_code_for_primitive(1);
+	di_manager->generate_code_for_primitive(1);*/
 
     /*{
 		OtfCmd_41_Create_primitive_Solid_Rectangle cmd;
