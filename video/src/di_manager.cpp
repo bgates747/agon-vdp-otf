@@ -204,7 +204,7 @@ void DiManager::initialize() {
   // LCD mode
   I2S1.conf2.val            = 0;
   I2S1.conf2.lcd_en         = 1;
-  I2S1.conf2.lcd_tx_wrx2_en = 0; // NOT 1!
+  I2S1.conf2.lcd_tx_wrx2_en = (otf_video_params.m_scan_count == 2 ? 1 : 0);
   I2S1.conf2.lcd_tx_sdx2_en = 0;
 
   I2S1.sample_rate_conf.val         = 0;
