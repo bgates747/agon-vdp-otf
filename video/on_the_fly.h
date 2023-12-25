@@ -211,6 +211,8 @@ int8_t use_otf_mode(int8_t mode) {
 		(otf_video_params.m_syncs_off << 24) | (otf_video_params.m_syncs_off << 16) |
 		(otf_video_params.m_syncs_off << 8) | otf_video_params.m_syncs_off;
 
+	otf_video_params.dump();
+
     uint8_t oldMode = videoMode;
 	videoMode = mode;
 

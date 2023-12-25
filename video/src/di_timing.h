@@ -25,6 +25,10 @@
 
 #include "di_constants.h"
 #include <stdint.h>
+#define	DEBUG			1						// Serial Debug Mode: 1 = enable
+#if DEBUG
+extern void debug_log(const char* fmt, ...);
+#endif
 
 typedef struct {
     uint32_t m_active_lines;
