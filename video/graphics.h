@@ -606,7 +606,7 @@ int8_t change_mode(uint8_t mode) {
 		case 18:
 			errVal = change_resolution(2, SVGA_1024x768_60Hz);		// VDP 1.03 Mode 0
 			break;
-		case 30 ... 32:
+		case 30 ... 59:
 			return use_otf_mode(mode);
 		case 129:
 			errVal = change_resolution(4, VGA_640x480_60Hz, true);

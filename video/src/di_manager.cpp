@@ -90,7 +90,7 @@ DiManager::DiManager() {
   m_flash_count = 0;
   m_on_vertical_blank_cb = &default_on_vertical_blank;
   memset(m_primitives, 0, sizeof(m_primitives));
-  m_groups = new std::vector<DiPrimitive*>[otf_video_params->m_active_lines];
+  m_groups = new std::vector<DiPrimitive*>[otf_video_params.m_active_lines];
 
   logicalCoords = false; // this mode always uses regular coordinates
 /*  m_incoming_command.push_back('A');
@@ -129,8 +129,8 @@ void DiManager::create_root() {
 }
 
 void DiManager::initialize() {
-  //debug_log("otf_video_params->m_dma_total_descr %u\n", otf_video_params->m_dma_total_descr);
-  size_t new_size = (size_t)(sizeof(lldesc_t) * otf_video_params->m_dma_total_descr);
+  //debug_log("otf_video_params.m_dma_total_descr %u\n", otf_video_params.m_dma_total_descr);
+  size_t new_size = (size_t)(sizeof(lldesc_t) * otf_video_params.m_dma_total_descr);
   void* p = heap_caps_malloc(new_size, MALLOC_CAP_32BIT|MALLOC_CAP_8BIT|MALLOC_CAP_DMA);
   m_dma_descriptor = (volatile lldesc_t *)p;
 
@@ -143,7 +143,7 @@ void DiManager::initialize() {
   uint32_t descr_index = 0;
   m_video_lines->init_to_black();
 //debug_log("@%i\n",__LINE__);
-  for (uint32_t i = 0; i < otf_video_params->m_active_buffers_written; i++) {
+  for (uint32_t i = 0; i < otf_video_params.m_active_buffers_written; i++) {
     init_dma_descriptor_pair(m_video_lines, (i & (NUM_ACTIVE_BUFFERS - 1)) * 2, descr_index++);
   }
 //debug_log("@%i\n",__LINE__);
@@ -151,7 +151,7 @@ void DiManager::initialize() {
   // DMA buffer chain: VFP
   m_front_porch->init_to_black();
 //debug_log("@%i\n",__LINE__);
-  for (uint i = 0; i < otf_video_params->m_vfp_lines; i++) {
+  for (uint i = 0; i < otf_video_params.m_vfp_lines; i++) {
     init_dma_descriptor(m_front_porch, 0, descr_index++);
   }
 //debug_log("@%i\n",__LINE__);
@@ -159,7 +159,7 @@ void DiManager::initialize() {
   // DMA buffer chain: VS
   m_vertical_sync->init_for_vsync();
 //debug_log("@%i\n",__LINE__);
-  for (uint i = 0; i < otf_video_params->m_vs_buffers_written; i++) {
+  for (uint i = 0; i < otf_video_params.m_vs_buffers_written; i++) {
     init_dma_descriptor_pair(m_vertical_sync, 0, descr_index++);
   }
 //debug_log("@%i\n",__LINE__);
@@ -167,7 +167,7 @@ void DiManager::initialize() {
   // DMA buffer chain: VBP
   m_back_porch->init_to_black();
 //debug_log("@%i\n",__LINE__);
-  for (uint i = 0; i < otf_video_params->m_vbp_lines; i++) {
+  for (uint i = 0; i < otf_video_params.m_vbp_lines; i++) {
     init_dma_descriptor(m_back_porch, 0, descr_index++);
   }
 //debug_log("@%i di %u ------\n",__LINE__,descr_index);
@@ -210,7 +210,7 @@ void DiManager::initialize() {
   I2S1.sample_rate_conf.val         = 0;
   I2S1.sample_rate_conf.tx_bits_mod = 8;
 
-  setup_dma_clock(otf_video_params->m_dma_clock_freq);
+  setup_dma_clock(otf_video_params.m_dma_clock_freq);
 
   I2S1.fifo_conf.val                  = 0;
   I2S1.fifo_conf.tx_fifo_mod_force_en = 1;
@@ -246,7 +246,7 @@ void DiManager::initialize() {
 }
 
 void DiManager::clear() {
-    for (int g = 0; g < otf_video_params->m_active_lines; g++) {
+    for (int g = 0; g < otf_video_params.m_active_lines; g++) {
         std::vector<DiPrimitive*> * vp = &m_groups[g];
         vp->clear();
     }
@@ -768,12 +768,12 @@ void IRAM_ATTR DiManager::loop() {
     uint32_t descr_index = (descr_addr - (uint32_t)m_dma_descriptor) / sizeof(lldesc_t);
 //debug_log("@%i da %X aa %X di %u\n",__LINE__,descr_addr,m_dma_descriptor,descr_index);
 if ((uint32_t)descr_addr == 0xc0c0c0c0) while(1);
-    if (descr_index <= otf_video_params->m_active_buffers_written) {
+    if (descr_index <= otf_video_params.m_active_buffers_written) {
       //uint32_t dma_line_index = descr_index * NUM_LINES_PER_BUFFER;
       uint32_t dma_buffer_index = descr_index & (NUM_ACTIVE_BUFFERS-1);
 
       // Draw enough lines to stay ahead of DMA.
-      while (current_line_index < otf_video_params->m_active_lines && current_buffer_index != dma_buffer_index) {
+      while (current_line_index < otf_video_params.m_active_lines && current_buffer_index != dma_buffer_index) {
         auto buf_inx = current_line_index & (NUM_ACTIVE_BUFFERS * NUM_LINES_PER_BUFFER - 1);
 //debug_log("@%i di%u dbi%u cli%u bi%u\n",__LINE__,descr_index,dma_buffer_index,current_line_index,buf_inx);
         draw_primitives(m_video_lines->get_buffer_ptr(buf_inx), current_line_index);
@@ -843,8 +843,8 @@ if ((uint32_t)descr_addr == 0xc0c0c0c0) while(1);
       loop_state = LoopState::ProcessingIncomingData;
       
     } else if (loop_state == LoopState::ProcessingIncomingData) {
-//debug_log("@%i di %u td %u\n",__LINE__,descr_index,otf_video_params->m_dma_total_descr);
-      if (descr_index >= otf_video_params->m_dma_total_descr - otf_video_params->m_dma_active_lines - 1) {
+//debug_log("@%i di %u td %u\n",__LINE__,descr_index,otf_video_params.m_dma_total_descr);
+      if (descr_index >= otf_video_params.m_dma_total_descr - otf_video_params.m_dma_active_lines - 1) {
         // Prepare the start of the next frame.
         for (current_line_index = 0, current_buffer_index = 0;
               current_buffer_index < NUM_ACTIVE_BUFFERS;
@@ -895,8 +895,8 @@ void DiManager::init_dma_descriptor(DiVideoScanLine* vscan, uint32_t scan_index,
 
   if (descr_index == 0) {
 //    debug_log("a. idd vscan %X si %u di %u dd %X prior %X\n",vscan,scan_index,descr_index,dd,
-//    &m_dma_descriptor[otf_video_params->m_dma_total_descr - 1]);
-    m_dma_descriptor[otf_video_params->m_dma_total_descr - 1].qe.stqe_next = (lldesc_t*)dd;
+//    &m_dma_descriptor[otf_video_params.m_dma_total_descr - 1]);
+    m_dma_descriptor[otf_video_params.m_dma_total_descr - 1].qe.stqe_next = (lldesc_t*)dd;
   } else {
 //    debug_log("b. idd vscan %X si %u di %u dd %X prior %X\n",vscan,scan_index,descr_index,dd,
 //    &m_dma_descriptor[descr_index - 1]);
@@ -915,8 +915,8 @@ void DiManager::init_dma_descriptor_pair(DiVideoScanLine* vscan, uint32_t scan_i
 
   if (descr_index == 0) {
  //   debug_log("c. idd vscan %X si %u di %u dd %X prior %X\n",vscan,scan_index,descr_index,dd,
- //   &m_dma_descriptor[otf_video_params->m_dma_total_descr - 1]);
-    m_dma_descriptor[otf_video_params->m_dma_total_descr - 1].qe.stqe_next = (lldesc_t*)dd;
+ //   &m_dma_descriptor[otf_video_params.m_dma_total_descr - 1]);
+    m_dma_descriptor[otf_video_params.m_dma_total_descr - 1].qe.stqe_next = (lldesc_t*)dd;
   } else {
  //   debug_log("d. idd vscan %X si %u di %u dd %X prior %X\n",vscan,scan_index,descr_index,dd,
  //   &m_dma_descriptor[descr_index - 1]);
@@ -1591,7 +1591,7 @@ bool DiManager::handle_otf_cmd() {
         auto cmd = &cu->m_80_Create_primitive_Tile_Array;
         if (m_incoming_command.size() == sizeof(*cmd)) {
           create_tile_array(cmd->m_id, cmd->m_pid, cmd->m_flags,
-            otf_video_params->m_active_pixels, otf_video_params->m_active_lines,
+            otf_video_params.m_active_pixels, otf_video_params.m_active_lines,
             cmd->m_columns, cmd->m_rows, cmd->m_w, cmd->m_h);
           m_incoming_command.clear();
           return true;
@@ -1713,7 +1713,7 @@ bool DiManager::handle_otf_cmd() {
         auto cmd = &cu->m_100_Create_primitive_Tile_Map;
         if (m_incoming_command.size() == sizeof(*cmd)) {
           create_tile_map(cmd->m_id, cmd->m_pid, cmd->m_flags,
-            otf_video_params->m_active_pixels, otf_video_params->m_active_lines,
+            otf_video_params.m_active_pixels, otf_video_params.m_active_lines,
             cmd->m_columns, cmd->m_rows, cmd->m_w, cmd->m_h);
           m_incoming_command.clear();
           return true;
@@ -2252,12 +2252,12 @@ void DiManager::send_screen_pixel(int16_t x, int16_t y) {
 //
 void DiManager::send_mode_information() {
 	byte packet[] = {
-		(uint8_t)(otf_video_params->m_active_pixels),	 				// Width in pixels (L)
-		(uint8_t)(otf_video_params->m_active_pixels >> 8),		// Width in pixels (H)
-		(uint8_t)(otf_video_params->m_active_lines),					// Height in pixels (L)
-		(uint8_t)(otf_video_params->m_active_pixels >> 8),		// Height in pixels (H)
-		(uint8_t)(otf_video_params->m_active_pixels / 8),		  // Width in characters (byte)
-		(uint8_t)(otf_video_params->m_active_lines / 8),		  // Height in characters (byte)
+		(uint8_t)(otf_video_params.m_active_pixels),	 				// Width in pixels (L)
+		(uint8_t)(otf_video_params.m_active_pixels >> 8),		// Width in pixels (H)
+		(uint8_t)(otf_video_params.m_active_lines),					// Height in pixels (L)
+		(uint8_t)(otf_video_params.m_active_pixels >> 8),		// Height in pixels (H)
+		(uint8_t)(otf_video_params.m_active_pixels / 8),		  // Width in characters (byte)
+		(uint8_t)(otf_video_params.m_active_lines / 8),		  // Height in characters (byte)
 		64,						              // Colour depth
 		(uint8_t)videoMode          // The video mode number
 	};

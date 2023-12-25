@@ -48,8 +48,11 @@ typedef struct {
     uint32_t m_syncs_on;
     uint32_t m_syncs_off;
     uint32_t m_syncs_off_x4;
+    uint32_t m_scan_count;
+
+#ifdef DEBUG
+    void dump();
+#endif
 } OtfVideoParams;
 
-extern const OtfVideoParams otf_video_params_800x600;
-extern const OtfVideoParams otf_video_params_640x480;
-extern const OtfVideoParams* otf_video_params;
+extern OtfVideoParams otf_video_params;

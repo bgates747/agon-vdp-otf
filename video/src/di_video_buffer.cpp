@@ -31,7 +31,7 @@
 #include "di_video_buffer.h"
 #include "di_timing.h"
 #include "freertos/FreeRTOS.h"
-extern void debug_log(const char* fmt, ...);
+//extern void debug_log(const char* fmt, ...);
 DiVideoScanLine::DiVideoScanLine(uint32_t num_lines) {
   //debug_log("DiVideoScanLine::DiVideoScanLine x %u\n", num_lines);
   m_num_lines = num_lines;
@@ -54,10 +54,10 @@ volatile uint32_t * DiVideoScanLine::get_buffer_ptr(uint32_t index) volatile {
 
 uint32_t DiVideoScanLine::get_buffer_size()
 {
-  return otf_video_params->m_active_pixels +
-    otf_video_params->m_hfp_pixels +
-    otf_video_params->m_hs_pixels +
-    otf_video_params->m_hbp_pixels;
+  return otf_video_params.m_active_pixels +
+    otf_video_params.m_hfp_pixels +
+    otf_video_params.m_hs_pixels +
+    otf_video_params.m_hbp_pixels;
 }
 
 uint32_t DiVideoScanLine::get_total_size() {
@@ -71,22 +71,22 @@ volatile uint32_t* DiVideoScanLine::get_active_pixels() {
 volatile uint32_t* DiVideoScanLine::get_hfp_pixels() {
   return (volatile uint32_t*)
     (((volatile uint8_t*) m_scan_line) +
-      otf_video_params->m_active_pixels);
+      otf_video_params.m_active_pixels);
 }
 
 volatile uint32_t* DiVideoScanLine::get_hs_pixels() {
   return (volatile uint32_t*)
     (((volatile uint8_t*) m_scan_line) +
-      otf_video_params->m_active_pixels +
-      otf_video_params->m_hfp_pixels);
+      otf_video_params.m_active_pixels +
+      otf_video_params.m_hfp_pixels);
 }
 
 volatile uint32_t* DiVideoScanLine::get_hbp_pixels() {
   return (volatile uint32_t*)
     (((volatile uint8_t*) m_scan_line) +
-      otf_video_params->m_active_pixels +
-      otf_video_params->m_hfp_pixels +  
-      otf_video_params->m_hs_pixels);
+      otf_video_params.m_active_pixels +
+      otf_video_params.m_hfp_pixels +  
+      otf_video_params.m_hs_pixels);
 }
 
 volatile uint32_t* DiVideoScanLine::get_active_pixels(uint32_t index) {
@@ -115,10 +115,10 @@ void DiVideoScanLine::init_to_black() {
     //debug_log("%X DiVideoScanLine::init_to_black() get_hfp_pixels(i) %X\n", this, get_hfp_pixels(i));
     //debug_log("%X DiVideoScanLine::init_to_black() get_hs_pixels(i) %X\n", this, get_hs_pixels(i));
     //debug_log("%X DiVideoScanLine::init_to_black() get_hbp_pixels(i) %X\n", this, get_hbp_pixels(i));
-    memset((void*)get_active_pixels(i), otf_video_params->m_syncs_off, otf_video_params->m_active_pixels);
-    memset((void*)get_hfp_pixels(i), otf_video_params->m_syncs_off, otf_video_params->m_hfp_pixels);
-    memset((void*)get_hs_pixels(i), (otf_video_params->m_hs_on|otf_video_params->m_vs_off), otf_video_params->m_hs_pixels);
-    memset((void*)get_hbp_pixels(i), otf_video_params->m_syncs_off, otf_video_params->m_hbp_pixels);
+    memset((void*)get_active_pixels(i), otf_video_params.m_syncs_off, otf_video_params.m_active_pixels);
+    memset((void*)get_hfp_pixels(i), otf_video_params.m_syncs_off, otf_video_params.m_hfp_pixels);
+    memset((void*)get_hs_pixels(i), (otf_video_params.m_hs_on|otf_video_params.m_vs_off), otf_video_params.m_hs_pixels);
+    memset((void*)get_hbp_pixels(i), otf_video_params.m_syncs_off, otf_video_params.m_hbp_pixels);
   }
 }
 
@@ -128,9 +128,9 @@ void DiVideoScanLine::init_for_vsync() {
     //debug_log("%X DiVideoScanLine::init_for_vsync() get_hfp_pixels(i) %X\n", this, get_hfp_pixels(i));
     //debug_log("%X DiVideoScanLine::init_for_vsync() get_hs_pixels(i) %X\n", this, get_hs_pixels(i));
     //debug_log("%X DiVideoScanLine::init_for_vsync() get_hbp_pixels(i) %X\n", this, get_hbp_pixels(i));
-    memset((void*)get_active_pixels(i), (otf_video_params->m_hs_off|otf_video_params->m_vs_on), otf_video_params->m_active_pixels);
-    memset((void*)get_hfp_pixels(i), (otf_video_params->m_hs_off|otf_video_params->m_vs_on), otf_video_params->m_hfp_pixels);
-    memset((void*)get_hs_pixels(i), otf_video_params->m_syncs_on, otf_video_params->m_hs_pixels);
-    memset((void*)get_hbp_pixels(i), (otf_video_params->m_hs_off|otf_video_params->m_vs_on), otf_video_params->m_hbp_pixels);
+    memset((void*)get_active_pixels(i), (otf_video_params.m_hs_off|otf_video_params.m_vs_on), otf_video_params.m_active_pixels);
+    memset((void*)get_hfp_pixels(i), (otf_video_params.m_hs_off|otf_video_params.m_vs_on), otf_video_params.m_hfp_pixels);
+    memset((void*)get_hs_pixels(i), otf_video_params.m_syncs_on, otf_video_params.m_hs_pixels);
+    memset((void*)get_hbp_pixels(i), (otf_video_params.m_hs_off|otf_video_params.m_vs_on), otf_video_params.m_hbp_pixels);
   }
 }
