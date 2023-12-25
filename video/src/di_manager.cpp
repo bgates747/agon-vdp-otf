@@ -160,7 +160,7 @@ debug_log("@%i\n",__LINE__);
   m_vertical_sync->init_for_vsync();
 debug_log("@%i\n",__LINE__);
   for (uint i = 0; i < otf_video_params->m_vs_buffers_written; i++) {
-    init_dma_descriptor(m_vertical_sync, 0, descr_index++);
+    init_dma_descriptor_pair(m_vertical_sync, 0, descr_index++);
   }
 debug_log("@%i\n",__LINE__);
   
@@ -925,8 +925,8 @@ void DiManager::init_dma_descriptor_pair(DiVideoScanLine* vscan, uint32_t scan_i
 
   dd->sosf = dd->offset = dd->eof = 0;
   dd->owner = 1;
-  dd->size = vscan->get_total_size();
-  dd->length = vscan->get_total_size();
+  dd->size = vscan->get_buffer_size() * 2;
+  dd->length = vscan->get_buffer_size() * 2;
   dd->buf = (uint8_t volatile *)vscan->get_buffer_ptr(scan_index);
 }
 
