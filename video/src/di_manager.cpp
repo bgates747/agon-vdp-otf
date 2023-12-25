@@ -129,7 +129,7 @@ void DiManager::create_root() {
 }
 
 void DiManager::initialize() {
-  debug_log("otf_video_params->m_dma_total_descr %u\n", otf_video_params->m_dma_total_descr);
+  //debug_log("otf_video_params->m_dma_total_descr %u\n", otf_video_params->m_dma_total_descr);
   size_t new_size = (size_t)(sizeof(lldesc_t) * otf_video_params->m_dma_total_descr);
   void* p = heap_caps_malloc(new_size, MALLOC_CAP_32BIT|MALLOC_CAP_8BIT|MALLOC_CAP_DMA);
   m_dma_descriptor = (volatile lldesc_t *)p;
@@ -138,39 +138,39 @@ void DiManager::initialize() {
   m_front_porch = new DiVideoScanLine(1);
   m_vertical_sync = new DiVideoScanLine(NUM_LINES_PER_BUFFER);
   m_back_porch = new DiVideoScanLine(1);
-debug_log("@%i\n",__LINE__);
+//debug_log("@%i\n",__LINE__);
   // DMA buffer chain: ACT
   uint32_t descr_index = 0;
   m_video_lines->init_to_black();
-debug_log("@%i\n",__LINE__);
+//debug_log("@%i\n",__LINE__);
   for (uint32_t i = 0; i < otf_video_params->m_active_buffers_written; i++) {
     init_dma_descriptor_pair(m_video_lines, (i & (NUM_ACTIVE_BUFFERS - 1)) * 2, descr_index++);
   }
-debug_log("@%i\n",__LINE__);
+//debug_log("@%i\n",__LINE__);
 
   // DMA buffer chain: VFP
   m_front_porch->init_to_black();
-debug_log("@%i\n",__LINE__);
+//debug_log("@%i\n",__LINE__);
   for (uint i = 0; i < otf_video_params->m_vfp_lines; i++) {
     init_dma_descriptor(m_front_porch, 0, descr_index++);
   }
-debug_log("@%i\n",__LINE__);
+//debug_log("@%i\n",__LINE__);
 
   // DMA buffer chain: VS
   m_vertical_sync->init_for_vsync();
-debug_log("@%i\n",__LINE__);
+//debug_log("@%i\n",__LINE__);
   for (uint i = 0; i < otf_video_params->m_vs_buffers_written; i++) {
     init_dma_descriptor_pair(m_vertical_sync, 0, descr_index++);
   }
-debug_log("@%i\n",__LINE__);
+//debug_log("@%i\n",__LINE__);
   
   // DMA buffer chain: VBP
   m_back_porch->init_to_black();
-debug_log("@%i\n",__LINE__);
+//debug_log("@%i\n",__LINE__);
   for (uint i = 0; i < otf_video_params->m_vbp_lines; i++) {
     init_dma_descriptor(m_back_porch, 0, descr_index++);
   }
-debug_log("@%i di %u ------\n",__LINE__,descr_index);
+//debug_log("@%i di %u ------\n",__LINE__,descr_index);
 
   // GPIO configuration for color bits
   setupGPIO(GPIO_RED_0,   VGA_RED_BIT,   GPIO_MODE_OUTPUT);
@@ -235,14 +235,14 @@ debug_log("@%i di %u ------\n",__LINE__,descr_index);
   I2S1.lc_conf.ahbm_fifo_rst = 1;
   I2S1.lc_conf.ahbm_rst      = 0;
   I2S1.lc_conf.ahbm_fifo_rst = 0;
-debug_log("@%i aa %X ======\n",__LINE__,m_dma_descriptor);
+//debug_log("@%i aa %X ======\n",__LINE__,m_dma_descriptor);
   // Start DMA
   I2S1.lc_conf.val = I2S_OUT_DATA_BURST_EN;// | I2S_OUTDSCR_BURST_EN;
   I2S1.out_link.addr = (uint32_t)m_dma_descriptor;
   I2S1.int_clr.val = 0xFFFFFFFF;
   I2S1.out_link.start = 1;
   I2S1.conf.tx_start  = 1;
-debug_log("@%i\n",__LINE__);
+//debug_log("@%i\n",__LINE__);
 }
 
 void DiManager::clear() {
@@ -894,12 +894,12 @@ void DiManager::init_dma_descriptor(DiVideoScanLine* vscan, uint32_t scan_index,
   volatile lldesc_t * dd = &m_dma_descriptor[descr_index];
 
   if (descr_index == 0) {
-    debug_log("a. idd vscan %X si %u di %u dd %X prior %X\n",vscan,scan_index,descr_index,dd,
-    &m_dma_descriptor[otf_video_params->m_dma_total_descr - 1]);
+//    debug_log("a. idd vscan %X si %u di %u dd %X prior %X\n",vscan,scan_index,descr_index,dd,
+//    &m_dma_descriptor[otf_video_params->m_dma_total_descr - 1]);
     m_dma_descriptor[otf_video_params->m_dma_total_descr - 1].qe.stqe_next = (lldesc_t*)dd;
   } else {
-    debug_log("b. idd vscan %X si %u di %u dd %X prior %X\n",vscan,scan_index,descr_index,dd,
-    &m_dma_descriptor[descr_index - 1]);
+//    debug_log("b. idd vscan %X si %u di %u dd %X prior %X\n",vscan,scan_index,descr_index,dd,
+//    &m_dma_descriptor[descr_index - 1]);
     m_dma_descriptor[descr_index - 1].qe.stqe_next = (lldesc_t*)dd;
   }
 
@@ -914,12 +914,12 @@ void DiManager::init_dma_descriptor_pair(DiVideoScanLine* vscan, uint32_t scan_i
   volatile lldesc_t * dd = &m_dma_descriptor[descr_index];
 
   if (descr_index == 0) {
-    debug_log("c. idd vscan %X si %u di %u dd %X prior %X\n",vscan,scan_index,descr_index,dd,
-    &m_dma_descriptor[otf_video_params->m_dma_total_descr - 1]);
+ //   debug_log("c. idd vscan %X si %u di %u dd %X prior %X\n",vscan,scan_index,descr_index,dd,
+ //   &m_dma_descriptor[otf_video_params->m_dma_total_descr - 1]);
     m_dma_descriptor[otf_video_params->m_dma_total_descr - 1].qe.stqe_next = (lldesc_t*)dd;
   } else {
-    debug_log("d. idd vscan %X si %u di %u dd %X prior %X\n",vscan,scan_index,descr_index,dd,
-    &m_dma_descriptor[descr_index - 1]);
+ //   debug_log("d. idd vscan %X si %u di %u dd %X prior %X\n",vscan,scan_index,descr_index,dd,
+ //   &m_dma_descriptor[descr_index - 1]);
     m_dma_descriptor[descr_index - 1].qe.stqe_next = (lldesc_t*)dd;
   }
 
@@ -991,7 +991,7 @@ VDU 127: Backspace
 */
 bool DiManager::process_character(uint8_t character) {
 //debug_log("@%i\n",__LINE__);
-  debug_log("[%02hX]", character);
+  //debug_log("[%02hX]", character);
 //debug_log("@%i m_incoming_command size %u\n", __LINE__, m_incoming_command.size());
   if (m_incoming_command.size()) {
     switch (m_incoming_command[0]) {
@@ -1144,15 +1144,15 @@ From this page: https://www.bbcbasic.co.uk/bbcwin/manual/bbcwin8.html#vdu23
 VDU 23, 1, 0; 0; 0; 0;: Text Cursor Control
 */
 bool DiManager::handle_udg_sys_cmd(uint8_t character) {
-debug_log("@%i\n",__LINE__);
-debug_log("@%i this %X, m_incoming_command size %u\n", __LINE__, (void*)this, m_incoming_command.size());
+//debug_log("@%i\n",__LINE__);
+//debug_log("@%i this %X, m_incoming_command size %u\n", __LINE__, (void*)this, m_incoming_command.size());
   m_incoming_command.push_back(character);
-debug_log("@%i\n",__LINE__);
+//debug_log("@%i\n",__LINE__);
   if (m_incoming_command.size() >= 2 && get_param_8(1) == 30) {
-debug_log("@%i\n",__LINE__);
+//debug_log("@%i\n",__LINE__);
     return handle_otf_cmd();
   }
-debug_log("@%i\n",__LINE__);
+//debug_log("@%i\n",__LINE__);
   if (m_incoming_command.size() >= 2 && get_param_8(1) == 1) {
     // VDU 23, 1, enable; 0; 0; 0;: Text Cursor Control
     if (m_incoming_command.size() >= 10) {
