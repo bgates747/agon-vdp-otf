@@ -26,6 +26,7 @@
 // 
 
 #include "di_general_line.h"
+#include "di_timing.h"
 
 static int32_t min3(int32_t a, int32_t b, int32_t c) {
   int32_t m = MIN(a, b);
@@ -100,7 +101,7 @@ void DiGeneralLine::init_from_coords(int16_t* coords,
   m_height = max_of_pairs(coords+1, n) - m_rel_y + 1;
   //debug_log("%hi %hi, w %hi, h %i\n", m_rel_x, m_rel_y, m_width, m_height);
   color &= 0x3F; // remove any alpha bits
-  m_color = PIXEL_COLOR_X4(color);
+  m_color = PIXEL_COLOR_X4(color) | otf_video_params.m_syncs_off_x4;
 
   while (n--) {
     *coords++ -= m_rel_x;

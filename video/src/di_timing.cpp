@@ -41,13 +41,13 @@ void OtfVideoParams::dump() {
     debug_log("m_dma_active_lines: %u\n", m_dma_active_lines);
     debug_log("m_dma_total_lines: %u\n", m_dma_total_lines);
     debug_log("m_dma_total_descr: %u\n", m_dma_total_descr);
-    debug_log("m_hs_on: %u\n", m_hs_on);
-    debug_log("m_hs_off: %u\n", m_hs_off);
-    debug_log("m_vs_on: %u\n", m_vs_on);
-    debug_log("m_vs_off: %u\n", m_vs_off);
-    debug_log("m_syncs_on: %u\n", m_syncs_on);
-    debug_log("m_syncs_off: %u\n", m_syncs_off);
-    debug_log("m_syncs_off_x4: %u\n", m_syncs_off_x4);
+    debug_log("m_hs_on: %X\n", m_hs_on);
+    debug_log("m_hs_off: %X\n", m_hs_off);
+    debug_log("m_vs_on: %X\n", m_vs_on);
+    debug_log("m_vs_off: %X\n", m_vs_off);
+    debug_log("m_syncs_on: %X\n", m_syncs_on);
+    debug_log("m_syncs_off: %X\n", m_syncs_off);
+    debug_log("m_syncs_off_x4: %X\n", m_syncs_off_x4);
     debug_log("m_scan_count: %u\n", m_scan_count);
 }
 #endif

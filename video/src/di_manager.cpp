@@ -136,7 +136,7 @@ void DiManager::initialize() {
 
   m_video_lines = new DiVideoScanLine(NUM_ACTIVE_BUFFERS * NUM_LINES_PER_BUFFER);
   m_front_porch = new DiVideoScanLine(1);
-  m_vertical_sync = new DiVideoScanLine(NUM_LINES_PER_BUFFER);
+  m_vertical_sync = new DiVideoScanLine(1);
   m_back_porch = new DiVideoScanLine(1);
 //debug_log("@%i\n",__LINE__);
   // DMA buffer chain: ACT
@@ -159,8 +159,8 @@ void DiManager::initialize() {
   // DMA buffer chain: VS
   m_vertical_sync->init_for_vsync();
 //debug_log("@%i\n",__LINE__);
-  for (uint i = 0; i < otf_video_params.m_vs_buffers_written; i++) {
-    init_dma_descriptor_pair(m_vertical_sync, 0, descr_index++);
+  for (uint i = 0; i < otf_video_params.m_vs_lines; i++) {
+    init_dma_descriptor(m_vertical_sync, 0, descr_index++);
   }
 //debug_log("@%i\n",__LINE__);
   

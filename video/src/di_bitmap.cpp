@@ -32,6 +32,7 @@
 #include "di_bitmap.h"
 #include "esp_heap_caps.h"
 #include <cstring>
+#include "di_timing.h"
 //extern void debug_log(const char* fmt, ...);
 
 DiBitmap::DiBitmap(uint32_t width, uint32_t height, uint16_t flags) : DiPrimitive(flags) {
@@ -113,6 +114,8 @@ void DiBitmap::set_transparent_color(uint8_t color) {
 void DiBitmap::set_pixel(int32_t x, int32_t y, uint8_t color) {
   uint32_t* p;
   int32_t index;
+
+  color |= otf_video_params.m_syncs_off_x4;
 
   if (m_flags & PRIM_FLAG_H_SCROLL_1) {
     for (uint32_t pos = 0; pos < 4; pos++) {

@@ -24,6 +24,7 @@
 // 
 
 #include "di_solid_ellipse.h"
+#include "di_timing.h"
 
 DiSolidEllipse::DiSolidEllipse(uint16_t flags) : DiPrimitive(flags) {
 }
@@ -34,7 +35,7 @@ void DiSolidEllipse::init_params(int32_t x, int32_t y, uint32_t width, uint32_t 
   m_width = width;
   m_height = height;
   color &= 0x3F; // remove any alpha bits
-  m_color = PIXEL_COLOR_X4(color);
+  m_color = PIXEL_COLOR_X4(color) | otf_video_params.m_syncs_off_x4;
 }
 
 void IRAM_ATTR DiSolidEllipse::paint(volatile uint32_t* p_scan_line, uint32_t line_index) {

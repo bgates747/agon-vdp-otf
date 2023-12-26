@@ -24,6 +24,7 @@
 // 
 
 #include "di_set_pixel.h"
+#include "di_timing.h"
 
 DiSetPixel::DiSetPixel(uint16_t flags, int32_t x, int32_t y, uint8_t color) : DiPrimitive(flags) {
   m_opaqueness = DiPrimitive::normal_alpha_to_opaqueness(color);
@@ -31,7 +32,7 @@ DiSetPixel::DiSetPixel(uint16_t flags, int32_t x, int32_t y, uint8_t color) : Di
   m_rel_y = y;
   m_width = 1;
   m_height = 1;
-  m_color = PIXEL_COLOR_X4(color);
+  m_color = PIXEL_COLOR_X4(color) | otf_video_params.m_syncs_off_x4;
   m_paint_code.enter_and_leave_outer_function();
 }
 

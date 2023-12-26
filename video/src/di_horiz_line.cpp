@@ -24,6 +24,7 @@
 // 
 
 #include "di_horiz_line.h"
+#include "di_timing.h"
 
 DiHorizontalLine::DiHorizontalLine(uint16_t flags) : DiPrimitive(flags) {
   m_flags |= PRIM_FLAGS_X;
@@ -35,7 +36,7 @@ void DiHorizontalLine::make_line(int32_t x, int32_t y, uint32_t width, uint8_t c
   m_rel_y = y;
   m_width = width;
   m_height = 1;
-  m_color = PIXEL_COLOR_X4(color);
+  m_color = PIXEL_COLOR_X4(color) | otf_video_params.m_syncs_off_x4;
   m_paint_code.enter_and_leave_outer_function();
 }
 

@@ -24,6 +24,7 @@
 // 
 
 #include "di_rectangle.h"
+#include "di_timing.h"
 
 DiRectangle::DiRectangle(uint16_t flags) : DiPrimitive(flags) {
 }
@@ -34,7 +35,7 @@ void DiRectangle::make_rectangle_outline(int32_t x, int32_t y, uint32_t width, u
   m_width = width;
   m_height = height;
   m_opaqueness = DiPrimitive::normal_alpha_to_opaqueness(color);
-  m_color = PIXEL_COLOR_X4(color);
+  m_color = PIXEL_COLOR_X4(color) | otf_video_params.m_syncs_off_x4;
 }
 
 void DiRectangle::generate_instructions() {

@@ -75,7 +75,8 @@ int8_t use_otf_mode(int8_t mode) {
 	// Modeline for 684x384@60Hz resolution, opposite syncs
 	//                                                 1368+72+144+216 1800   768+1+3+23 795
 	//                                                  684+36+72+108  900    384+1+2+11 398
-	#define SVGA_684x384_60Hz "\"684x384@60Hz\" 85.86 684 720 792 900 384 385 387 398 -HSync +VSync DoubleScan"
+	//#define SVGA_684x384_60Hz "\"684x384@60Hz\" 85.5 684 720 792 900 384 385 387 398 -HSync +VSync DoubleScan"
+	#define SVGA_684x384_60Hz "\"1366x768@60Hz\" 85.5 1366 1438 1582 1798 768 769 772 795 -HSync +VSync"
 
 	const char* mode_line = NULL;
 	switch (resolution) {
@@ -117,7 +118,7 @@ int8_t use_otf_mode(int8_t mode) {
     otf_video_params.m_dma_total_descr =
 		otf_video_params.m_active_buffers_written +
 		timings.VFrontPorch +
-		otf_video_params.m_vs_buffers_written +
+		timings.VSyncPulse +
 		timings.VBackPorch;
     otf_video_params.m_hs_on = (timings.HSyncLogic == '+' ? 1 : 0) << VGA_HSYNC_BIT;
     otf_video_params.m_hs_off = (timings.HSyncLogic == '+' ? 0 : 1) << VGA_HSYNC_BIT;
