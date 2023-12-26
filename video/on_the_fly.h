@@ -91,7 +91,7 @@ int8_t use_otf_mode(int8_t mode) {
 		case 9: mode_line = VGA_320x200_70Hz; break;
 	}
 
-	if (!resolution) {
+	if (!mode_line) {
 		return -1; // invalid mode
 	}
 

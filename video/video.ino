@@ -87,7 +87,7 @@ void setup() {
 	set_mode(1);
 	processor->sendModeInformation();
 	boot_screen();
-	set_mode(30);
+	set_mode(50);
 }
 
 // The main loop
