@@ -156,7 +156,7 @@ const T & tmin(const T & a, const T & b)
 //  MAX 7575757Hz - sdm0 = 0 sdm1 = 128 sdm2 = 8 o_div = 31
 void APLLCalcParams(double freq, APLLParams * params, uint8_t * a, uint8_t * b, double * out_freq, double * error)
 {
-  double FXTAL = otf_video_params.m_dma_clock_freq;
+  double FXTAL = 40000000.0;
 
   *error = 999999999;
 
@@ -227,25 +227,6 @@ void APLLCalcParams(double freq, APLLParams * params, uint8_t * a, uint8_t * b, 
 
     }
   }
-}
-
-void setup_dma_clock(int freq)
-{
-  APLLParams p = {0, 0, 0, 0};
-  double error, out_freq;
-  uint8_t a = 1, b = 0;
-  APLLCalcParams(freq, &p, &a, &b, &out_freq, &error);
-
-  I2S1.clkm_conf.val          = 0;
-  I2S1.clkm_conf.clkm_div_b   = b;
-  I2S1.clkm_conf.clkm_div_a   = a;
-  I2S1.clkm_conf.clkm_div_num = 2;  // not less than 2
-  
-  I2S1.sample_rate_conf.tx_bck_div_num = 1; // this makes I2S1O_BCK = I2S1_CLK
-
-  rtc_clk_apll_enable(true, p.sdm0, p.sdm1, p.sdm2, p.o_div);
-
-  I2S1.clkm_conf.clka_en = 1;
 }
 
 // if bit is -1 = clock signal

@@ -201,6 +201,9 @@ void DiManager::initialize() {
   I2S1.conf.tx_fifo_reset = 1;
   I2S1.conf.tx_fifo_reset = 0;
 
+  // Stop DMA clock
+  I2S1.clkm_conf.clk_en = 0;
+
   // LCD mode
   I2S1.conf2.val            = 0;
   I2S1.conf2.lcd_en         = 1;
@@ -210,8 +213,24 @@ void DiManager::initialize() {
   I2S1.sample_rate_conf.val         = 0;
   I2S1.sample_rate_conf.tx_bits_mod = 8;
 
-  setup_dma_clock(otf_video_params.m_dma_clock_freq);
+  // Start DMA clock
+  APLLParams prms = {0, 0, 0, 0};
+  double error, out_freq;
+  uint8_t a = 1, b = 0;
+  APLLCalcParams(otf_video_params.m_dma_clock_freq, &prms, &a, &b, &out_freq, &error);
 
+  I2S1.clkm_conf.val          = 0;
+  I2S1.clkm_conf.clkm_div_b   = b;
+  I2S1.clkm_conf.clkm_div_a   = a;
+  I2S1.clkm_conf.clkm_div_num = 2;  // not less than 2
+  
+  I2S1.sample_rate_conf.tx_bck_div_num = 1; // this makes I2S1O_BCK = I2S1_CLK
+
+  rtc_clk_apll_enable(true, prms.sdm0, prms.sdm1, prms.sdm2, prms.o_div);
+
+  I2S1.clkm_conf.clka_en = 1;
+
+  // Setup FIFO
   I2S1.fifo_conf.val                  = 0;
   I2S1.fifo_conf.tx_fifo_mod_force_en = 1;
   I2S1.fifo_conf.tx_fifo_mod          = 1;
@@ -235,14 +254,13 @@ void DiManager::initialize() {
   I2S1.lc_conf.ahbm_fifo_rst = 1;
   I2S1.lc_conf.ahbm_rst      = 0;
   I2S1.lc_conf.ahbm_fifo_rst = 0;
-//debug_log("@%i aa %X ======\n",__LINE__,m_dma_descriptor);
+
   // Start DMA
   I2S1.lc_conf.val = I2S_OUT_DATA_BURST_EN;// | I2S_OUTDSCR_BURST_EN;
   I2S1.out_link.addr = (uint32_t)m_dma_descriptor;
   I2S1.int_clr.val = 0xFFFFFFFF;
   I2S1.out_link.start = 1;
   I2S1.conf.tx_start  = 1;
-//debug_log("@%i\n",__LINE__);
 }
 
 void DiManager::clear() {
