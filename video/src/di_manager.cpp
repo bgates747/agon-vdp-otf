@@ -844,21 +844,22 @@ void IRAM_ATTR DiManager::loop() {
 
   while (true) {
     uint32_t descr_addr = (uint32_t) I2S1.out_link_dscr;
+
     uint32_t descr_index = (descr_addr - (uint32_t)m_dma_descriptor) / sizeof(lldesc_t);
+    uint32_t descr_index_div;
+    if (otf_video_params.m_scan_count == 2) {
+      descr_index_div = (descr_index >> 1);
+    } else if (otf_video_params.m_scan_count == 4) {
+      descr_index_div = (descr_index >> 2);
+    } else {
+      descr_index_div = descr_index;
+    }
+
 //debug_log("@%i da %X aa %X di %u\n",__LINE__,descr_addr,m_dma_descriptor,descr_index);
 if ((uint32_t)descr_addr == 0xc0c0c0c0) while(1);
     if (descr_index < otf_video_params.m_active_lines) {
 
-      uint32_t dma_buffer_index;
-      if (otf_video_params.m_scan_count == 1) {
-        dma_buffer_index = descr_index & (NUM_ACTIVE_BUFFERS-1);
-      } else if (otf_video_params.m_scan_count == 2) {
-        dma_buffer_index = (descr_index >> 1) & (NUM_ACTIVE_BUFFERS-1);
-      } else if (otf_video_params.m_scan_count == 4) {
-        dma_buffer_index = (descr_index >> 2) & (NUM_ACTIVE_BUFFERS-1);
-      } else {
-        dma_buffer_index = 0;
-      }
+      uint32_t dma_buffer_index = descr_index & (NUM_ACTIVE_BUFFERS-1);
 
       // Draw enough lines to stay ahead of DMA.
       while (current_line_index < otf_video_params.m_active_lines && current_buffer_index != dma_buffer_index) {
@@ -930,7 +931,7 @@ if ((uint32_t)descr_addr == 0xc0c0c0c0) while(1);
       
     } else if (loop_state == LoopState::ProcessingIncomingData) {
 //debug_log("@%i di %u td %u\n",__LINE__,descr_index,otf_video_params.m_dma_total_descr);
-      if (descr_index >= otf_video_params.m_dma_total_descr - otf_video_params.m_dma_active_lines - 1) {
+      if (descr_index >= otf_video_params.m_dma_total_descr - NUM_ACTIVE_BUFFERS - 1) {
         // Prepare the start of the next frame.
         for (current_line_index = 0;
               current_line_index < NUM_ACTIVE_BUFFERS;
@@ -992,26 +993,6 @@ void DiManager::init_dma_descriptor(DiVideoScanLine* vscan, uint32_t scan_index,
   dd->owner = 1;
   dd->size = vscan->get_buffer_size();
   dd->length = vscan->get_buffer_size();
-  dd->buf = (uint8_t volatile *)vscan->get_buffer_ptr(scan_index);
-}
-
-void DiManager::init_dma_descriptor_pair(DiVideoScanLine* vscan, uint32_t scan_index, uint32_t descr_index) {
-  volatile lldesc_t * dd = &m_dma_descriptor[descr_index];
-
-  if (descr_index == 0) {
- //   debug_log("c. idd vscan %X si %u di %u dd %X prior %X\n",vscan,scan_index,descr_index,dd,
- //   &m_dma_descriptor[otf_video_params.m_dma_total_descr - 1]);
-    m_dma_descriptor[otf_video_params.m_dma_total_descr - 1].qe.stqe_next = (lldesc_t*)dd;
-  } else {
- //   debug_log("d. idd vscan %X si %u di %u dd %X prior %X\n",vscan,scan_index,descr_index,dd,
- //   &m_dma_descriptor[descr_index - 1]);
-    m_dma_descriptor[descr_index - 1].qe.stqe_next = (lldesc_t*)dd;
-  }
-
-  dd->sosf = dd->offset = dd->eof = 0;
-  dd->owner = 1;
-  dd->size = vscan->get_buffer_size() * 2;
-  dd->length = vscan->get_buffer_size() * 2;
   dd->buf = (uint8_t volatile *)vscan->get_buffer_ptr(scan_index);
 }
 

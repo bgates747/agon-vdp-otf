@@ -40,7 +40,6 @@ typedef struct {
     uint32_t m_active_pixels;
     uint32_t m_hbp_pixels;
     uint32_t m_dma_clock_freq;
-    uint32_t m_dma_active_lines;
     uint32_t m_dma_total_lines;
     uint32_t m_dma_total_descr;
     uint32_t m_hs_on;

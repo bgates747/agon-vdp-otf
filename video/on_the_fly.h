@@ -111,8 +111,8 @@ int8_t use_otf_mode(int8_t mode) {
     otf_video_params.m_active_pixels = timings.HVisibleArea;
     otf_video_params.m_hbp_pixels = timings.HBackPorch;
     otf_video_params.m_dma_clock_freq = timings.frequency;
-    otf_video_params.m_dma_total_lines = timings.VVisibleArea + timings.VFrontPorch + timings.VSyncPulse + timings.VBackPorch;
-    otf_video_params.m_dma_total_descr = otf_video_params.m_dma_total_lines * timings.scanCount;
+    otf_video_params.m_dma_total_lines = timings.VVisibleArea * timings.scanCount + timings.VFrontPorch + timings.VSyncPulse + timings.VBackPorch;
+    otf_video_params.m_dma_total_descr = otf_video_params.m_dma_total_lines;
     otf_video_params.m_hs_on = (timings.HSyncLogic == '+' ? 1 : 0) << VGA_HSYNC_BIT;
     otf_video_params.m_hs_off = (timings.HSyncLogic == '+' ? 0 : 1) << VGA_HSYNC_BIT;
     otf_video_params.m_vs_on = (timings.VSyncLogic == '+' ? 1 : 0) << VGA_VSYNC_BIT;

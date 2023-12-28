@@ -39,220 +39,217 @@ typedef void (*DiVoidCallback)();
 #define INCOMING_COMMAND_SIZE      24
 
 class DiManager {
-    public:
-    // Construct a drawing-instruction manager, which handles multiple drawing primitives.
-    DiManager();
+  public:
+  // Construct a drawing-instruction manager, which handles multiple drawing primitives.
+  DiManager();
 
-    // Destroy the manager and its child primitives.
-    ~DiManager();
+  // Destroy the manager and its child primitives.
+  ~DiManager();
 
-    // Create the root primitive.
-    void create_root();
+  // Create the root primitive.
+  void create_root();
 
-    // Create various types of drawing primitives.
-    DiPrimitive* create_point(uint16_t id, uint16_t parent, uint16_t flags,
-                            int32_t x, int32_t y, uint8_t color);
+  // Create various types of drawing primitives.
+  DiPrimitive* create_point(uint16_t id, uint16_t parent, uint16_t flags,
+                          int32_t x, int32_t y, uint8_t color);
 
-    DiPrimitive* create_line(OtfCmd_20_Create_primitive_Line* cmd);
+  DiPrimitive* create_line(OtfCmd_20_Create_primitive_Line* cmd);
 
-    DiPrimitive* create_rectangle_outline(OtfCmd_40_Create_primitive_Rectangle_Outline* cmd);
+  DiPrimitive* create_rectangle_outline(OtfCmd_40_Create_primitive_Rectangle_Outline* cmd);
 
-    DiSolidRectangle* create_solid_rectangle(OtfCmd_41_Create_primitive_Solid_Rectangle* cmd);
+  DiSolidRectangle* create_solid_rectangle(OtfCmd_41_Create_primitive_Solid_Rectangle* cmd);
 
-    DiPrimitive* create_ellipse(uint16_t id, uint16_t parent, uint16_t flags,
-                            int32_t x, int32_t y, uint32_t width, uint32_t height,
-                            uint8_t color);
+  DiPrimitive* create_ellipse(uint16_t id, uint16_t parent, uint16_t flags,
+                          int32_t x, int32_t y, uint32_t width, uint32_t height,
+                          uint8_t color);
 
-    DiPrimitive* create_solid_ellipse(uint16_t id, uint16_t parent, uint16_t flags,
-                            int32_t x, int32_t y, uint32_t width, uint32_t height,
-                            uint8_t color);
+  DiPrimitive* create_solid_ellipse(uint16_t id, uint16_t parent, uint16_t flags,
+                          int32_t x, int32_t y, uint32_t width, uint32_t height,
+                          uint8_t color);
 
-    DiPrimitive* create_triangle_outline(OtfCmd_30_Create_primitive_Triangle_Outline* cmd);
+  DiPrimitive* create_triangle_outline(OtfCmd_30_Create_primitive_Triangle_Outline* cmd);
 
-    DiPrimitive* create_solid_triangle(OtfCmd_31_Create_primitive_Solid_Triangle* cmd);
+  DiPrimitive* create_solid_triangle(OtfCmd_31_Create_primitive_Solid_Triangle* cmd);
 
-    DiPrimitive* create_triangle_list_outline(OtfCmd_32_Create_primitive_Triangle_List_Outline* cmd);
-    
-    DiPrimitive* create_solid_triangle_list(OtfCmd_33_Create_primitive_Solid_Triangle_List* cmd);
-
-    DiPrimitive* create_triangle_fan_outline(OtfCmd_34_Create_primitive_Triangle_Fan_Outline* cmd);
-
-    DiPrimitive* create_solid_triangle_fan(OtfCmd_35_Create_primitive_Solid_Triangle_Fan* cmd);
-
-    DiPrimitive* create_triangle_strip_outline(OtfCmd_36_Create_primitive_Triangle_Strip_Outline* cmd);
-
-    DiPrimitive* create_solid_triangle_strip(OtfCmd_37_Create_primitive_Solid_Triangle_Strip* cmd);
-
-    DiPrimitive* create_quad_outline(OtfCmd_60_Create_primitive_Quad_Outline* cmd);
-
-    DiPrimitive* create_solid_quad(OtfCmd_61_Create_primitive_Solid_Quad* cmd);
-
-    DiPrimitive* create_quad_list_outline(OtfCmd_62_Create_primitive_Quad_List_Outline* cmd);
-    
-    DiPrimitive* create_solid_quad_list(OtfCmd_63_Create_primitive_Solid_Quad_List* cmd);
-
-    DiPrimitive* create_quad_strip_outline(OtfCmd_64_Create_primitive_Quad_Strip_Outline* cmd);
-
-    DiPrimitive* create_solid_quad_strip(OtfCmd_65_Create_primitive_Solid_Quad_Strip* cmd);
-
-    DiTileMap* create_tile_map(uint16_t id, uint16_t parent, uint16_t flags,
-                            int32_t screen_width, int32_t screen_height,
-                            uint32_t columns, uint32_t rows, uint32_t width, uint32_t height);
-
-    DiTileArray* create_tile_array(uint16_t id, uint16_t parent, uint16_t flags,
-                            int32_t screen_width, int32_t screen_height,
-                            uint32_t columns, uint32_t rows, uint32_t width, uint32_t height);
-
-    DiTextArea* create_text_area(uint16_t id, uint16_t parent, uint16_t flags,
-                            uint32_t x, uint32_t y, uint32_t columns, uint32_t rows, const uint8_t* font);
-
-    DiBitmap* create_solid_bitmap(OtfCmd_120_Create_primitive_Solid_Bitmap* cmd);
-
-    DiBitmap* create_masked_bitmap(OtfCmd_121_Create_primitive_Masked_Bitmap* cmd);
-
-    DiBitmap* create_transparent_bitmap(OtfCmd_122_Create_primitive_Transparent_Bitmap* cmd);
-
-    DiBitmap* create_reference_solid_bitmap(uint16_t id, uint16_t parent, uint16_t flags, uint16_t bmid);
-
-    DiBitmap* create_reference_masked_bitmap(uint16_t id, uint16_t parent, uint16_t flags, uint16_t bmid);
-
-    DiBitmap* create_reference_transparent_bitmap(uint16_t id, uint16_t parent, uint16_t flags, uint16_t bmid);
-
-    DiBitmap* create_solid_bitmap_for_tile_array(uint16_t id, uint16_t bm_id);
-
-    DiBitmap* create_masked_bitmap_for_tile_array(uint16_t id, uint16_t bm_id, uint8_t color);
-
-    DiBitmap* create_transparent_bitmap_for_tile_array(uint16_t id, uint16_t bm_id, uint8_t color);
-
-    DiBitmap* create_solid_bitmap_for_tile_map(uint16_t id, uint16_t bm_id);
-
-    DiBitmap* create_masked_bitmap_for_tile_map(uint16_t id, uint16_t bm_id, uint8_t color);
-
-    DiBitmap* create_transparent_bitmap_for_tile_map(uint16_t id, uint16_t bm_id, uint8_t color);
-
-    DiRender* create_solid_render(uint16_t id, uint16_t parent, uint16_t flags,
-                            uint32_t width, uint32_t height);
-
-    DiRender* create_masked_render(uint16_t id, uint16_t parent, uint16_t flags,
-                            uint32_t width, uint32_t height);
-
-    DiRender* create_transparent_render(uint16_t id, uint16_t parent, uint16_t flags,
-                            uint32_t width, uint32_t height, uint8_t color);
-
-    DiPrimitive* create_primitive_group(OtfCmd_140_Create_primitive_Group* cmd);
-
-    // Set the flags for an existing primitive.
-    void set_primitive_flags(uint16_t id, uint16_t flags);
-
-    // Move an existing primitive to an absolute position.
-    void move_primitive_absolute(uint16_t id, int32_t x, int32_t y);
-
-    // Move an existing primitive to a relative position.
-    void move_primitive_relative(uint16_t id, int32_t x, int32_t y);
-
-    // Delete an existing primitive.
-    void delete_primitive(uint16_t id);
-
-    // Generate code for an existing primitive.
-    void generate_code_for_primitive(uint16_t id);
-
-    // Move an existing bitmap to an absolute position and slice it.
-    void slice_solid_bitmap_absolute(uint16_t id, int32_t x, int32_t y, int32_t start_line, int32_t height);
-    void slice_masked_bitmap_absolute(uint16_t id, int32_t x, int32_t y, int32_t start_line, int32_t height);
-    void slice_transparent_bitmap_absolute(uint16_t id, int32_t x, int32_t y, int32_t start_line, int32_t height);
-
-    // Move an existing bitmap to a relative position and slice it.
-    void slice_solid_bitmap_relative(uint16_t id, int32_t x, int32_t y, int32_t start_line, int32_t height);
-    void slice_masked_bitmap_relative(uint16_t id, int32_t x, int32_t y, int32_t start_line, int32_t height);
-    void slice_transparent_bitmap_relative(uint16_t id, int32_t x, int32_t y, int32_t start_line, int32_t height);
-
-    // Set a pixel within an existing bitmap.
-    void set_solid_bitmap_pixel(uint16_t id, int32_t x, int32_t y, uint8_t color, int16_t nth);
-    void set_masked_bitmap_pixel(uint16_t id, int32_t x, int32_t y, uint8_t color, int16_t nth);
-    void set_transparent_bitmap_pixel(uint16_t id, int32_t x, int32_t y, uint8_t color, int16_t nth);
-    void set_solid_bitmap_pixel_for_tile_array(uint16_t id, uint16_t bm_id, int32_t x, int32_t y, uint8_t color, int16_t nth);
-    void set_masked_bitmap_pixel_for_tile_array(uint16_t id, uint16_t bm_id, int32_t x, int32_t y, uint8_t color, int16_t nth);
-    void set_transparent_bitmap_pixel_for_tile_array(uint16_t id, uint16_t bm_id, int32_t x, int32_t y, uint8_t color, int16_t nth);
-    void set_solid_bitmap_pixel_for_tile_map(uint16_t id, uint16_t bm_id, int32_t x, int32_t y, uint8_t color, int16_t nth);
-    void set_masked_bitmap_pixel_for_tile_map(uint16_t id, uint16_t bm_id, int32_t x, int32_t y, uint8_t color, int16_t nth);
-    void set_transparent_bitmap_pixel_for_tile_map(uint16_t id, uint16_t bm_id, int32_t x, int32_t y, uint8_t color, int16_t nth);
-
-    // Set bitmap ID for tile in tile array.
-    void set_tile_array_bitmap_id(uint16_t id, uint16_t col, uint16_t row, uint16_t bm_id);
-
-    // Set bitmap ID for tile in tile map.
-    void set_tile_map_bitmap_id(uint16_t id, uint16_t col, uint16_t row, uint16_t bm_id);
-
-    // Setup a callback for when the visible frame pixels have been sent to DMA,
-    // and the vertical blanking time begins.
-    void set_on_vertical_blank_cb(DiVoidCallback callback_fcn);
-
-    // Setup and run the main loop to do continuous drawing.
-    // For the demo, the loop never ends.
-    void IRAM_ATTR run();
-
-    // Store an incoming character for use later.
-    void store_character(uint8_t character);
-
-    // Store an incoming character string for use later.
-    // The string is null-terminated.
-    void store_string(const uint8_t* string);
-
-    // Validate a primitive ID.
-    inline bool validate_id(int16_t id) { return (id >= 0) && (id < MAX_NUM_PRIMITIVES); }
+  DiPrimitive* create_triangle_list_outline(OtfCmd_32_Create_primitive_Triangle_List_Outline* cmd);
   
-    // Get a safe primitive pointer.
-    inline DiPrimitive* get_safe_primitive(int16_t id) { return validate_id(id) ? m_primitives[id] : NULL; }
+  DiPrimitive* create_solid_triangle_list(OtfCmd_33_Create_primitive_Solid_Triangle_List* cmd);
 
-    protected:
-    // Structures used to support DMA for video.
-    volatile lldesc_t *         m_dma_descriptor; // [DMA_TOTAL_DESCR]
-    DiVideoScanLine *           m_video_lines; // [NUM_ACTIVE_BUFFERS]
-    DiVideoScanLine *           m_front_porch;
-    DiVideoScanLine *           m_vertical_sync;
-    DiVideoScanLine *           m_back_porch;
-    DiVoidCallback              m_on_vertical_blank_cb;
-    uint32_t                    m_next_buffer_write;
-    uint32_t                    m_next_buffer_read;
-    uint32_t                    m_num_buffer_chars;
-    uint32_t                    m_command_data_index;
-    DiTextArea*                 m_text_area;
-    DiSolidRectangle*           m_cursor;
-    uint8_t                     m_flash_count;
-    uint8_t                     m_incoming_data[INCOMING_DATA_BUFFER_SIZE];
-    std::vector<uint8_t>        m_incoming_command;
-    DiPrimitive *               m_primitives[MAX_NUM_PRIMITIVES]; // Indexes of array are primitive IDs
-    std::vector<DiPrimitive*>*  m_groups; // Vertical scan groups (for optimizing paint calls)
+  DiPrimitive* create_triangle_fan_outline(OtfCmd_34_Create_primitive_Triangle_Fan_Outline* cmd);
 
-    // Setup the DMA stuff.
-    void initialize();
+  DiPrimitive* create_solid_triangle_fan(OtfCmd_35_Create_primitive_Solid_Triangle_Fan* cmd);
 
-    // Run the main loop.
-    void IRAM_ATTR loop();
+  DiPrimitive* create_triangle_strip_outline(OtfCmd_36_Create_primitive_Triangle_Strip_Outline* cmd);
 
-    // Clear the primitive data, etc.
-    void clear();
+  DiPrimitive* create_solid_triangle_strip(OtfCmd_37_Create_primitive_Solid_Triangle_Strip* cmd);
 
-    // Add a primitive to the manager.
-    void add_primitive(DiPrimitive* prim, DiPrimitive* parent);
+  DiPrimitive* create_quad_outline(OtfCmd_60_Create_primitive_Quad_Outline* cmd);
 
-    // Delete a primitive from the manager.
-    void remove_primitive(DiPrimitive* prim);
+  DiPrimitive* create_solid_quad(OtfCmd_61_Create_primitive_Solid_Quad* cmd);
 
-    // Recompute the geometry and paint list membership for a primitive.
-    void recompute_primitive(DiPrimitive* prim, uint16_t old_flags,
-                             int32_t old_min_group, int32_t old_max_group);
-    // Finish creating a primitive.
-    DiPrimitive* finish_create(uint16_t id, DiPrimitive* prim, DiPrimitive* parent_prim);
+  DiPrimitive* create_quad_list_outline(OtfCmd_62_Create_primitive_Quad_List_Outline* cmd);
+  
+  DiPrimitive* create_solid_quad_list(OtfCmd_63_Create_primitive_Solid_Quad_List* cmd);
 
-    // Draw all primitives that belong to the active scan line group.
-    void IRAM_ATTR draw_primitives(volatile uint32_t* p_scan_line, uint32_t line_index);
+  DiPrimitive* create_quad_strip_outline(OtfCmd_64_Create_primitive_Quad_Strip_Outline* cmd);
 
-    // Setup a single DMA descriptor.
-    void init_dma_descriptor(DiVideoScanLine* vscan, uint32_t scan_index, uint32_t descr_index);
+  DiPrimitive* create_solid_quad_strip(OtfCmd_65_Create_primitive_Solid_Quad_Strip* cmd);
 
-    // Setup a pair of DMA descriptors.
-    void init_dma_descriptor_pair(DiVideoScanLine* vscan, uint32_t scan_index, uint32_t descr_index);
+  DiTileMap* create_tile_map(uint16_t id, uint16_t parent, uint16_t flags,
+                          int32_t screen_width, int32_t screen_height,
+                          uint32_t columns, uint32_t rows, uint32_t width, uint32_t height);
+
+  DiTileArray* create_tile_array(uint16_t id, uint16_t parent, uint16_t flags,
+                          int32_t screen_width, int32_t screen_height,
+                          uint32_t columns, uint32_t rows, uint32_t width, uint32_t height);
+
+  DiTextArea* create_text_area(uint16_t id, uint16_t parent, uint16_t flags,
+                          uint32_t x, uint32_t y, uint32_t columns, uint32_t rows, const uint8_t* font);
+
+  DiBitmap* create_solid_bitmap(OtfCmd_120_Create_primitive_Solid_Bitmap* cmd);
+
+  DiBitmap* create_masked_bitmap(OtfCmd_121_Create_primitive_Masked_Bitmap* cmd);
+
+  DiBitmap* create_transparent_bitmap(OtfCmd_122_Create_primitive_Transparent_Bitmap* cmd);
+
+  DiBitmap* create_reference_solid_bitmap(uint16_t id, uint16_t parent, uint16_t flags, uint16_t bmid);
+
+  DiBitmap* create_reference_masked_bitmap(uint16_t id, uint16_t parent, uint16_t flags, uint16_t bmid);
+
+  DiBitmap* create_reference_transparent_bitmap(uint16_t id, uint16_t parent, uint16_t flags, uint16_t bmid);
+
+  DiBitmap* create_solid_bitmap_for_tile_array(uint16_t id, uint16_t bm_id);
+
+  DiBitmap* create_masked_bitmap_for_tile_array(uint16_t id, uint16_t bm_id, uint8_t color);
+
+  DiBitmap* create_transparent_bitmap_for_tile_array(uint16_t id, uint16_t bm_id, uint8_t color);
+
+  DiBitmap* create_solid_bitmap_for_tile_map(uint16_t id, uint16_t bm_id);
+
+  DiBitmap* create_masked_bitmap_for_tile_map(uint16_t id, uint16_t bm_id, uint8_t color);
+
+  DiBitmap* create_transparent_bitmap_for_tile_map(uint16_t id, uint16_t bm_id, uint8_t color);
+
+  DiRender* create_solid_render(uint16_t id, uint16_t parent, uint16_t flags,
+                          uint32_t width, uint32_t height);
+
+  DiRender* create_masked_render(uint16_t id, uint16_t parent, uint16_t flags,
+                          uint32_t width, uint32_t height);
+
+  DiRender* create_transparent_render(uint16_t id, uint16_t parent, uint16_t flags,
+                          uint32_t width, uint32_t height, uint8_t color);
+
+  DiPrimitive* create_primitive_group(OtfCmd_140_Create_primitive_Group* cmd);
+
+  // Set the flags for an existing primitive.
+  void set_primitive_flags(uint16_t id, uint16_t flags);
+
+  // Move an existing primitive to an absolute position.
+  void move_primitive_absolute(uint16_t id, int32_t x, int32_t y);
+
+  // Move an existing primitive to a relative position.
+  void move_primitive_relative(uint16_t id, int32_t x, int32_t y);
+
+  // Delete an existing primitive.
+  void delete_primitive(uint16_t id);
+
+  // Generate code for an existing primitive.
+  void generate_code_for_primitive(uint16_t id);
+
+  // Move an existing bitmap to an absolute position and slice it.
+  void slice_solid_bitmap_absolute(uint16_t id, int32_t x, int32_t y, int32_t start_line, int32_t height);
+  void slice_masked_bitmap_absolute(uint16_t id, int32_t x, int32_t y, int32_t start_line, int32_t height);
+  void slice_transparent_bitmap_absolute(uint16_t id, int32_t x, int32_t y, int32_t start_line, int32_t height);
+
+  // Move an existing bitmap to a relative position and slice it.
+  void slice_solid_bitmap_relative(uint16_t id, int32_t x, int32_t y, int32_t start_line, int32_t height);
+  void slice_masked_bitmap_relative(uint16_t id, int32_t x, int32_t y, int32_t start_line, int32_t height);
+  void slice_transparent_bitmap_relative(uint16_t id, int32_t x, int32_t y, int32_t start_line, int32_t height);
+
+  // Set a pixel within an existing bitmap.
+  void set_solid_bitmap_pixel(uint16_t id, int32_t x, int32_t y, uint8_t color, int16_t nth);
+  void set_masked_bitmap_pixel(uint16_t id, int32_t x, int32_t y, uint8_t color, int16_t nth);
+  void set_transparent_bitmap_pixel(uint16_t id, int32_t x, int32_t y, uint8_t color, int16_t nth);
+  void set_solid_bitmap_pixel_for_tile_array(uint16_t id, uint16_t bm_id, int32_t x, int32_t y, uint8_t color, int16_t nth);
+  void set_masked_bitmap_pixel_for_tile_array(uint16_t id, uint16_t bm_id, int32_t x, int32_t y, uint8_t color, int16_t nth);
+  void set_transparent_bitmap_pixel_for_tile_array(uint16_t id, uint16_t bm_id, int32_t x, int32_t y, uint8_t color, int16_t nth);
+  void set_solid_bitmap_pixel_for_tile_map(uint16_t id, uint16_t bm_id, int32_t x, int32_t y, uint8_t color, int16_t nth);
+  void set_masked_bitmap_pixel_for_tile_map(uint16_t id, uint16_t bm_id, int32_t x, int32_t y, uint8_t color, int16_t nth);
+  void set_transparent_bitmap_pixel_for_tile_map(uint16_t id, uint16_t bm_id, int32_t x, int32_t y, uint8_t color, int16_t nth);
+
+  // Set bitmap ID for tile in tile array.
+  void set_tile_array_bitmap_id(uint16_t id, uint16_t col, uint16_t row, uint16_t bm_id);
+
+  // Set bitmap ID for tile in tile map.
+  void set_tile_map_bitmap_id(uint16_t id, uint16_t col, uint16_t row, uint16_t bm_id);
+
+  // Setup a callback for when the visible frame pixels have been sent to DMA,
+  // and the vertical blanking time begins.
+  void set_on_vertical_blank_cb(DiVoidCallback callback_fcn);
+
+  // Setup and run the main loop to do continuous drawing.
+  // For the demo, the loop never ends.
+  void IRAM_ATTR run();
+
+  // Store an incoming character for use later.
+  void store_character(uint8_t character);
+
+  // Store an incoming character string for use later.
+  // The string is null-terminated.
+  void store_string(const uint8_t* string);
+
+  // Validate a primitive ID.
+  inline bool validate_id(int16_t id) { return (id >= 0) && (id < MAX_NUM_PRIMITIVES); }
+
+  // Get a safe primitive pointer.
+  inline DiPrimitive* get_safe_primitive(int16_t id) { return validate_id(id) ? m_primitives[id] : NULL; }
+
+  protected:
+  // Structures used to support DMA for video.
+  volatile lldesc_t *         m_dma_descriptor; // [DMA_TOTAL_DESCR]
+  DiVideoScanLine *           m_video_lines; // [NUM_ACTIVE_BUFFERS]
+  DiVideoScanLine *           m_front_porch;
+  DiVideoScanLine *           m_vertical_sync;
+  DiVideoScanLine *           m_back_porch;
+  DiVoidCallback              m_on_vertical_blank_cb;
+  uint32_t                    m_next_buffer_write;
+  uint32_t                    m_next_buffer_read;
+  uint32_t                    m_num_buffer_chars;
+  uint32_t                    m_command_data_index;
+  DiTextArea*                 m_text_area;
+  DiSolidRectangle*           m_cursor;
+  uint8_t                     m_flash_count;
+  uint8_t                     m_incoming_data[INCOMING_DATA_BUFFER_SIZE];
+  std::vector<uint8_t>        m_incoming_command;
+  DiPrimitive *               m_primitives[MAX_NUM_PRIMITIVES]; // Indexes of array are primitive IDs
+  std::vector<DiPrimitive*>*  m_groups; // Vertical scan groups (for optimizing paint calls)
+
+  // Setup the DMA stuff.
+  void initialize();
+
+  // Run the main loop.
+  void IRAM_ATTR loop();
+
+  // Clear the primitive data, etc.
+  void clear();
+
+  // Add a primitive to the manager.
+  void add_primitive(DiPrimitive* prim, DiPrimitive* parent);
+
+  // Delete a primitive from the manager.
+  void remove_primitive(DiPrimitive* prim);
+
+  // Recompute the geometry and paint list membership for a primitive.
+  void recompute_primitive(DiPrimitive* prim, uint16_t old_flags,
+                            int32_t old_min_group, int32_t old_max_group);
+  // Finish creating a primitive.
+  DiPrimitive* finish_create(uint16_t id, DiPrimitive* prim, DiPrimitive* parent_prim);
+
+  // Draw all primitives that belong to the active scan line group.
+  void IRAM_ATTR draw_primitives(volatile uint32_t* p_scan_line, uint32_t line_index);
+
+  // Setup a single DMA descriptor.
+  void init_dma_descriptor(DiVideoScanLine* vscan, uint32_t scan_index, uint32_t descr_index);
 
   // Process all stored characters.
   void process_stored_characters();

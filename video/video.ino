@@ -87,7 +87,7 @@ void setup() {
 	//setLegacyModes(true);
 	//set_mode(1);
 	//processor->sendModeInformation();
-	set_mode(50);
+	set_mode(56);
 	boot_screen();
 }
 
