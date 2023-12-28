@@ -255,7 +255,7 @@ void DiManager::initialize() {
   I2S1.conf_chan.val         = 0;
   I2S1.conf_chan.tx_chan_mod = 1;
 
-//  I2S1.conf.tx_right_first = 0;
+  //I2S1.conf.tx_right_first = 0;
   I2S1.conf.tx_right_first = 1;
 
   I2S1.timing.val = 0;
@@ -861,11 +861,16 @@ void IRAM_ATTR DiManager::loop() {
     if (descr_index_div < otf_video_params.m_active_lines) {
 
       uint32_t dma_buffer_index = descr_index_div & (NUM_ACTIVE_BUFFERS-1);
-
+      if (dma_buffer_index != current_buffer_index) {
+        draw_primitives(m_video_lines->get_buffer_ptr(dma_buffer_index), descr_index_div);
+        current_buffer_index = dma_buffer_index;
+      }
+/*
       // Draw enough lines to stay ahead of DMA.
       while (current_line_index < otf_video_params.m_active_lines && current_buffer_index != dma_buffer_index) {
         auto buf_inx = current_line_index & (NUM_ACTIVE_BUFFERS - 1);
 //debug_log("@%i di%u dbi%u cli%u bi%u\n",__LINE__,descr_index_div,dma_buffer_index,current_line_index,buf_inx);
+        //memset((void*)m_video_lines->get_buffer_ptr(buf_inx),otf_video_params.m_syncs_off|0x04,otf_video_params.m_active_pixels);
         draw_primitives(m_video_lines->get_buffer_ptr(buf_inx), current_line_index);
 //debug_log("@%i\n",__LINE__);
         ++current_line_index;
@@ -874,7 +879,7 @@ void IRAM_ATTR DiManager::loop() {
         }
 //debug_log("@%i\n",__LINE__);
       }
-
+*/
 //debug_log("@%i\n",__LINE__);
       loop_state = LoopState::WritingActiveLines;
 
@@ -941,6 +946,7 @@ void IRAM_ATTR DiManager::loop() {
         for (current_line_index = 0;
               current_line_index < NUM_ACTIVE_BUFFERS;
               current_line_index++) {
+          //memset((void*)m_video_lines->get_buffer_ptr(current_line_index),otf_video_params.m_syncs_off|0x10,otf_video_params.m_active_pixels);
           draw_primitives(m_video_lines->get_buffer_ptr(current_line_index), current_line_index);
         }
 //debug_log("@%i\n",__LINE__);

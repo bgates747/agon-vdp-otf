@@ -51,7 +51,6 @@ void otf(void * options) {
 		di_manager->generate_code_for_primitive(1);
 	}
 
-    di_manager->store_string((const uint8_t*)otf_video_params.m_mode_line);
 	debug_log("Running OTF manager...\r\n");
 	di_manager->run();
 }
@@ -77,25 +76,28 @@ int8_t use_otf_mode(int8_t mode) {
 	//                                                 1368+72+144+216 1800   768+1+3+23 795
 	//                                                  684+36+72+108  900    384+1+2+11 398
 	#define SVGA_684x384_60Hz "\"684x384@60Hz\" 42.75 684 720 792 900 384 385 387 398 -HSync +VSync DoubleScan"
-	//#define SVGA_684x384_60Hz "\"1366x768@60Hz\" 85.5 1366 1438 1582 1798 768 769 772 795 -HSync +VSync"
 
-	/** Modeline for 1280x720@60Hz resolution */ //         1280 1468 1604 1664
+	// Modeline for 1368x768@60Hz resolution, opposite syncs
+	#define SVGA_1368x768_60Hz "\"1368x768@60Hz\" 85.5 1368 1440 1584 1800 768 769 772 795 -HSync +VSync"
+
+	// Modeline for 1280x720@60Hz resolution                1280 1468 1604 1664
 	#define SVGA_1280x720_60Hz_ADJ "\"1280x720@60Hz\" 74.48 1280 1324 1460 1664 720 721 724 746 +hsync +vsync"
 
 	const char* mode_line = NULL;
 	switch (resolution) {
-		case 0: mode_line = SVGA_800x600_60Hz_Pos; break;
-		case 1: mode_line = SVGA_800x600_60Hz; break;
-		case 2: mode_line = SVGA_684x384_60Hz; break; // quarter of 1368x768
-		case 3: mode_line = QSVGA_640x512_60Hz; break; // quarter of 1280x1024
-		case 4: mode_line = VGA_640x480_60Hz; break;
-		case 5: mode_line = VGA_640x240_60Hz; break; //
-		case 6: mode_line = VGA_512x384_60Hz; break; // quarter of 1024x768
-		case 7: mode_line = QVGA_320x240_60Hz; break; // quarter of 640x480
-		case 8: mode_line = VGA_320x200_75Hz; break;
-		case 9: mode_line = VGA_320x200_70Hz; break;
-		case 10: mode_line = SVGA_1024x768_60Hz; break;
-		case 11: mode_line = SVGA_1280x720_60Hz_ADJ; break;
+		case 0: mode_line = SVGA_800x600_60Hz_Pos; break; // good
+		case 1: mode_line = SVGA_800x600_60Hz; break; // good
+		case 2: mode_line = SVGA_684x384_60Hz; break; // quarter of 1368x768, fuzzy
+		case 3: mode_line = QSVGA_640x512_60Hz; break; // quarter of 1280x1024, good, but left margin too wide
+		case 4: mode_line = VGA_640x480_60Hz; break; // good
+		case 5: mode_line = VGA_640x240_60Hz; break; // good, but left margin too narrow
+		case 6: mode_line = VGA_512x384_60Hz; break; // quarter of 1024x768, good, but left margin too wide
+		case 7: mode_line = QVGA_320x240_60Hz; break; // quarter of 640x480, good, but left margin too narrow
+		case 8: mode_line = VGA_320x200_75Hz; break; // good, but left margin too narrow
+		case 9: mode_line = VGA_320x200_70Hz; break; // good, but left margin too wide
+		case 10: mode_line = SVGA_1024x768_60Hz; break; // good
+		case 11: mode_line = SVGA_1280x720_60Hz_ADJ; break; // good
+		case 12: mode_line = SVGA_1368x768_60Hz; break; // out of range on monitor
 	}
 
 	if (!mode_line) {
