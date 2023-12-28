@@ -856,15 +856,15 @@ void IRAM_ATTR DiManager::loop() {
     }
 
 //debug_log("@%i da %X aa %X di %u\n",__LINE__,descr_addr,m_dma_descriptor,descr_index);
-if ((uint32_t)descr_addr == 0xc0c0c0c0) while(1);
-    if (descr_index < otf_video_params.m_active_lines) {
 
-      uint32_t dma_buffer_index = descr_index & (NUM_ACTIVE_BUFFERS-1);
+    if (descr_index_div < otf_video_params.m_active_lines) {
+
+      uint32_t dma_buffer_index = descr_index_div & (NUM_ACTIVE_BUFFERS-1);
 
       // Draw enough lines to stay ahead of DMA.
       while (current_line_index < otf_video_params.m_active_lines && current_buffer_index != dma_buffer_index) {
         auto buf_inx = current_line_index & (NUM_ACTIVE_BUFFERS - 1);
-//debug_log("@%i di%u dbi%u cli%u bi%u\n",__LINE__,descr_index,dma_buffer_index,current_line_index,buf_inx);
+//debug_log("@%i di%u dbi%u cli%u bi%u\n",__LINE__,descr_index_div,dma_buffer_index,current_line_index,buf_inx);
         draw_primitives(m_video_lines->get_buffer_ptr(buf_inx), current_line_index);
 //debug_log("@%i\n",__LINE__);
         ++current_line_index;
@@ -941,7 +941,7 @@ if ((uint32_t)descr_addr == 0xc0c0c0c0) while(1);
 //debug_log("@%i\n",__LINE__);
 
         loop_state = LoopState::NearNewFrameStart;
-        current_line_index = 0;
+        current_line_index = NUM_ACTIVE_BUFFERS;
         current_buffer_index = 0;
       } else {
 //debug_log("@%i\n",__LINE__);
