@@ -35,8 +35,6 @@ void OtfVideoParams::dump() {
     debug_log("m_hs_pixels: %u\n", m_hs_pixels);
     debug_log("m_active_pixels: %u\n", m_active_pixels);
     debug_log("m_hbp_pixels: %u\n", m_hbp_pixels);
-    debug_log("m_active_buffers_written: %u\n", m_active_buffers_written);
-    debug_log("m_vs_buffers_written: %u\n", m_vs_buffers_written);
     debug_log("m_dma_clock_freq: %u\n", m_dma_clock_freq);
     debug_log("m_dma_active_lines: %u\n", m_dma_active_lines);
     debug_log("m_dma_total_lines: %u\n", m_dma_total_lines);

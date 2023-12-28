@@ -75,21 +75,21 @@ int8_t use_otf_mode(int8_t mode) {
 	// Modeline for 684x384@60Hz resolution, opposite syncs
 	//                                                 1368+72+144+216 1800   768+1+3+23 795
 	//                                                  684+36+72+108  900    384+1+2+11 398
-	//#define SVGA_684x384_60Hz "\"684x384@60Hz\" 85.5 684 720 792 900 384 385 387 398 -HSync +VSync DoubleScan"
-	#define SVGA_684x384_60Hz "\"1366x768@60Hz\" 85.5 1366 1438 1582 1798 768 769 772 795 -HSync +VSync"
+	#define SVGA_684x384_60Hz "\"684x384@60Hz\" 42.75 684 720 792 900 384 385 387 398 -HSync +VSync DoubleScan"
+	//#define SVGA_684x384_60Hz "\"1366x768@60Hz\" 85.5 1366 1438 1582 1798 768 769 772 795 -HSync +VSync"
 
 	const char* mode_line = NULL;
 	switch (resolution) {
-		case 0: mode_line = SVGA_800x600_60Hz_Pos; break;
-		case 1: mode_line = SVGA_800x600_60Hz; break;
-		case 2: mode_line = SVGA_684x384_60Hz; break; // quarter of 1368x768
-		case 3: mode_line = QSVGA_640x512_60Hz; break; // quarter of 1280x1024
-		case 4: mode_line = VGA_640x480_60Hz; break;
-		case 5: mode_line = VGA_640x240_60Hz; break;
-		case 6: mode_line = VGA_512x384_60Hz; break; // quarter of 1024x768
-		case 7: mode_line = QVGA_320x240_60Hz; break; // quarter of 640x480
-		case 8: mode_line = VGA_320x200_75Hz; break;
-		case 9: mode_line = VGA_320x200_70Hz; break;
+		case 0: mode_line = SVGA_800x600_60Hz_Pos; break; // (WORKS on my small monitor)
+		case 1: mode_line = SVGA_800x600_60Hz; break; // (WORKS on my small monitor)
+		case 2: mode_line = SVGA_684x384_60Hz; break; // quarter of 1368x768 (not supported on my small monitor)
+		case 3: mode_line = QSVGA_640x512_60Hz; break; // quarter of 1280x1024 (not supported on my small monitor)
+		case 4: mode_line = VGA_640x480_60Hz; break; // (WORKS on my small monitor)
+		case 5: mode_line = VGA_640x240_60Hz; break; // (not supported on my small monitor)
+		case 6: mode_line = VGA_512x384_60Hz; break; // quarter of 1024x768 (not supported on my small monitor)
+		case 7: mode_line = QVGA_320x240_60Hz; break; // quarter of 640x480 (not supported on my small monitor)
+		case 8: mode_line = VGA_320x200_75Hz; break; // (not supported on my small monitor)
+		case 9: mode_line = VGA_320x200_70Hz; break; // (not supported on my small monitor)
 	}
 
 	if (!mode_line) {
@@ -110,16 +110,9 @@ int8_t use_otf_mode(int8_t mode) {
     otf_video_params.m_hs_pixels = timings.HSyncPulse;
     otf_video_params.m_active_pixels = timings.HVisibleArea;
     otf_video_params.m_hbp_pixels = timings.HBackPorch;
-    otf_video_params.m_active_buffers_written = timings.VVisibleArea / NUM_LINES_PER_BUFFER;
-    otf_video_params.m_vs_buffers_written = timings.VSyncPulse / NUM_LINES_PER_BUFFER;
     otf_video_params.m_dma_clock_freq = timings.frequency;
-    otf_video_params.m_dma_active_lines = NUM_ACTIVE_BUFFERS*NUM_LINES_PER_BUFFER;
     otf_video_params.m_dma_total_lines = timings.VVisibleArea + timings.VFrontPorch + timings.VSyncPulse + timings.VBackPorch;
-    otf_video_params.m_dma_total_descr =
-		otf_video_params.m_active_buffers_written +
-		timings.VFrontPorch +
-		timings.VSyncPulse +
-		timings.VBackPorch;
+    otf_video_params.m_dma_total_descr = otf_video_params.m_dma_total_lines * timings.scanCount;
     otf_video_params.m_hs_on = (timings.HSyncLogic == '+' ? 1 : 0) << VGA_HSYNC_BIT;
     otf_video_params.m_hs_off = (timings.HSyncLogic == '+' ? 0 : 1) << VGA_HSYNC_BIT;
     otf_video_params.m_vs_on = (timings.VSyncLogic == '+' ? 1 : 0) << VGA_VSYNC_BIT;

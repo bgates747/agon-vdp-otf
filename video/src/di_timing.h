@@ -39,8 +39,6 @@ typedef struct {
     uint32_t m_hs_pixels;
     uint32_t m_active_pixels;
     uint32_t m_hbp_pixels;
-    uint32_t m_active_buffers_written;
-    uint32_t m_vs_buffers_written;
     uint32_t m_dma_clock_freq;
     uint32_t m_dma_active_lines;
     uint32_t m_dma_total_lines;

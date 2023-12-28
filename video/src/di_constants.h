@@ -66,8 +66,8 @@
 #define FIX_INDEX(idx)      ((idx)^2)
 
 // Used to control the few DMA scan line buffers.
-#define NUM_LINES_PER_BUFFER  2
-#define NUM_ACTIVE_BUFFERS    4 // must be a power of 2 and multiple of NUM_LINES_PER_BUFFER
+#define ACTIVE_BUFFERS_SHIFT    3 // exponent of power of 2
+#define NUM_ACTIVE_BUFFERS      (1<<ACTIVE_BUFFERS_SHIFT)
 
 // This number determines how many primitives may exist simultaneously.
 // Some may exist without being drawn. Primitive #0 is the root primitive,

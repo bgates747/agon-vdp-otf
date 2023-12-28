@@ -134,7 +134,7 @@ void DiManager::initialize() {
   void* p = heap_caps_malloc(new_size, MALLOC_CAP_32BIT|MALLOC_CAP_8BIT|MALLOC_CAP_DMA);
   m_dma_descriptor = (volatile lldesc_t *)p;
 
-  m_video_lines = new DiVideoScanLine(NUM_ACTIVE_BUFFERS * NUM_LINES_PER_BUFFER);
+  m_video_lines = new DiVideoScanLine(NUM_ACTIVE_BUFFERS);
   m_front_porch = new DiVideoScanLine(1);
   m_vertical_sync = new DiVideoScanLine(1);
   m_back_porch = new DiVideoScanLine(1);
@@ -143,8 +143,18 @@ void DiManager::initialize() {
   uint32_t descr_index = 0;
   m_video_lines->init_to_black();
 //debug_log("@%i\n",__LINE__);
-  for (uint32_t i = 0; i < otf_video_params.m_active_buffers_written; i++) {
-    init_dma_descriptor_pair(m_video_lines, (i & (NUM_ACTIVE_BUFFERS - 1)) * 2, descr_index++);
+  for (uint32_t i = 0; i < otf_video_params.m_active_lines; i++) {
+    if (otf_video_params.m_scan_count == 1) {
+      init_dma_descriptor(m_video_lines, (i & (NUM_ACTIVE_BUFFERS - 1)), descr_index++);
+    } else if (otf_video_params.m_scan_count == 2) {
+      init_dma_descriptor(m_video_lines, (i & (NUM_ACTIVE_BUFFERS - 1)), descr_index++);
+      init_dma_descriptor(m_video_lines, (i & (NUM_ACTIVE_BUFFERS - 1)), descr_index++);
+    } else if (otf_video_params.m_scan_count == 4) {
+      init_dma_descriptor(m_video_lines, (i & (NUM_ACTIVE_BUFFERS - 1)), descr_index++);
+      init_dma_descriptor(m_video_lines, (i & (NUM_ACTIVE_BUFFERS - 1)), descr_index++);
+      init_dma_descriptor(m_video_lines, (i & (NUM_ACTIVE_BUFFERS - 1)), descr_index++);
+      init_dma_descriptor(m_video_lines, (i & (NUM_ACTIVE_BUFFERS - 1)), descr_index++);
+    }
   }
 //debug_log("@%i\n",__LINE__);
 
@@ -207,7 +217,7 @@ void DiManager::initialize() {
   // LCD mode
   I2S1.conf2.val            = 0;
   I2S1.conf2.lcd_en         = 1;
-  I2S1.conf2.lcd_tx_wrx2_en = (otf_video_params.m_scan_count == 2 ? 1 : 0);
+  I2S1.conf2.lcd_tx_wrx2_en = (otf_video_params.m_scan_count >= 2 ? 1 : 0);
   I2S1.conf2.lcd_tx_sdx2_en = 0;
 
   I2S1.sample_rate_conf.val         = 0;
@@ -245,7 +255,8 @@ void DiManager::initialize() {
   I2S1.conf_chan.val         = 0;
   I2S1.conf_chan.tx_chan_mod = 1;
 
-  I2S1.conf.tx_right_first = 0;
+//  I2S1.conf.tx_right_first = 0;
+  I2S1.conf.tx_right_first = 1;
 
   I2S1.timing.val = 0;
 
@@ -255,10 +266,60 @@ void DiManager::initialize() {
   I2S1.lc_conf.ahbm_rst      = 0;
   I2S1.lc_conf.ahbm_fifo_rst = 0;
 
-  // Start DMA
-  I2S1.lc_conf.val = I2S_OUT_DATA_BURST_EN;// | I2S_OUTDSCR_BURST_EN;
+  // Prepare to start DMA
+  I2S1.lc_conf.val = I2S_OUT_DATA_BURST_EN | I2S_OUTDSCR_BURST_EN;
   I2S1.out_link.addr = (uint32_t)m_dma_descriptor;
   I2S1.int_clr.val = 0xFFFFFFFF;
+
+///////////////////
+#define SHOWIT(dd) debug_log(#dd ": %u %X\n", dd, dd);
+  SHOWIT(I2S1.conf2.val)
+  SHOWIT(I2S1.conf2.lcd_en)
+  SHOWIT(I2S1.conf2.lcd_tx_wrx2_en)
+  SHOWIT(I2S1.conf2.lcd_tx_sdx2_en)
+
+  SHOWIT(I2S1.sample_rate_conf.val)
+  SHOWIT(I2S1.sample_rate_conf.tx_bits_mod)
+
+  SHOWIT(I2S1.clkm_conf.val)
+  SHOWIT(I2S1.clkm_conf.clkm_div_b)
+  SHOWIT(I2S1.clkm_conf.clkm_div_a)
+  SHOWIT(I2S1.clkm_conf.clkm_div_num)
+  SHOWIT(I2S1.sample_rate_conf.tx_bck_div_num)
+  SHOWIT(I2S1.clkm_conf.clka_en)
+
+  SHOWIT(I2S1.fifo_conf.val)
+  SHOWIT(I2S1.fifo_conf.tx_fifo_mod_force_en)
+  SHOWIT(I2S1.fifo_conf.tx_fifo_mod)
+  SHOWIT(I2S1.fifo_conf.tx_fifo_mod)
+  SHOWIT(I2S1.fifo_conf.tx_data_num)
+  SHOWIT(I2S1.fifo_conf.dscr_en)
+
+  SHOWIT(I2S1.conf1.val)
+  SHOWIT(I2S1.conf1.tx_stop_en)
+  SHOWIT(I2S1.conf1.tx_pcm_bypass)
+
+  SHOWIT(I2S1.conf_chan.val)
+  SHOWIT(I2S1.conf_chan.tx_chan_mod)
+
+  SHOWIT(I2S1.conf.tx_right_first)
+
+  SHOWIT(I2S1.timing.val)
+
+  SHOWIT(I2S1.lc_conf.ahbm_rst)
+  SHOWIT(I2S1.lc_conf.ahbm_fifo_rst)
+  SHOWIT(I2S1.lc_conf.ahbm_rst)
+  SHOWIT(I2S1.lc_conf.ahbm_fifo_rst)
+
+  SHOWIT(I2S1.lc_conf.val)
+  SHOWIT(I2S1.out_link.addr)
+  SHOWIT(I2S1.int_clr.val)
+  SHOWIT(I2S1.out_link.start)
+  SHOWIT(I2S1.conf.tx_start)
+
+///////////////////
+
+  // Start DMA
   I2S1.out_link.start = 1;
   I2S1.conf.tx_start  = 1;
 }
@@ -777,7 +838,7 @@ void IRAM_ATTR DiManager::run() {
 
 void IRAM_ATTR DiManager::loop() {
 //debug_log("@%i\n",__LINE__);
-  uint32_t current_line_index = 0;//NUM_ACTIVE_BUFFERS * NUM_LINES_PER_BUFFER;
+  uint32_t current_line_index = 0;
   uint32_t current_buffer_index = 0;
   LoopState loop_state = LoopState::NearNewFrameStart;
 
@@ -786,17 +847,24 @@ void IRAM_ATTR DiManager::loop() {
     uint32_t descr_index = (descr_addr - (uint32_t)m_dma_descriptor) / sizeof(lldesc_t);
 //debug_log("@%i da %X aa %X di %u\n",__LINE__,descr_addr,m_dma_descriptor,descr_index);
 if ((uint32_t)descr_addr == 0xc0c0c0c0) while(1);
-    if (descr_index <= otf_video_params.m_active_buffers_written) {
-      //uint32_t dma_line_index = descr_index * NUM_LINES_PER_BUFFER;
-      uint32_t dma_buffer_index = descr_index & (NUM_ACTIVE_BUFFERS-1);
+    if (descr_index < otf_video_params.m_active_lines) {
+
+      uint32_t dma_buffer_index;
+      if (otf_video_params.m_scan_count == 1) {
+        dma_buffer_index = descr_index & (NUM_ACTIVE_BUFFERS-1);
+      } else if (otf_video_params.m_scan_count == 2) {
+        dma_buffer_index = (descr_index >> 1) & (NUM_ACTIVE_BUFFERS-1);
+      } else if (otf_video_params.m_scan_count == 4) {
+        dma_buffer_index = (descr_index >> 2) & (NUM_ACTIVE_BUFFERS-1);
+      } else {
+        dma_buffer_index = 0;
+      }
 
       // Draw enough lines to stay ahead of DMA.
       while (current_line_index < otf_video_params.m_active_lines && current_buffer_index != dma_buffer_index) {
-        auto buf_inx = current_line_index & (NUM_ACTIVE_BUFFERS * NUM_LINES_PER_BUFFER - 1);
+        auto buf_inx = current_line_index & (NUM_ACTIVE_BUFFERS - 1);
 //debug_log("@%i di%u dbi%u cli%u bi%u\n",__LINE__,descr_index,dma_buffer_index,current_line_index,buf_inx);
         draw_primitives(m_video_lines->get_buffer_ptr(buf_inx), current_line_index);
-//debug_log("@%i\n",__LINE__);
-        draw_primitives(m_video_lines->get_buffer_ptr(buf_inx+1), ++current_line_index);
 //debug_log("@%i\n",__LINE__);
         ++current_line_index;
         if (++current_buffer_index >= NUM_ACTIVE_BUFFERS) {
@@ -864,11 +932,10 @@ if ((uint32_t)descr_addr == 0xc0c0c0c0) while(1);
 //debug_log("@%i di %u td %u\n",__LINE__,descr_index,otf_video_params.m_dma_total_descr);
       if (descr_index >= otf_video_params.m_dma_total_descr - otf_video_params.m_dma_active_lines - 1) {
         // Prepare the start of the next frame.
-        for (current_line_index = 0, current_buffer_index = 0;
-              current_buffer_index < NUM_ACTIVE_BUFFERS;
-              current_line_index+=2, current_buffer_index++) {
+        for (current_line_index = 0;
+              current_line_index < NUM_ACTIVE_BUFFERS;
+              current_line_index++) {
           draw_primitives(m_video_lines->get_buffer_ptr(current_line_index), current_line_index);
-          draw_primitives(m_video_lines->get_buffer_ptr(current_line_index+1), current_line_index+1);
         }
 //debug_log("@%i\n",__LINE__);
 
