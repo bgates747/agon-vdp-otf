@@ -31,6 +31,7 @@ extern void debug_log(const char* fmt, ...);
 #endif
 
 typedef struct {
+    const char* m_mode_line;
     uint32_t m_active_lines;
     uint32_t m_vfp_lines;
     uint32_t m_vs_lines;

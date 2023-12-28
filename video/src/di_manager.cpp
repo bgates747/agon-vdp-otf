@@ -840,6 +840,7 @@ void IRAM_ATTR DiManager::loop() {
 //debug_log("@%i\n",__LINE__);
   uint32_t current_line_index = 0;
   uint32_t current_buffer_index = 0;
+  uint32_t frame_count = 0;
   LoopState loop_state = LoopState::NearNewFrameStart;
 
   while (true) {
@@ -926,6 +927,10 @@ void IRAM_ATTR DiManager::loop() {
       do_keyboard();
       do_mouse();
 //debug_log("@%i\n",__LINE__);
+
+      if (++frame_count == 60*4) {
+        store_string((const uint8_t*)otf_video_params.m_mode_line);
+      }
 
       loop_state = LoopState::ProcessingIncomingData;
       
