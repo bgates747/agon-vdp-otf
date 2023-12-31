@@ -934,7 +934,26 @@ void IRAM_ATTR DiManager::loop() {
 //debug_log("@%i\n",__LINE__);
 
       if (++frame_count == 60*4) {
-        store_string((const uint8_t*)otf_video_params.m_mode_line);
+        store_string("\r\n");
+        store_string(otf_video_params.m_mode_line);
+        store_string("\r\n");
+        auto cols = otf_video_params.m_active_pixels / 8;
+        char n[10];
+        sprintf(n, "%u\r\n", cols);
+        store_string(n);
+        auto rows = otf_video_params.m_active_lines / 8;
+        sprintf(n, "%u\r\n", rows);
+        store_string(n);
+        for (uint32_t c = 0; c < cols; c++) {
+          sprintf(n, "%u", (c / 10) % 10);
+          store_string(n);
+        }
+        store_string("\r\n");
+        for (uint32_t c = 0; c < cols; c++) {
+          sprintf(n, "%u", c % 10);
+          store_string(n);
+        }
+        store_string("\r\n");
       }
 
       loop_state = LoopState::ProcessingIncomingData;

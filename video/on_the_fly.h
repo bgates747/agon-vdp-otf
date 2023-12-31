@@ -81,22 +81,37 @@ int8_t use_otf_mode(int8_t mode) {
 	#define SVGA_1368x768_60Hz "\"1368x768@60Hz\" 85.5 1368 1440 1584 1800 768 769 772 795 -HSync +VSync"
 
 	// Modeline for 1280x720@60Hz resolution                1280 1468 1604 1664
-	#define SVGA_1280x720_60Hz_ADJ "\"1280x720@60Hz\" 74.48 1280 1324 1460 1664 720 721 724 746 +hsync +vsync"
+	//#define SVGA_1280x720_60Hz_ADJ "\"1280x720@60Hz\" 74.48 1280 1344 1480 1664 720 721 724 746 +hsync +vsync"
+	#define SVGA_1280x720_60Hz_ADJ "\"1280x720@60Hz\" 74.25 1280 1344 1480 1664 720 721 724 746 +hsync +vsync"
+	//#define SVGA_1280x720_60Hz_ADJ "\"1280x720@60Hz\" 74.25 1280 1390 1430 1650 720 725 730 750 +hsync +vsync"
+
+	// Modeline for 640x512@60Hz resolution (for pixel perfect 1280x1024 double scan resolution)
+	// 664 720, 680 736
+	#define QSVGA_640x512_60Hz_ADJ "\"640x512@60Hz\" 54     640 664 720 844 512 513 515 533 -HSync -VSync DoubleScan"
+
+	// Modeline for 320x200@75Hz resolution
+	#define VGA_320x200_75Hz_ADJ "\"320x200@75Hz\" 12.93 336 368 376 408 200 208 211 229 -HSync -VSync DoubleScan"
+
+	// Modeline for 1024x768@60Hz resolution
+	#define SVGA_1024x768_60Hz_ADJ "\"1024x768@60Hz\" 65 1024 1056 1192 1344 768 771 777 806 -HSync -VSync"
+
+	// Modeline for 320x200@70Hz resolution - the same of VGA_640x200_70Hz with horizontal halved
+	#define VGA_320x200_70Hz_ADJ "\"320x200@70Hz\" 12.5875 320 328 356 400 200 206 207 224 -HSync -VSync DoubleScan"
 
 	const char* mode_line = NULL;
 	switch (resolution) {
-		case 0: mode_line = SVGA_800x600_60Hz_Pos; break; // good
-		case 1: mode_line = SVGA_800x600_60Hz; break; // good
-		case 2: mode_line = SVGA_684x384_60Hz; break; // quarter of 1368x768, fuzzy
-		case 3: mode_line = QSVGA_640x512_60Hz; break; // quarter of 1280x1024, good, but left margin too wide
-		case 4: mode_line = VGA_640x480_60Hz; break; // good
-		case 5: mode_line = VGA_640x240_60Hz; break; // good, but left margin too narrow
-		case 6: mode_line = VGA_512x384_60Hz; break; // quarter of 1024x768, good, but left margin too wide
-		case 7: mode_line = QVGA_320x240_60Hz; break; // quarter of 640x480, good, but left margin too narrow
-		case 8: mode_line = VGA_320x200_75Hz; break; // good, but left margin too narrow
-		case 9: mode_line = VGA_320x200_70Hz; break; // good, but left margin too wide
-		case 10: mode_line = SVGA_1024x768_60Hz; break; // good
-		case 11: mode_line = SVGA_1280x720_60Hz_ADJ; break; // good
+		case 0: mode_line = SVGA_800x600_60Hz_Pos; break; // (100x75) good
+		case 1: mode_line = SVGA_800x600_60Hz; break; // (100x75) good
+		case 2: mode_line = SVGA_684x384_60Hz; break; // (85x48) quarter of 1368x768, fuzzy
+		case 3: mode_line = QSVGA_640x512_60Hz_ADJ; break; // (80x64) quarter of 1280x1024, clean, but missing 4 rightmost columns
+		case 4: mode_line = VGA_640x480_60Hz; break; // (80x60) good
+		case 5: mode_line = VGA_640x240_60Hz; break; // (80x30) clean, but missing 2 rightmost columns
+		case 6: mode_line = VGA_512x384_60Hz; break; // (64x48) quarter of 1024x768, good
+		case 7: mode_line = QVGA_320x240_60Hz; break; // (40x30) quarter of 640x480, clean, but missing 1 rightmost column
+		case 8: mode_line = VGA_320x200_75Hz; break; // (40x25) clean, but missing 1 rightmost column
+		case 9: mode_line = VGA_320x200_70Hz_ADJ; break; // (40x25) clean, but missing 2 rightmost columns
+		case 10: mode_line = SVGA_1024x768_60Hz_ADJ; break; // (128x96) good
+		case 11: mode_line = SVGA_1280x720_60Hz_ADJ; break; // (160x90) clean, but missing columns 134 to 159
 		case 12: mode_line = SVGA_1368x768_60Hz; break; // out of range on monitor
 	}
 
@@ -131,6 +146,10 @@ int8_t use_otf_mode(int8_t mode) {
     otf_video_params.m_syncs_off_x4 =
 		(otf_video_params.m_syncs_off << 24) | (otf_video_params.m_syncs_off << 16) |
 		(otf_video_params.m_syncs_off << 8) | otf_video_params.m_syncs_off;
+
+    int adj = 0;
+    otf_video_params.m_hfp_pixels += adj;
+	otf_video_params.m_hbp_pixels -= adj;
 
 	otf_video_params.dump();
 

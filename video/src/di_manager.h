@@ -197,6 +197,7 @@ class DiManager {
   // Store an incoming character string for use later.
   // The string is null-terminated.
   void store_string(const uint8_t* string);
+  inline void store_string(const char* string) { store_string((const uint8_t*) string); }
 
   // Validate a primitive ID.
   inline bool validate_id(int16_t id) { return (id >= 0) && (id < MAX_NUM_PRIMITIVES); }
