@@ -30,12 +30,16 @@
 #define _anglex int16_t  m_anglex;
 #define _angley int16_t  m_angley;
 #define _anglez int16_t  m_anglez;
+#define _blue   uint8_t  m_blue;
 #define _bgcolor uint8_t m_bgcolor;
 #define _bmid   uint16_t m_bmid;
+#define _bottom uint16_t m_bottom;
+#define _bottom8 uint8_t m_bottom;
 #define _char   uint8_t  m_char;
 #define _color  uint8_t  m_color;
 #define _colors uint8_t  m_colors[1];
 #define _column uint16_t m_column;
+#define _column8 uint8_t m_column;
 #define _columns uint16_t m_columns;
 #define _coords int16_t  m_coords[1];
 #define _distx  int16_t  m_distx;
@@ -44,18 +48,36 @@
 #define _firstchar uint8_t m_firstchar;
 #define _fgcolor uint8_t m_fgcolor;
 #define _flags  uint16_t m_flags;
+#define _green  uint8_t m_green;
 #define _h      uint16_t m_h;
 #define _i0     uint16_t m_i0;
 #define _id     uint16_t m_id;
 #define _ix     int16_t  m_ix;
 #define _iy     int16_t  m_iy;
 #define _lastchar uint8_t m_lastchar;
+#define _left   uint16_t m_left;
+#define _left8  uint8_t m_left;
+#define _logical  uint8_t m_logical;
 #define _mid    uint16_t m_mid;
+#define _mode   uint8_t m_mode;
 #define _n      uint16_t m_n;
 #define _oid    uint16_t m_oid;
+#define _physical uint8_t m_physical;
 #define _pid    uint16_t m_pid;
+#define _r1     uint8_t m_r1;
+#define _r2     uint8_t m_r2;
+#define _r3     uint8_t m_r3;
+#define _r4     uint8_t m_r4;
+#define _r5     uint8_t m_r5;
+#define _r6     uint8_t m_r6;
+#define _r7     uint8_t m_r7;
+#define _r8     uint8_t m_r8;
+#define _red    uint8_t m_red;
 #define _row    uint16_t m_row;
+#define _row8   uint8_t m_row;
 #define _rows   uint16_t m_rows;
+#define _right  uint16_t m_right;
+#define _right8 uint8_t m_right;
 #define _s      uint16_t m_s;
 #define _scalex uint16_t m_scalex;
 #define _scaley uint16_t m_scaley;
@@ -64,6 +86,8 @@
 #define _sx1    int16_t  m_sx1;
 #define _sy0    int16_t  m_sy0;
 #define _sy1    int16_t  m_sy1;
+#define _top    uint16_t m_top;
+#define _top8   uint8_t m_top;
 #define _u0     uint16_t m_u0;
 #define _v0     uint16_t m_v0;
 #define _w      uint16_t m_w;
@@ -181,6 +205,46 @@ OTFCMD(216,(_id _oid _distz),_Set_Object_Z_Translation_Distance)
 OTFCMD(217,(_id _oid _distx _disty _distz),_Set_Object_XYZ_Translation_Distances)
 OTFCMD(218,(_id),_Render_To_Bitmap)
 
+#define VDUCMD(cmd, params, name) \
+typedef struct { \
+    uint8_t     m_category; \
+    ARGS params \
+} VduCmd_##cmd##name;
+
+VDUCMD(0,(),_Ignore_data)
+VDUCMD(1,(),_Print_data)
+VDUCMD(2,(),_Enable_print_mode)
+VDUCMD(3,(),_Disable_print_mode)
+VDUCMD(4,(),_Print_at_text_cursor)
+VDUCMD(5,(),_Print_at_graphics_cursor)
+VDUCMD(6,(),_Enable_output_to_screen)
+VDUCMD(7,(),_Beep)
+VDUCMD(8,(),_Move_text_cursor_left)
+VDUCMD(9,(),_Move_text_cursor_right)
+VDUCMD(10,(),_Move_text_cursor_down)
+VDUCMD(11,(),_Move_text_cursor_up)
+VDUCMD(12,(),_Clear_text_viewport)
+VDUCMD(13,(),_Move_text_cursor_boln)
+VDUCMD(14,(),_Enable_auto_page_mode)
+VDUCMD(15,(),_Disable_auto_page_mode)
+VDUCMD(16,(),_Clear_graphics_viewport)
+VDUCMD(17,(_color),_Set_text_color)
+VDUCMD(18,(_mode _color),_Set_graphics_mode_color)
+VDUCMD(19,(_logical _physical _red _green _blue),_Set_palette_color)
+VDUCMD(20,(),_Reset_colors)
+VDUCMD(21,(),_Disable_output_to_screen)
+VDUCMD(22,(_mode),_Set_video_mode)
+VDUCMD(23,(_char _r1 _r2 _r3 _r4 _r5 _r6 _r7 _r8),_Manipulate_text)
+VDUCMD(24,(_left _bottom _right _top),_Define_graphics_viewport)
+VDUCMD(25,(_mode _x _y),_Plot_graphics)
+VDUCMD(26,(),_Reset_viewports)
+VDUCMD(27,(_char),_Display_character)
+VDUCMD(28,(_left8 _bottom8 _right8 _top8),_Define_text_viewport)
+VDUCMD(29,(_x _y),_Set_graphics_origin)
+VDUCMD(30,(),_Move_text_cursor_home)
+VDUCMD(31,(_row8 _column8),_Set_text_tab_position)
+VDUCMD(127,(),_Backspace)
+
 typedef union {
     OtfCmd_0_Set_flags_for_primitive m_0_Set_flags_for_primitive;
     OtfCmd_1_Set_primitive_position m_1_Set_primitive_position;
@@ -272,5 +336,41 @@ typedef union {
     OtfCmd_217_Set_Object_XYZ_Translation_Distances m_217_Set_Object_XYZ_Translation_Distances;
     OtfCmd_218_Render_To_Bitmap m_218_Render_To_Bitmap;
 } OtfCmdUnion;
+
+typedef union {
+    VduCmd_0_Ignore_data m_0_Ignore_data;
+    VduCmd_1_Print_data m_1_Print_data;
+    VduCmd_2_Enable_print_mode m_2_Enable_print_mode;
+    VduCmd_3_Disable_print_mode m_3_Disable_print_mode;
+    VduCmd_4_Print_at_text_cursor m_4_Print_at_text_cursor;
+    VduCmd_5_Print_at_graphics_cursor m_5_Print_at_graphics_cursor;
+    VduCmd_6_Enable_output_to_screen m_6_Enable_output_to_screen;
+    VduCmd_7_Beep m_7_Beep;
+    VduCmd_8_Move_text_cursor_left m_8_Move_text_cursor_left;
+    VduCmd_9_Move_text_cursor_right m_9_Move_text_cursor_right;
+    VduCmd_10_Move_text_cursor_down m_10_Move_text_cursor_down;
+    VduCmd_11_Move_text_cursor_up m_11_Move_text_cursor_up;
+    VduCmd_12_Clear_text_viewport m_12_Clear_text_viewport;
+    VduCmd_13_Move_text_cursor_boln m_13_Move_text_cursor_boln;
+    VduCmd_14_Enable_auto_page_mode m_14_Enable_auto_page_mode;
+    VduCmd_15_Disable_auto_page_mode m_15_Disable_auto_page_mode;
+    VduCmd_16_Clear_graphics_viewport m_16_Clear_graphics_viewport;
+    VduCmd_17_Set_text_color m_17_Set_text_color;
+    VduCmd_18_Set_graphics_mode_color m_18_Set_graphics_mode_color;
+    VduCmd_19_Set_palette_color m_19_Set_palette_color;
+    VduCmd_20_Reset_colors m_20_Reset_colors;
+    VduCmd_21_Disable_output_to_screen m_21_Disable_output_to_screen;
+    VduCmd_22_Set_video_mode m_22_Set_video_mode;
+    VduCmd_23_Manipulate_text m_23_Manipulate_text;
+    VduCmd_24_Define_graphics_viewport m_24_Define_graphics_viewport;
+    VduCmd_25_Plot_graphics m_25_Plot_graphics;
+    VduCmd_26_Reset_viewports m_26_Reset_viewports;
+    VduCmd_27_Display_character m_27_Display_character;
+    VduCmd_28_Define_text_viewport m_28_Define_text_viewport;
+    VduCmd_29_Set_graphics_origin m_29_Set_graphics_origin;
+    VduCmd_30_Move_text_cursor_home m_30_Move_text_cursor_home;
+    VduCmd_31_Set_text_tab_position m_31_Set_text_tab_position;
+    VduCmd_127_Backspace m_127_Backspace;
+} VduCmdUnion;
 
 #pragma pack(pop)

@@ -103,8 +103,7 @@ class DiManager {
                           int32_t screen_width, int32_t screen_height,
                           uint32_t columns, uint32_t rows, uint32_t width, uint32_t height);
 
-  DiTextArea* create_text_area(uint16_t id, uint16_t parent, uint16_t flags,
-                          uint32_t x, uint32_t y, uint32_t columns, uint32_t rows, const uint8_t* font);
+  DiTextArea* create_text_area(OtfCmd_150_Create_primitive_Text_Area* cmd, const uint8_t* font);
 
   DiBitmap* create_solid_bitmap(OtfCmd_120_Create_primitive_Solid_Bitmap* cmd);
 
@@ -275,6 +274,7 @@ class DiManager {
   bool define_graphics_viewport(uint8_t character);
   bool define_text_viewport(uint8_t character);
   bool move_cursor_tab(uint8_t character);
+  bool set_color(uint8_t character);
   void clear_screen();
   void move_cursor_left();
   void move_cursor_right();

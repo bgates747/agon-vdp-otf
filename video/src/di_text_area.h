@@ -90,6 +90,12 @@ class DiTextArea: public DiTileArray {
   void move_text(int32_t column, int32_t row, int32_t columns, int32_t rows,
                   int32_t delta_horiz, int32_t delta_vert);
 
+  // Set the foreground color.
+  void set_foreground_color(uint8_t color);
+
+  // Set the background color.
+  void set_background_color(uint8_t color);
+
   void clear_screen();
   void move_cursor_left();
   void move_cursor_right();

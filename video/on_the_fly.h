@@ -42,10 +42,15 @@ void otf(void * options) {
 		di_manager->generate_code_for_primitive(cmd.m_id);
 	} else if (opts == 2) {
 		// Create a full screen text area as the screen background.
-		auto columns = otf_video_params.m_active_pixels / 8;
-		auto rows = otf_video_params.m_active_lines / 8;
-		auto text_area = di_manager->create_text_area(1, ROOT_PRIMITIVE_ID, PRIM_FLAGS_DEFAULT,
-			0, 0, columns, rows, fabgl::FONT_AGON_DATA);
+		OtfCmd_150_Create_primitive_Text_Area cmd;
+		cmd.m_flags = PRIM_FLAGS_DEFAULT;
+		cmd.m_id = 1;
+		cmd.m_pid = ROOT_PRIMITIVE_ID;
+		cmd.m_x = 0;
+		cmd.m_y = 0;
+		cmd.m_columns = otf_video_params.m_active_pixels / 8;
+		cmd.m_rows = otf_video_params.m_active_lines / 8;
+		auto text_area = di_manager->create_text_area(&cmd, fabgl::FONT_AGON_DATA);
 		text_area->define_character_range(0x20, 0x7E, PIXEL_ALPHA_100_MASK|0x05, PIXEL_ALPHA_100_MASK|0x00);
 		text_area->clear_screen();
 		di_manager->generate_code_for_primitive(1);

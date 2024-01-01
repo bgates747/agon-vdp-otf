@@ -273,3 +273,11 @@ void DiTextArea::get_position(uint16_t& column, uint16_t& row) {
   column = m_current_column;
   row = m_current_row;
 }
+
+void DiTextArea::set_foreground_color(uint8_t color) {
+  m_fg_color = color;
+}
+
+void DiTextArea::set_background_color(uint8_t color) {
+  m_bg_color = color;
+}

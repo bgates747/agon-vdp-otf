@@ -68,6 +68,10 @@ extern int videoMode;
 extern bool stream_byte_available();
 extern uint8_t stream_read_byte();
 
+namespace fabgl {
+  extern uint8_t FONT_AGON_DATA[256*8];
+}
+
 extern "C" {
 extern void fcn_copy_words_in_loop(void* dst, void* src, uint32_t num_words);
 }
@@ -93,11 +97,6 @@ DiManager::DiManager() {
   m_groups = new std::vector<DiPrimitive*>[otf_video_params.m_active_lines];
 
   logicalCoords = false; // this mode always uses regular coordinates
-/*  m_incoming_command.push_back('A');
-  m_incoming_command.push_back('b');
-  m_incoming_command.push_back('C');
-  m_incoming_command.push_back('d');
-debug_log("@%i m_incoming_command size %u\n", __LINE__, m_incoming_command.size());*/
 }
 
 DiManager::~DiManager() {
@@ -799,14 +798,13 @@ DiTileArray* DiManager::create_tile_array(uint16_t id, uint16_t parent, uint16_t
     return tile_array;
 }
 
-DiTextArea* DiManager::create_text_area(uint16_t id, uint16_t parent, uint16_t flags,
-                            uint32_t x, uint32_t y, uint32_t columns, uint32_t rows, const uint8_t* font) {
-    if (!validate_id(id)) return NULL;
-    DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(parent))) return NULL;
+DiTextArea* DiManager::create_text_area(OtfCmd_150_Create_primitive_Text_Area* cmd, const uint8_t* font) {
+    if (!validate_id(cmd->m_id)) return NULL;
+    DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
-    DiTextArea* text_area = new DiTextArea(x, y, flags, columns, rows, font);
+    DiTextArea* text_area = new DiTextArea(cmd->m_x, cmd->m_y, cmd->m_flags, cmd->m_columns, cmd->m_rows, font);
 
-    finish_create(id, text_area, parent_prim);
+    finish_create(cmd->m_id, text_area, parent_prim);
     m_text_area = text_area;
 
     // Create a child rectangle as a text cursor.
@@ -815,16 +813,16 @@ DiTextArea* DiManager::create_text_area(uint16_t id, uint16_t parent, uint16_t f
     m_text_area->get_tile_coordinates(0, 0, cx, cy, cx_extent, cy_extent);
     auto w = cx_extent - cx;
 
-    OtfCmd_41_Create_primitive_Solid_Rectangle cmd;
-    cmd.m_id = id + 1;
-    cmd.m_pid = id;
-    cmd.m_flags = flags & PRIM_FLAGS_DEFAULT;
-    cmd.m_x = cx;
-    cmd.m_y = cy_extent - 2;
-    cmd.m_w = w;
-    cmd.m_h = 2;
-    cmd.m_color = 0xFF;
-    m_cursor = create_solid_rectangle(&cmd);
+    OtfCmd_41_Create_primitive_Solid_Rectangle cursor_cmd;
+    cursor_cmd.m_id = cmd->m_id + 1;
+    cursor_cmd.m_pid = cmd->m_id;
+    cursor_cmd.m_flags = cmd->m_flags & PRIM_FLAGS_DEFAULT;
+    cursor_cmd.m_x = cx;
+    cursor_cmd.m_y = cy_extent - 2;
+    cursor_cmd.m_w = w;
+    cursor_cmd.m_h = 2;
+    cursor_cmd.m_color = 0xFF;
+    m_cursor = create_solid_rectangle(&cursor_cmd);
     cursorEnabled = true;
 
     return text_area;
@@ -1090,17 +1088,8 @@ bool DiManager::process_character(uint8_t character) {
   //debug_log("[%02hX]", character);
 //debug_log("@%i m_incoming_command size %u\n", __LINE__, m_incoming_command.size());
   if (m_incoming_command.size()) {
+    m_incoming_command.push_back(character);
     switch (m_incoming_command[0]) {
-      case 0x11: return ignore_cmd(character, 2);
-      case 0x17: return handle_udg_sys_cmd(character);
-      case 0x1F: return move_cursor_tab(character);
-    }
-    return false;
-  } else if (character >= 0x20 && character != 0x7F) {
-    // printable character
-    write_character(character);
-  } else {
-    switch (character) {
       case 0x04: report(character); break; // use filled characters & text cursor
       case 0x05: report(character); break; // use transparent characters & graphics cursor
       case 0x07: report(character); break; // play bell
@@ -1113,11 +1102,11 @@ bool DiManager::process_character(uint8_t character) {
       case 0x0E: report(character); break; // paged mode ON
       case 0x0F: report(character); break; // paged mode OFF
       case 0x10: report(character); break; // clear graphics screen
-      case 0x11: return ignore_cmd(character, 2); // set color
+      case 0x11: return set_color(); // set color
       case 0x12: report(character); break; // set graphics mode, color
       case 0x13: report(character); break; // define logical color (palette)
       case 0x16: report(character); break; // set vdu mode
-      case 0x17: return handle_udg_sys_cmd(character); // handle UDG/system command
+      case 0x17: return handle_udg_sys_cmd(character?); // handle UDG/system command
       case 0x18: return define_graphics_viewport(character);
       case 0x19: report(character); break; // vdu plot
       case 0x1A: clear_screen(); break; // reset text and graphic viewports
@@ -1126,7 +1115,14 @@ bool DiManager::process_character(uint8_t character) {
       case 0x1E: move_cursor_home(); break;
       case 0x1F: return move_cursor_tab(character);
       case 0x7F: do_backspace(); break;
-      default: report(character); break;
+      default: {
+        if (character >= 0x20 && character != 0x7F) {
+          // printable character
+          write_character(character);
+        } else {
+         report(character); break;
+        }
+      }
     }
   }
   return true;
@@ -1141,7 +1137,6 @@ void DiManager::process_string(const uint8_t* string) {
 }
 
 bool DiManager::ignore_cmd(uint8_t character, uint8_t len) {
-  m_incoming_command.push_back(character);
   if (m_incoming_command.size() >= len) {
     m_incoming_command.clear();
     return true;
@@ -1150,7 +1145,6 @@ bool DiManager::ignore_cmd(uint8_t character, uint8_t len) {
 }
 
 bool DiManager::define_graphics_viewport(uint8_t character) {
-  m_incoming_command.push_back(character);
   if (m_incoming_command.size() >= 9) {
       int16_t left = get_param_16(1);
       int16_t bottom = get_param_16(3);
@@ -1163,7 +1157,6 @@ bool DiManager::define_graphics_viewport(uint8_t character) {
 }
 
 bool DiManager::define_text_viewport(uint8_t character) {
-  m_incoming_command.push_back(character);
   if (m_incoming_command.size() >= 5) {
       uint8_t left = get_param_8(1);
       uint8_t bottom = get_param_8(2);
@@ -1240,10 +1233,7 @@ From this page: https://www.bbcbasic.co.uk/bbcwin/manual/bbcwin8.html#vdu23
 VDU 23, 1, 0; 0; 0; 0;: Text Cursor Control
 */
 bool DiManager::handle_udg_sys_cmd(uint8_t character) {
-//debug_log("@%i\n",__LINE__);
 //debug_log("@%i this %X, m_incoming_command size %u\n", __LINE__, (void*)this, m_incoming_command.size());
-  m_incoming_command.push_back(character);
-//debug_log("@%i\n",__LINE__);
   if (m_incoming_command.size() >= 2 && get_param_8(1) == 30) {
 //debug_log("@%i\n",__LINE__);
     return handle_otf_cmd();
@@ -2124,18 +2114,47 @@ bool DiManager::handle_otf_cmd() {
 
       case 150: {
         auto cmd = &cu->m_150_Create_primitive_Text_Area;
+        if (m_incoming_command.size() == sizeof(*cmd)) {
+          create_text_area(cmd, fabgl::FONT_AGON_DATA);
+          m_incoming_command.clear();
+          return true;
+        }
       } break;
 
       case 151: {
         auto cmd = &cu->m_151_Select_Active_Text_Area;
+        if (m_incoming_command.size() == sizeof(*cmd)) {
+          DiTextArea* text_area = (DiTextArea*) get_safe_primitive(cmd->m_id);
+          if (text_area) {
+            m_text_area = text_area;
+          }
+          m_incoming_command.clear();
+          return true;
+        }
       } break;
 
       case 152: {
         auto cmd = &cu->m_152_Define_Text_Area_Character;
+        if (m_incoming_command.size() == sizeof(*cmd)) {
+          DiTextArea* text_area = (DiTextArea*) get_safe_primitive(cmd->m_id);
+          if (text_area) {
+            text_area->define_character(cmd->m_char, cmd->m_fgcolor, cmd->m_bgcolor);
+          }
+          m_incoming_command.clear();
+          return true;
+        }
       } break;
 
       case 153: {
         auto cmd = &cu->m_153_Define_Text_Area_Character_Range;
+        if (m_incoming_command.size() == sizeof(*cmd)) {
+          DiTextArea* text_area = (DiTextArea*) get_safe_primitive(cmd->m_id);
+          if (text_area) {
+            text_area->define_character_range(cmd->m_firstchar, cmd->m_lastchar, cmd->m_fgcolor, cmd->m_bgcolor);
+          }
+          m_incoming_command.clear();
+          return true;
+        }
       } break;
 
       case 200: {
@@ -2223,6 +2242,25 @@ bool DiManager::handle_otf_cmd() {
   return false;
 }
 
+bool DiManager::set_color() {
+  if (m_incoming_command.size() >= 2) {
+    if (m_text_area) {
+      // Because the upper bit is used to indicate background (vs foreground),
+      // this command does not support transparency settings, and we assume
+      // using 100% opaque color values here.
+      auto color = m_incoming_command[1];
+      if (color & 0x80) {
+        m_text_area->set_background_color(PIXEL_ALPHA_100_MASK|(color & 0x3F));
+      } else {
+        m_text_area->set_foreground_color(PIXEL_ALPHA_100_MASK|(color & 0x3F));
+      }
+    }
+    m_incoming_command.clear();
+    return true;
+  }
+  return false;
+}
+
 void DiManager::clear_screen() {
   if (m_text_area) {
     m_text_area->clear_screen();
@@ -2272,7 +2310,6 @@ void DiManager::do_backspace() {
 }
 
 bool DiManager::move_cursor_tab(uint8_t character) {
-  m_incoming_command.push_back(character);
   if (m_incoming_command.size() >= 3) {
     if (m_text_area) {
       uint8_t x = get_param_8(1);
