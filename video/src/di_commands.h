@@ -52,6 +52,7 @@
 #define _h      uint16_t m_h;
 #define _i0     uint16_t m_i0;
 #define _id     uint16_t m_id;
+#define _ignore uint8_t  m_ignore;
 #define _ix     int16_t  m_ix;
 #define _iy     int16_t  m_iy;
 #define _lastchar uint8_t m_lastchar;
@@ -211,8 +212,8 @@ typedef struct { \
     ARGS params \
 } VduCmd_##cmd##name;
 
-VDUCMD(0,(),_Ignore_data)
-VDUCMD(1,(),_Print_data)
+VDUCMD(0,(_ignore),_Ignore_data)
+VDUCMD(1,(_char),_Print_character)
 VDUCMD(2,(),_Enable_print_mode)
 VDUCMD(3,(),_Disable_print_mode)
 VDUCMD(4,(),_Print_at_text_cursor)
@@ -339,7 +340,7 @@ typedef union {
 
 typedef union {
     VduCmd_0_Ignore_data m_0_Ignore_data;
-    VduCmd_1_Print_data m_1_Print_data;
+    VduCmd_1_Print_character m_1_Print_character;
     VduCmd_2_Enable_print_mode m_2_Enable_print_mode;
     VduCmd_3_Disable_print_mode m_3_Disable_print_mode;
     VduCmd_4_Print_at_text_cursor m_4_Print_at_text_cursor;
