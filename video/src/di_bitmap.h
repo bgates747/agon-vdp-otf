@@ -36,7 +36,7 @@
 class DiBitmap : public DiPrimitive {
   public:
   // Construct a bitmap that owns its pixel data.
-  DiBitmap(uint32_t width, uint32_t height, uint16_t flags);
+  DiBitmap(uint32_t width, uint32_t height, uint16_t flags, bool use_psram);
 
   // Construct a bitmap that references (borrows) its pixel data.
   DiBitmap(uint16_t flags, DiBitmap* ref_bitmap);
@@ -90,4 +90,5 @@ class DiBitmap : public DiPrimitive {
   uint32_t    m_save_height;
   uint32_t    m_built_width;
   uint8_t     m_transparent_color;
+  bool        m_use_psram;
 };

@@ -1,5 +1,5 @@
 ## Create primitive: Solid Bitmap
-<b>VDU 23, 30, 120, id; pid; flags; w; h;</b> : Create primitive: Solid Bitmap
+<b>VDU 23, 30, 120, id; pid; flags; w; h; psram</b> : Create primitive: Solid Bitmap
 
 This commmand creates a primitive that draws a solid bitmap, meaning
 that every pixel is fully opaque (though each pixel has its own color).
@@ -9,8 +9,12 @@ processing speed perspective. Bitmaps with any transparency may be slower, and t
 OTF mode will automatically set the PRIM_FLAGS_ALL_SAME flag
 when this command is used.
 
+If the psram parameter is nonzero, the bitmap pixels are kept in PSRAM (SPI RAM)
+rather than in DRAM. This should only be done in resolutions where the pixel clock
+rate is relatively slow; otherwise, flicker may occur.
+
 ## Create primitive: Masked Bitmap
-<b>VDU 23, 30, 121, id; pid; flags; w; h; color</b> : Create primitive: Masked Bitmap
+<b>VDU 23, 30, 121, id; pid; flags; w; h; psram, color</b> : Create primitive: Masked Bitmap
 
 This commmand creates a primitive that draws a masked bitmap, meaning
 that every pixel is either fully opaque (though each pixel has its own color) or fully transparent.
@@ -23,8 +27,12 @@ visible color in the source bitmap. When setting the color of
 each pixel in the bitmap, use that given color for any pixels
 that must be invisible.
 
+If the psram parameter is nonzero, the bitmap pixels are kept in PSRAM (SPI RAM)
+rather than in DRAM. This should only be done in resolutions where the pixel clock
+rate is relatively slow; otherwise, flicker may occur.
+
 ## Create primitive: Transparent Bitmap
-<b>VDU 23, 30, 122, id; pid; flags; w; h; color</b> : Create primitive: Transparent Bitmap
+<b>VDU 23, 30, 122, id; pid; flags; w; h; psram, color</b> : Create primitive: Transparent Bitmap
 
 This commmand creates a primitive that draws a transparent bitmap, meaning
 that each pixel has either 0%, 25%, 50%, 75%, or 100% opacity.
@@ -39,6 +47,10 @@ that must be invisible.
 
 OTF mode will automatically set the PRIM_FLAGS_BLENDED flag
 when this command is used.
+
+If the psram parameter is nonzero, the bitmap pixels are kept in PSRAM (SPI RAM)
+rather than in DRAM. This should only be done in resolutions where the pixel clock
+rate is relatively slow; otherwise, flicker may occur.
 
 ## Set position & slice solid bitmap
 <b>VDU 23, 30, 123, id; x; y; s; h;</b> : Set position & slice solid bitmap

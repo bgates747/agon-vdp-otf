@@ -55,7 +55,6 @@ void otf(void * options) {
 		text_area->clear_screen();
 		di_manager->generate_code_for_primitive(1);
 	}
-
 	debug_log("Running OTF manager...\r\n");
 	di_manager->run();
 }

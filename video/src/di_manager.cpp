@@ -2809,7 +2809,7 @@ DiBitmap* DiManager::create_solid_bitmap(OtfCmd_120_Create_primitive_Solid_Bitma
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
     cmd->m_flags |= PRIM_FLAGS_ALL_SAME;
-    auto prim = new DiBitmap(cmd->m_w, cmd->m_h, cmd->m_flags);
+    auto prim = new DiBitmap(cmd->m_w, cmd->m_h, cmd->m_flags, (cmd->m_psram != 0));
 
     finish_create(cmd->m_id, prim, parent_prim);
     return prim;
@@ -2820,7 +2820,7 @@ DiBitmap* DiManager::create_masked_bitmap(OtfCmd_121_Create_primitive_Masked_Bit
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
     cmd->m_flags |= PRIM_FLAGS_MASKED;
-    auto prim = new DiBitmap(cmd->m_w, cmd->m_h, cmd->m_flags);
+    auto prim = new DiBitmap(cmd->m_w, cmd->m_h, cmd->m_flags, (cmd->m_psram != 0));
     prim->set_transparent_color(cmd->m_color);
 
     finish_create(cmd->m_id, prim, parent_prim);
@@ -2832,7 +2832,7 @@ DiBitmap* DiManager::create_transparent_bitmap(OtfCmd_122_Create_primitive_Trans
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
     cmd->m_flags |= PRIM_FLAGS_BLENDED;
-    auto prim = new DiBitmap(cmd->m_w, cmd->m_h, cmd->m_flags);
+    auto prim = new DiBitmap(cmd->m_w, cmd->m_h, cmd->m_flags, (cmd->m_psram != 0));
     prim->set_transparent_color(cmd->m_color);
 
     finish_create(cmd->m_id, prim, parent_prim);
@@ -2918,7 +2918,7 @@ DiRender* DiManager::create_solid_render(OtfCmd_200_Create_primitive_Solid_Rende
     if (!validate_id(cmd->m_id)) return NULL;
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
-    auto prim = new DiRender(cmd->m_w, cmd->m_h, cmd->m_flags);
+    auto prim = new DiRender(cmd->m_w, cmd->m_h, cmd->m_flags, (cmd->m_psram != 0));
 
     finish_create(cmd->m_id, prim, parent_prim);
     return prim;
@@ -2929,7 +2929,7 @@ DiRender* DiManager::create_masked_render(OtfCmd_201_Create_primitive_Masked_Ren
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
     cmd->m_flags |= PRIM_FLAGS_MASKED;
-    auto prim = new DiRender(cmd->m_w, cmd->m_h, cmd->m_flags);
+    auto prim = new DiRender(cmd->m_w, cmd->m_h, cmd->m_flags, (cmd->m_psram != 0));
     prim->set_transparent_color(cmd->m_color);
 
     finish_create(cmd->m_id, prim, parent_prim);
@@ -2941,7 +2941,7 @@ DiRender* DiManager::create_transparent_render(OtfCmd_202_Create_primitive_Trans
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
     cmd->m_flags |= PRIM_FLAGS_BLENDED;
-    auto prim = new DiRender(cmd->m_w, cmd->m_h, cmd->m_flags);
+    auto prim = new DiRender(cmd->m_w, cmd->m_h, cmd->m_flags, (cmd->m_psram != 0));
     prim->set_transparent_color(cmd->m_color);
 
     finish_create(cmd->m_id, prim, parent_prim);

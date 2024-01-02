@@ -65,6 +65,7 @@
 #define _oid    uint16_t m_oid;
 #define _physical uint8_t m_physical;
 #define _pid    uint16_t m_pid;
+#define _psram  uint8_t m_psram;
 #define _r1     uint8_t m_r1;
 #define _r2     uint8_t m_r2;
 #define _r3     uint8_t m_r3;
@@ -165,9 +166,9 @@ OTFCMD(107,(_id _bmid _x _y _color),_Set_transparent_bitmap_pixel_in_Tile_Map)
 OTFCMD(108,(_id _bmid _x _y _n _colors),_Set_solid_bitmap_pixels_in_Tile_Map)
 OTFCMD(109,(_id _bmid _x _y _n _colors),_Set_masked_bitmap_pixels_in_Tile_Map)
 OTFCMD(110,(_id _bmid _x _y _n _colors),_Set_transparent_bitmap_pixels_in_Tile_Map)
-OTFCMD(120,(_id _pid _flags _w _h),_Create_primitive_Solid_Bitmap)
-OTFCMD(121,(_id _pid _flags _w _h _color),_Create_primitive_Masked_Bitmap)
-OTFCMD(122,(_id _pid _flags _w _h _color),_Create_primitive_Transparent_Bitmap)
+OTFCMD(120,(_id _pid _flags _w _h _psram),_Create_primitive_Solid_Bitmap)
+OTFCMD(121,(_id _pid _flags _w _h _psram _color),_Create_primitive_Masked_Bitmap)
+OTFCMD(122,(_id _pid _flags _w _h _psram _color),_Create_primitive_Transparent_Bitmap)
 OTFCMD(123,(_id _x _y _s _h),_Set_position_and_slice_solid_bitmap)
 OTFCMD(124,(_id _x _y _s _h),_Set_position_and_slice_masked_bitmap)
 OTFCMD(125,(_id _x _y _s _h),_Set_position_and_slice_transparent_bitmap)
@@ -188,9 +189,9 @@ OTFCMD(150,(_id _pid _flags _x _y _columns _rows),_Create_primitive_Text_Area)
 OTFCMD(151,(_id),_Select_Active_Text_Area)
 OTFCMD(152,(_id _char _fgcolor _bgcolor),_Define_Text_Area_Character)
 OTFCMD(153,(_id _firstchar _lastchar _fgcolor _bgcolor),_Define_Text_Area_Character_Range)
-OTFCMD(200,(_id _pid _flags _x _y _w _h),_Create_primitive_Solid_Render)
-OTFCMD(201,(_id _pid _flags _x _y _w _h _color),_Create_primitive_Masked_Render)
-OTFCMD(202,(_id _pid _flags _x _y _w _h _color),_Create_primitive_Transparent_Render)
+OTFCMD(200,(_id _pid _flags _x _y _w _h _psram),_Create_primitive_Solid_Render)
+OTFCMD(201,(_id _pid _flags _x _y _w _h _psram _color),_Create_primitive_Masked_Render)
+OTFCMD(202,(_id _pid _flags _x _y _w _h _psram _color),_Create_primitive_Transparent_Render)
 OTFCMD(203,(_id _mid _n _x0 _y0 _z0),_Define_Mesh_Vertices)
 OTFCMD(204,(_id _mid _n _i0),_Set_Mesh_Vertex_Indices)
 OTFCMD(205,(_id _mid _n _u0 _v0),_Define_Texture_Coordinates)

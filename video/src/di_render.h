@@ -31,7 +31,7 @@
 class DiRender : public DiBitmap {
   public:
   // Construct a render.
-  DiRender(uint32_t width, uint32_t height, uint16_t flags);
+  DiRender(uint32_t width, uint32_t height, uint16_t flags, bool use_psram);
 
   // Destroy a render.
   ~DiRender();

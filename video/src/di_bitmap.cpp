@@ -35,27 +35,40 @@
 #include "di_timing.h"
 //extern void debug_log(const char* fmt, ...);
 
-DiBitmap::DiBitmap(uint32_t width, uint32_t height, uint16_t flags) : DiPrimitive(flags) {
+DiBitmap::DiBitmap(uint32_t width, uint32_t height, uint16_t flags, bool use_psram) : DiPrimitive(flags) {
   //debug_log(" @%i ",__LINE__);
   m_width = width;
   m_height = height;
   m_save_height = height;
   m_flags |= PRIM_FLAGS_X_SRC;
   m_transparent_color = 0;
+  m_use_psram = use_psram;
 
   if (flags & PRIM_FLAG_H_SCROLL_1) {
       m_words_per_line = ((width + sizeof(uint32_t) - 1) / sizeof(uint32_t) + 2);
       m_bytes_per_line = m_words_per_line * sizeof(uint32_t);
       m_words_per_position = m_words_per_line * height;
       m_bytes_per_position = m_words_per_position * sizeof(uint32_t);
-      m_pixels = new uint32_t[m_words_per_position * 4];
+
+      if (use_psram) {
+        m_pixels = (uint32_t*) heap_caps_malloc(m_words_per_position * 4, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT | MALLOC_CAP_32BIT);
+      } else {
+        m_pixels = new uint32_t[m_words_per_position * 4];
+      }
+
       memset(m_pixels, 0x00, m_bytes_per_position * 4);
   } else {
       m_words_per_line = ((width + sizeof(uint32_t) - 1) / sizeof(uint32_t));
       m_bytes_per_line = m_words_per_line * sizeof(uint32_t);
       m_words_per_position = m_words_per_line * height;
       m_bytes_per_position = m_words_per_position * sizeof(uint32_t);
-      m_pixels = new uint32_t[m_words_per_position];
+
+      if (use_psram) {
+        m_pixels = (uint32_t*) heap_caps_malloc(m_words_per_position, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT | MALLOC_CAP_32BIT);
+      } else {
+        m_pixels = new uint32_t[m_words_per_position];
+      }
+
       memset(m_pixels, 0x00, m_bytes_per_position);
   }
   m_visible_start = m_pixels;
@@ -83,7 +96,11 @@ DiBitmap::DiBitmap(uint16_t flags, DiBitmap* ref_bitmap) : DiPrimitive(flags) {
 
 DiBitmap::~DiBitmap() {
   if (!(m_flags & PRIM_FLAGS_REF_DATA)) {
-    delete [] m_pixels;
+    if (m_use_psram) {
+      heap_caps_free(m_pixels);
+    } else {
+      delete [] m_pixels;
+    }
   }
 }
 

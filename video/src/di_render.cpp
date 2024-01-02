@@ -94,8 +94,8 @@ void di_render_init( DiRenderBackEnd * backend, Vec2i size) {
 
 //-----------------------------------------
 
-DiRender::DiRender(uint32_t width, uint32_t height, uint16_t flags) :
-  DiBitmap(width, height, flags) {
+DiRender::DiRender(uint32_t width, uint32_t height, uint16_t flags, bool use_psram) :
+  DiBitmap(width, height, flags, use_psram) {
 }
 
 DiRender::~DiRender() {

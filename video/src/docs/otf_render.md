@@ -85,7 +85,7 @@ VDU ... PDX; PDY; PDZ; ...
 <br>
 
 ## Create primitive: Solid Render
-<b>VDU 23, 30, 200, id; pid; flags; x; y; w; h;</b> :  Create primitive: Solid Render
+<b>VDU 23, 30, 200, id; pid; flags; x; y; w; h; psram</b> :  Create primitive: Solid Render
 
 This command creates a primitive that renders a 3D scene to a bitmap. The bitmap can be
 manipulated or altered using the bitmap primitive commands, after the scene image
@@ -94,8 +94,12 @@ created prior to using other 3D related commands, below.
 
 A solid render has pixels that are all 100% opaque (0% transparent).
 
+If the psram parameter is nonzero, the bitmap pixels are kept in PSRAM (SPI RAM)
+rather than in DRAM. This should only be done in resolutions where the pixel clock
+rate is relatively slow; otherwise, flicker may occur.
+
 ## Create primitive: Masked Render
-<b>VDU 23, 30, 201, id; pid; flags; x; y; w; h; color</b> :  Create primitive: Masked Render
+<b>VDU 23, 30, 201, id; pid; flags; x; y; w; h; psram, color</b> :  Create primitive: Masked Render
 
 This command creates a primitive that renders a 3D scene to a bitmap. The bitmap can be
 manipulated or altered using the bitmap primitive commands, after the scene image
@@ -108,8 +112,12 @@ and should be a color (including its alpha bits) that is not likely to appear in
 the rendered image. For example, if the image will have no dark red pixels that are 25%
 opaque, then the color could be specified as 1 or &01 in BASIC (0x01 in C).
 
+If the psram parameter is nonzero, the bitmap pixels are kept in PSRAM (SPI RAM)
+rather than in DRAM. This should only be done in resolutions where the pixel clock
+rate is relatively slow; otherwise, flicker may occur.
+
 ## Create primitive: Transparent Render
-<b>VDU 23, 30, 202, id; pid; flags; x; y; w; h; c;</b> :  Create primitive: Transparent Render
+<b>VDU 23, 30, 202, id; pid; flags; x; y; w; h; psram, color</b> :  Create primitive: Transparent Render
 
 This command creates a primitive that renders a 3D scene to a bitmap. The bitmap can be
 manipulated or altered using the bitmap primitive commands, after the scene image
@@ -122,6 +130,10 @@ A transparent render has pixels that are 100% opaque (0% transparent), 75% opaqu
 and should be a color (including its alpha bits) that is not likely to appear in
 the rendered image. For example, if the image will have no dark red pixels that are 25%
 opaque, then the color could be specified as 1 or &01 in BASIC (0x01 in C).
+
+If the psram parameter is nonzero, the bitmap pixels are kept in PSRAM (SPI RAM)
+rather than in DRAM. This should only be done in resolutions where the pixel clock
+rate is relatively slow; otherwise, flicker may occur.
 
 ## Define Mesh Vertices
 <b>VDU 23, 30, 203, id; mid; n; x0; y0; z0; ...</b> :  Define Mesh Vertices
