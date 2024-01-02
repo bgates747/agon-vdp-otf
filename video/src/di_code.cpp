@@ -570,7 +570,7 @@ void EspFunction::copy_line_loop(EspFixups& fixups, uint32_t x_offset,
             width = MIN(skip, draw_width);
             opaqueness = 0;
             skip = 0;
-        } else if (!(flags & PRIM_FLAGS_BLENDED)) {
+        } else if (!(flags & (PRIM_FLAGS_MASKED|PRIM_FLAGS_BLENDED))) {
             // Transfer all pixels at 100% opaqueness.
             width = draw_width;            
         } else {
@@ -579,11 +579,11 @@ void EspFunction::copy_line_loop(EspFixups& fixups, uint32_t x_offset,
             width = 1;
             uint32_t index = FIX_OFFSET(x_offset);
             uint8_t src_color = p_src_bytes[index];
-            uint8_t first_alpha = (src_color == transparent_color) ? 0xFF : (src_color & 0xC0);
+            uint8_t first_alpha = ((flags & PRIM_FLAGS_MASKED) && (src_color == transparent_color)) ? 0xFF : (src_color & 0xC0);
             for (uint32_t i = 1; i < draw_width; i++) {
                 index = FIX_OFFSET(x_offset + i);
                 src_color = p_src_bytes[index];
-                uint8_t next_alpha = (src_color == transparent_color) ? 0xFF : (src_color & 0xC0);
+                uint8_t next_alpha = ((flags && PRIM_FLAGS_MASKED) && (src_color == transparent_color)) ? 0xFF : (src_color & 0xC0);
                 if (next_alpha == first_alpha) {
                     width++;
                 } else {

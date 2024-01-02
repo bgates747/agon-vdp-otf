@@ -50,94 +50,44 @@ class DiManager {
   void create_root();
 
   // Create various types of drawing primitives.
-  DiPrimitive* create_point(uint16_t id, uint16_t parent, uint16_t flags,
-                          int32_t x, int32_t y, uint8_t color);
-
+  DiPrimitive* create_point(OtfCmd_10_Create_primitive_Point* cmd);
   DiPrimitive* create_line(OtfCmd_20_Create_primitive_Line* cmd);
-
   DiPrimitive* create_rectangle_outline(OtfCmd_40_Create_primitive_Rectangle_Outline* cmd);
-
   DiSolidRectangle* create_solid_rectangle(OtfCmd_41_Create_primitive_Solid_Rectangle* cmd);
-
-  DiPrimitive* create_ellipse(uint16_t id, uint16_t parent, uint16_t flags,
-                          int32_t x, int32_t y, uint32_t width, uint32_t height,
-                          uint8_t color);
-
-  DiPrimitive* create_solid_ellipse(uint16_t id, uint16_t parent, uint16_t flags,
-                          int32_t x, int32_t y, uint32_t width, uint32_t height,
-                          uint8_t color);
-
+  DiPrimitive* create_ellipse(OtfCmd_50_Create_primitive_Ellipse_Outline* cmd);
+  DiPrimitive* create_solid_ellipse(OtfCmd_51_Create_primitive_Solid_Ellipse* cmd);
   DiPrimitive* create_triangle_outline(OtfCmd_30_Create_primitive_Triangle_Outline* cmd);
-
   DiPrimitive* create_solid_triangle(OtfCmd_31_Create_primitive_Solid_Triangle* cmd);
-
   DiPrimitive* create_triangle_list_outline(OtfCmd_32_Create_primitive_Triangle_List_Outline* cmd);
-  
   DiPrimitive* create_solid_triangle_list(OtfCmd_33_Create_primitive_Solid_Triangle_List* cmd);
-
   DiPrimitive* create_triangle_fan_outline(OtfCmd_34_Create_primitive_Triangle_Fan_Outline* cmd);
-
   DiPrimitive* create_solid_triangle_fan(OtfCmd_35_Create_primitive_Solid_Triangle_Fan* cmd);
-
   DiPrimitive* create_triangle_strip_outline(OtfCmd_36_Create_primitive_Triangle_Strip_Outline* cmd);
-
   DiPrimitive* create_solid_triangle_strip(OtfCmd_37_Create_primitive_Solid_Triangle_Strip* cmd);
-
   DiPrimitive* create_quad_outline(OtfCmd_60_Create_primitive_Quad_Outline* cmd);
-
   DiPrimitive* create_solid_quad(OtfCmd_61_Create_primitive_Solid_Quad* cmd);
-
   DiPrimitive* create_quad_list_outline(OtfCmd_62_Create_primitive_Quad_List_Outline* cmd);
-  
   DiPrimitive* create_solid_quad_list(OtfCmd_63_Create_primitive_Solid_Quad_List* cmd);
-
   DiPrimitive* create_quad_strip_outline(OtfCmd_64_Create_primitive_Quad_Strip_Outline* cmd);
-
   DiPrimitive* create_solid_quad_strip(OtfCmd_65_Create_primitive_Solid_Quad_Strip* cmd);
-
-  DiTileMap* create_tile_map(uint16_t id, uint16_t parent, uint16_t flags,
-                          int32_t screen_width, int32_t screen_height,
-                          uint32_t columns, uint32_t rows, uint32_t width, uint32_t height);
-
-  DiTileArray* create_tile_array(uint16_t id, uint16_t parent, uint16_t flags,
-                          int32_t screen_width, int32_t screen_height,
-                          uint32_t columns, uint32_t rows, uint32_t width, uint32_t height);
-
+  DiTileMap* create_tile_map(OtfCmd_100_Create_primitive_Tile_Map* cmd);
+  DiTileArray* create_tile_array(OtfCmd_80_Create_primitive_Tile_Array* cmd);
   DiTextArea* create_text_area(OtfCmd_150_Create_primitive_Text_Area* cmd, const uint8_t* font);
-
   DiBitmap* create_solid_bitmap(OtfCmd_120_Create_primitive_Solid_Bitmap* cmd);
-
   DiBitmap* create_masked_bitmap(OtfCmd_121_Create_primitive_Masked_Bitmap* cmd);
-
   DiBitmap* create_transparent_bitmap(OtfCmd_122_Create_primitive_Transparent_Bitmap* cmd);
-
-  DiBitmap* create_reference_solid_bitmap(uint16_t id, uint16_t parent, uint16_t flags, uint16_t bmid);
-
-  DiBitmap* create_reference_masked_bitmap(uint16_t id, uint16_t parent, uint16_t flags, uint16_t bmid);
-
-  DiBitmap* create_reference_transparent_bitmap(uint16_t id, uint16_t parent, uint16_t flags, uint16_t bmid);
-
-  DiBitmap* create_solid_bitmap_for_tile_array(uint16_t id, uint16_t bm_id);
-
-  DiBitmap* create_masked_bitmap_for_tile_array(uint16_t id, uint16_t bm_id, uint8_t color);
-
-  DiBitmap* create_transparent_bitmap_for_tile_array(uint16_t id, uint16_t bm_id, uint8_t color);
-
-  DiBitmap* create_solid_bitmap_for_tile_map(uint16_t id, uint16_t bm_id);
-
-  DiBitmap* create_masked_bitmap_for_tile_map(uint16_t id, uint16_t bm_id, uint8_t color);
-
-  DiBitmap* create_transparent_bitmap_for_tile_map(uint16_t id, uint16_t bm_id, uint8_t color);
-
-  DiRender* create_solid_render(uint16_t id, uint16_t parent, uint16_t flags,
-                          uint32_t width, uint32_t height);
-
-  DiRender* create_masked_render(uint16_t id, uint16_t parent, uint16_t flags,
-                          uint32_t width, uint32_t height);
-
-  DiRender* create_transparent_render(uint16_t id, uint16_t parent, uint16_t flags,
-                          uint32_t width, uint32_t height, uint8_t color);
-
+  DiBitmap* create_reference_solid_bitmap(OtfCmd_135_Create_primitive_Reference_Solid_Bitmap* cmd);
+  DiBitmap* create_reference_masked_bitmap(OtfCmd_136_Create_primitive_Reference_Masked_Bitmap* cmd);
+  DiBitmap* create_reference_transparent_bitmap(OtfCmd_137_Create_primitive_Reference_Transparent_Bitmap* cmd);
+  DiBitmap* create_solid_bitmap_for_tile_array(OtfCmd_81_Create_Solid_Bitmap_for_Tile_Array* cmd);
+  DiBitmap* create_masked_bitmap_for_tile_array(OtfCmd_82_Create_Masked_Bitmap_for_Tile_Array* cmd);
+  DiBitmap* create_transparent_bitmap_for_tile_array(OtfCmd_83_Create_Transparent_Bitmap_for_Tile_Array* cmd);
+  DiBitmap* create_solid_bitmap_for_tile_map(OtfCmd_101_Create_Solid_Bitmap_for_Tile_Map *cmd);
+  DiBitmap* create_masked_bitmap_for_tile_map(OtfCmd_102_Create_Masked_Bitmap_for_Tile_Map* cmd);
+  DiBitmap* create_transparent_bitmap_for_tile_map(OtfCmd_103_Create_Transparent_Bitmap_for_Tile_Map* cmd);
+  DiRender* create_solid_render(OtfCmd_200_Create_primitive_Solid_Render* cmd);
+  DiRender* create_masked_render(OtfCmd_201_Create_primitive_Masked_Render* cmd);
+  DiRender* create_transparent_render(OtfCmd_202_Create_primitive_Transparent_Render* cmd);
   DiPrimitive* create_primitive_group(OtfCmd_140_Create_primitive_Group* cmd);
 
   // Set the flags for an existing primitive.
@@ -156,31 +106,31 @@ class DiManager {
   void generate_code_for_primitive(uint16_t id);
 
   // Move an existing bitmap to an absolute position and slice it.
-  void slice_solid_bitmap_absolute(uint16_t id, int32_t x, int32_t y, int32_t start_line, int32_t height);
-  void slice_masked_bitmap_absolute(uint16_t id, int32_t x, int32_t y, int32_t start_line, int32_t height);
-  void slice_transparent_bitmap_absolute(uint16_t id, int32_t x, int32_t y, int32_t start_line, int32_t height);
+  void slice_solid_bitmap_absolute(OtfCmd_123_Set_position_and_slice_solid_bitmap* cmd);
+  void slice_masked_bitmap_absolute(OtfCmd_124_Set_position_and_slice_masked_bitmap* cmd);
+  void slice_transparent_bitmap_absolute(OtfCmd_125_Set_position_and_slice_transparent_bitmap* cmd);
 
   // Move an existing bitmap to a relative position and slice it.
-  void slice_solid_bitmap_relative(uint16_t id, int32_t x, int32_t y, int32_t start_line, int32_t height);
-  void slice_masked_bitmap_relative(uint16_t id, int32_t x, int32_t y, int32_t start_line, int32_t height);
-  void slice_transparent_bitmap_relative(uint16_t id, int32_t x, int32_t y, int32_t start_line, int32_t height);
+  void slice_solid_bitmap_relative(OtfCmd_126_Adjust_position_and_slice_solid_bitmap* cmd);
+  void slice_masked_bitmap_relative(OtfCmd_127_Adjust_position_and_slice_masked_bitmap* cmd);
+  void slice_transparent_bitmap_relative(OtfCmd_128_Adjust_position_and_slice_transparent_bitmap* cmd);
 
   // Set a pixel within an existing bitmap.
-  void set_solid_bitmap_pixel(uint16_t id, int32_t x, int32_t y, uint8_t color, int16_t nth);
-  void set_masked_bitmap_pixel(uint16_t id, int32_t x, int32_t y, uint8_t color, int16_t nth);
-  void set_transparent_bitmap_pixel(uint16_t id, int32_t x, int32_t y, uint8_t color, int16_t nth);
-  void set_solid_bitmap_pixel_for_tile_array(uint16_t id, uint16_t bm_id, int32_t x, int32_t y, uint8_t color, int16_t nth);
-  void set_masked_bitmap_pixel_for_tile_array(uint16_t id, uint16_t bm_id, int32_t x, int32_t y, uint8_t color, int16_t nth);
-  void set_transparent_bitmap_pixel_for_tile_array(uint16_t id, uint16_t bm_id, int32_t x, int32_t y, uint8_t color, int16_t nth);
-  void set_solid_bitmap_pixel_for_tile_map(uint16_t id, uint16_t bm_id, int32_t x, int32_t y, uint8_t color, int16_t nth);
-  void set_masked_bitmap_pixel_for_tile_map(uint16_t id, uint16_t bm_id, int32_t x, int32_t y, uint8_t color, int16_t nth);
-  void set_transparent_bitmap_pixel_for_tile_map(uint16_t id, uint16_t bm_id, int32_t x, int32_t y, uint8_t color, int16_t nth);
+  void set_solid_bitmap_pixel(OtfCmd_129_Set_solid_bitmap_pixel* cmd, int16_t nth);
+  void set_masked_bitmap_pixel(OtfCmd_130_Set_masked_bitmap_pixel* cmd, int16_t nth);
+  void set_transparent_bitmap_pixel(OtfCmd_131_Set_transparent_bitmap_pixel* cmd, int16_t nth);
+  void set_solid_bitmap_pixel_for_tile_array(OtfCmd_85_Set_solid_bitmap_pixel_in_Tile_Array* cmd, int16_t nth);
+  void set_masked_bitmap_pixel_for_tile_array(OtfCmd_86_Set_masked_bitmap_pixel_in_Tile_Array* cmd, int16_t nth);
+  void set_transparent_bitmap_pixel_for_tile_array(OtfCmd_87_Set_transparent_bitmap_pixel_in_Tile_Array* cmd, int16_t nth);
+  void set_solid_bitmap_pixel_for_tile_map(OtfCmd_105_Set_solid_bitmap_pixel_in_Tile_Map* cmd, int16_t nth);
+  void set_masked_bitmap_pixel_for_tile_map(OtfCmd_106_Set_masked_bitmap_pixel_in_Tile_Map* cmd, int16_t nth);
+  void set_transparent_bitmap_pixel_for_tile_map(OtfCmd_107_Set_transparent_bitmap_pixel_in_Tile_Map* cmd, int16_t nth);
 
   // Set bitmap ID for tile in tile array.
-  void set_tile_array_bitmap_id(uint16_t id, uint16_t col, uint16_t row, uint16_t bm_id);
+  void set_tile_array_bitmap_id(OtfCmd_84_Set_bitmap_ID_for_tile_in_Tile_Array* cmd);
 
   // Set bitmap ID for tile in tile map.
-  void set_tile_map_bitmap_id(uint16_t id, uint16_t col, uint16_t row, uint16_t bm_id);
+  void set_tile_map_bitmap_id(OtfCmd_104_Set_bitmap_ID_for_tile_in_Tile_Map* cmd);
 
   // Setup a callback for when the visible frame pixels have been sent to DMA,
   // and the vertical blanking time begins.
@@ -268,13 +218,11 @@ class DiManager {
 
   uint8_t get_param_8(uint32_t index);
   int16_t get_param_16(uint32_t index);
-  bool handle_udg_sys_cmd(uint8_t character);
+  bool handle_udg_sys_cmd();
   bool handle_otf_cmd();
-  bool ignore_cmd(uint8_t character, uint8_t len);
-  bool define_graphics_viewport(uint8_t character);
-  bool define_text_viewport(uint8_t character);
-  bool move_cursor_tab(uint8_t character);
-  bool set_color(uint8_t character);
+  bool define_graphics_viewport();
+  bool define_text_viewport();
+  void move_cursor_tab(VduCmd_31_Set_text_tab_position* cmd);
   void clear_screen();
   void move_cursor_left();
   void move_cursor_right();

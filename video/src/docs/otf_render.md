@@ -84,16 +84,47 @@ VDU ... PDX; PDY; PDZ; ...
 ```
 <br>
 
-## Create primitive: Render 3D Scene
-<b>VDU 23, 30, 200, id; pid; flags; x; y; w; h;</b> :  Create primitive: Render 3D Scene
+## Create primitive: Solid Render
+<b>VDU 23, 30, 200, id; pid; flags; x; y; w; h;</b> :  Create primitive: Solid Render
 
 This command creates a primitive that renders a 3D scene to a bitmap. The bitmap can be
 manipulated or altered using the bitmap primitive commands, after the scene image
 has been rendered. A scene may contain multiple objects. This render primitive must be
 created prior to using other 3D related commands, below.
 
+A solid render has pixels that are all 100% opaque (0% transparent).
+
+## Create primitive: Masked Render
+<b>VDU 23, 30, 201, id; pid; flags; x; y; w; h; color</b> :  Create primitive: Masked Render
+
+This command creates a primitive that renders a 3D scene to a bitmap. The bitmap can be
+manipulated or altered using the bitmap primitive commands, after the scene image
+has been rendered. A scene may contain multiple objects. This render primitive must be
+created prior to using other 3D related commands, below.
+
+A masked render has pixels that are all either 100% opaque (0% transparent) or
+0% opaque (100% transparent). The given color is used as the transparency color,
+and should be a color (including its alpha bits) that is not likely to appear in
+the rendered image. For example, if the image will have no dark red pixels that are 25%
+opaque, then the color could be specified as 1 or &01 in BASIC (0x01 in C).
+
+## Create primitive: Transparent Render
+<b>VDU 23, 30, 202, id; pid; flags; x; y; w; h; c;</b> :  Create primitive: Transparent Render
+
+This command creates a primitive that renders a 3D scene to a bitmap. The bitmap can be
+manipulated or altered using the bitmap primitive commands, after the scene image
+has been rendered. A scene may contain multiple objects. This render primitive must be
+created prior to using other 3D related commands, below.
+
+A transparent render has pixels that are 100% opaque (0% transparent), 75% opaque
+(25% transparent), 50% opaque (50% transparent), 25% opaque (75% transparent), or
+0% opaque (100% transparent). The given color is used as the transparency color,
+and should be a color (including its alpha bits) that is not likely to appear in
+the rendered image. For example, if the image will have no dark red pixels that are 25%
+opaque, then the color could be specified as 1 or &01 in BASIC (0x01 in C).
+
 ## Define Mesh Vertices
-<b>VDU 23, 30, 201, id; mid; n; x0; y0; z0; ...</b> :  Define Mesh Vertices
+<b>VDU 23, 30, 203, id; mid; n; x0; y0; z0; ...</b> :  Define Mesh Vertices
 
 This command establishes the list of mesh coordinates to be used to define
 a surface structure. The mesh may be referenced by multiple objects.
@@ -101,7 +132,7 @@ a surface structure. The mesh may be referenced by multiple objects.
 The "n" parameter is the number of vertices, so the total number of coordinates specified equals n*3.
 
 ## Set Mesh Vertex Indices
-<b>VDU 23, 30, 202, id; mid; n; i0; ...</b> :  Set Mesh Vertex Indices
+<b>VDU 23, 30, 204, id; mid; n; i0; ...</b> :  Set Mesh Vertex Indices
 
 This command lists the indexes of the vertices that define a 3D mesh. Individual
 vertices are often referenced multiple times within a mesh, because they are
@@ -111,7 +142,7 @@ the number of defined mesh vertices.
 The "n" parameter is the number of indices.
 
 ## Define Texture Coordinates
-<b>VDU 23, 30, 203, id; mid; n; u0; v0; ...</b> :  Define Texture Coordinates
+<b>VDU 23, 30, 205, id; mid; n; u0; v0; ...</b> :  Define Texture Coordinates
 
 This command establishes the list of U/V texture coordinates that define texturing
 for a mesh.
@@ -119,7 +150,7 @@ for a mesh.
 The "n" parameter is the number of coordinate pairs, so the total number of coordinates specified equals n*2.
 
 ## Set Texture Coordinate Indices
-<b>VDU 23, 30, 204, id; mid; n; i0; ...</b> :  Set Texture Coordinate Indices
+<b>VDU 23, 30, 206, id; mid; n; i0; ...</b> :  Set Texture Coordinate Indices
 
 This command lists the indexes of the coordinates that define a 3D texture for a mesh.
 Individual coordinates may be referenced multiple times within a texture,
@@ -130,7 +161,7 @@ coordinates associated with it.
 The "n" parameter is the number of indices.
 
 ## Define Object
-<b>VDU 23, 30, 205, id; oid; mid; bmid;</b> :  Create Object
+<b>VDU 23, 30, 207, id; oid; mid; bmid;</b> :  Create Object
 
 This command defines a renderable object in terms of its already-defined mesh,
 plus a reference to an existing bitmap that provides its coloring, via the
@@ -138,75 +169,75 @@ texture coordinates used by the mesh. The same mesh can be used multiple times,
 with the same or different bitmaps for coloring.
 
 ## Set Object X Scale Factor
-<b>VDU 23, 30, 206, id; oid; scalex;</b> :  Set Object X Scale Factor
+<b>VDU 23, 30, 208, id; oid; scalex;</b> :  Set Object X Scale Factor
 
 This command sets the X scale factor for an object.
 
 ## Set Object Y Scale Factor
-<b>VDU 23, 30, 207, id; oid; scaley;</b> :  Set Object Y Scale Factor
+<b>VDU 23, 30, 209, id; oid; scaley;</b> :  Set Object Y Scale Factor
 
 This command sets the Y scale factor for an object.
 
 ## Set Object Z Scale Factor
-<b>VDU 23, 30, 208, id; oid; scalez;</b> :  Set Object Z Scale Factor
+<b>VDU 23, 30, 210, id; oid; scalez;</b> :  Set Object Z Scale Factor
 
 This command sets the Z scale factor for an object.
 
 ## Set Object XYZ Scale Factors
-<b>VDU 23, 30, 209, id; oid; scalex; scaley; scalez</b> :  Set Object XYZ Scale Factors
+<b>VDU 23, 30, 211, id; oid; scalex; scaley; scalez</b> :  Set Object XYZ Scale Factors
 
 This command sets the X, Y, and Z scale factors for an object.
 
 ## Set Object X Rotation Angle
-<b>VDU 23, 30, 210, id; oid; anglex;</b> :  Set Object X Rotation Angle
+<b>VDU 23, 30, 212, id; oid; anglex;</b> :  Set Object X Rotation Angle
 
 This command sets the X rotation angle for an object.
 
 ## Set Object Y Rotation Angle
-<b>VDU 23, 30, 211, id; oid; angley;</b> :  Set Object Y Rotation Angle
+<b>VDU 23, 30, 213, id; oid; angley;</b> :  Set Object Y Rotation Angle
 
 This command sets the Y rotation angle for an object.
 
 ## Set Object Z Rotation Angle
-<b>VDU 23, 30, 212, id; oid; anglez;</b> :  Set Object Z Rotation Angle
+<b>VDU 23, 30, 214, id; oid; anglez;</b> :  Set Object Z Rotation Angle
 
 This command sets the Z rotation angle for an object.
 
 ## Set Object XYZ Rotation Angles
-<b>VDU 23, 30, 213, id; oid; anglex; angley; anglez;</b> :  Set Object XYZ Rotation Angles
+<b>VDU 23, 30, 215, id; oid; anglex; angley; anglez;</b> :  Set Object XYZ Rotation Angles
 
 This command sets the X, Y, and Z rotation angles for an object.
 
 ## Set Object X Translation Distance
-<b>VDU 23, 30, 214, id; oid; distx;</b> :  Set Object X Translation Distance
+<b>VDU 23, 30, 216, id; oid; distx;</b> :  Set Object X Translation Distance
 
 This command sets the X translation distance for an object.
 Note that 3D translation of an object is independent of 2D translation of the bitmap
 belonging to the render primitive.
 
 ## Set Object Y Translation Distance
-<b>VDU 23, 30, 215, id; oid; disty;</b> :  Set Object Y Translation Distance
+<b>VDU 23, 30, 217, id; oid; disty;</b> :  Set Object Y Translation Distance
 
 This command sets the Y translation distance for an object.
 Note that 3D translation of an object is independent of 2D translation of the bitmap
 belonging to the render primitive.
 
 ## Set Object Z Translation Distance
-<b>VDU 23, 30, 216, id; oid; distz;</b> :  Set Object Z Translation Distance
+<b>VDU 23, 30, 218, id; oid; distz;</b> :  Set Object Z Translation Distance
 
 This command sets the Z translation distance for an object.
 Note that 3D translation of an object is independent of 2D translation of the bitmap
 belonging to the render primitive.
 
 ## Set Object XYZ Translation Distances
-<b>VDU 23, 30, 217, id; oid; distx; disty; distz</b> :  Set Object XYZ Translation Distances
+<b>VDU 23, 30, 219, id; oid; distx; disty; distz</b> :  Set Object XYZ Translation Distances
 
 This command sets the X, Y, and Z translation distances for an object.
 Note that 3D translation of an object is independent of 2D translation of the bitmap
 belonging to the render primitive.
 
 ## Render To Bitmap
-<b>VDU 23, 30, 218, id;</b> :  Render To Bitmap
+<b>VDU 23, 30, 220, id;</b> :  Render To Bitmap
 
 This command uses information provided by the above commands to render the 3D scene
 onto the bitmap belonging to the render primitive. This command must be used in

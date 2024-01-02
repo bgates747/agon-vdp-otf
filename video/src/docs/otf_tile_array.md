@@ -1,13 +1,11 @@
 ## Create primitive: Tile Array
-<b>VDU 23, 30, 80, id; pid; flags; columns; rows; w; h;</b> : Create primitive: Tile Array
+<b>VDU 23, 30, 80, id; pid; flags; columns; rows; tw; th; w; h;</b> : Create primitive: Tile Array
 
 This commmand creates a primitive that draws a full or mostly full tile array, as opposed to a sparse tile map.
 The number of cells in the array is equal to the number of rows
-multiplied by the number of columns. The given width and height
-specify the size of a single tile. The overall width of the tile
-array is equal to the width of one tile multiplied by the number
-of columns. The overall height of the tile array is equal to the
-height of one tile multiplied by the number of rows.
+multiplied by the number of columns. The given tile width and tile height
+specify the size of a single tile. The overall width and height of the tile
+array are specified separately.
 
 The given width must be a multiple of 4 pixels. The given height can be any positive number, bearing in mind the memory requirements for
 storing bitmaps.
