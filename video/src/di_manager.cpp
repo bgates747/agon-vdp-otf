@@ -874,7 +874,7 @@ void IRAM_ATTR DiManager::loop() {
 //debug_log("@%i\n",__LINE__);
       loop_state = LoopState::WritingActiveLines;
 
-      while (stream_byte_available() > 0) {
+      while (stream_byte_available()) {
         store_character(stream_read_byte());
       }
 //debug_log("@%i\n",__LINE__);
@@ -883,7 +883,7 @@ void IRAM_ATTR DiManager::loop() {
 //debug_log("@%i\n",__LINE__);
       process_stored_characters();
 //debug_log("@%i\n",__LINE__);
-      while (stream_byte_available() > 0) {
+      while (stream_byte_available()) {
 //debug_log("@%i\n",__LINE__);
         process_character(stream_read_byte());
 //debug_log("@%i\n",__LINE__);
@@ -967,7 +967,7 @@ void IRAM_ATTR DiManager::loop() {
       } else {
 //debug_log("@%i\n",__LINE__);
         // Keep handling incoming characters
-        if (stream_byte_available() > 0) {
+        if (stream_byte_available()) {
           process_character(stream_read_byte());
         }
 //debug_log("@%i\n",__LINE__);
@@ -975,7 +975,7 @@ void IRAM_ATTR DiManager::loop() {
     } else {
       // LoopState::NearNewFrameStart
       // Keep storing incoming characters
-      //if (stream_byte_available() > 0) {
+      //if (stream_byte_available()) {
       //  store_character(stream_read_byte());
       //}
     }
@@ -1277,11 +1277,7 @@ bool DiManager::process_character(uint8_t character) {
       } break;
 
       case 23: {
-        auto cmd = &cu->m_23_Manipulate_text;
-        if (m_incoming_command.size() >= sizeof(*cmd)) {
-          m_incoming_command.clear();
-          return true;
-        }
+        return handle_udg_sys_cmd(); // handle UDG/system command
       } break;
 
       case 24: {
@@ -1294,7 +1290,8 @@ bool DiManager::process_character(uint8_t character) {
       case 25: {
         auto cmd = &cu->m_25_Plot_graphics;
         if (m_incoming_command.size() >= sizeof(*cmd)) {
-          return handle_udg_sys_cmd(); // handle UDG/system command
+          m_incoming_command.clear();
+          return true;
         }
       } break;
 
@@ -1636,6 +1633,9 @@ bool DiManager::handle_otf_cmd() {
       case 3: {
         auto cmd = &cu->m_3_Delete_primitive;
         if (m_incoming_command.size() == sizeof(*cmd)) {
+          if (m_text_area && (m_text_area->get_id() == cmd->m_id)) {
+            m_text_area = NULL;
+          }
           delete_primitive(cmd->m_id);
           m_incoming_command.clear();
           return true;
@@ -2160,9 +2160,9 @@ bool DiManager::handle_otf_cmd() {
       case 120: {
         auto cmd = &cu->m_120_Create_primitive_Solid_Bitmap;
         if (m_incoming_command.size() == sizeof(*cmd)) {
-          //debug_log("csb %hu %hu %04hX %u %u\n", cmd->m_id, cmd->m_pid, cmd->m_flags, cmd->m_w, cmd->m_h);
+          debug_log("csb %hu %hu %04hX %u %u\n", cmd->m_id, cmd->m_pid, cmd->m_flags, cmd->m_w, cmd->m_h);
           create_solid_bitmap(cmd);
-          //debug_log("csb done\n");
+          debug_log("csb done\n");
           m_incoming_command.clear();
           return true;
         }

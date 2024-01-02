@@ -84,10 +84,7 @@ void setup() {
 	setupKeyboardAndMouse();
 	init_audio();
 	copy_font();
-	//setLegacyModes(true);
-	//set_mode(1);
-	//processor->sendModeInformation();
-	set_mode(0x40);
+	set_mode(0x47);
 	processor->sendModeInformation();
 	boot_screen();
 }
