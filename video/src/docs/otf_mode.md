@@ -26,6 +26,42 @@ horizontal scrolling (on a 1-pixel boundary), there are multiple copies of the b
 each pre-shifted based on the pixel alignment. This allows the bitmap to be copied very quickly,
 a whole word (4 bytes) at a time, when drawing, regardless of the destination byte alignment.
 
+# OTF Video Modes
+
+When the Agon boots, it is normally in video mode 1, but can be
+placed into other video modes using either the BASIC MODE statement, or the proper VDU statement. OTF supports the following new video modes, many of which have the same resolution as older modes (that are not OTF-based).
+
+Modes 32..47 (&20..&2F) - change mode, but create no OTF primitives initially.<br>
+Modes 48..63 (&30..&3F) - change mode, and create full screen black rectangle.<br>
+Modes 64..79 (&40..&4F) - change mode, and create full screen text area.<br>
+
+<i>NOTE: The video timing settings for several of these
+video modes are still in flux, and may need adjusting,
+after some experimentation,
+so be aware, when using any OTF modes.</i>
+
+&20/&30/&40: 800x600 @ 60Hz, 100x75 (positive synchs)<br>
+&21/&31/&41: 800x600 @ 60Hz, 100x75 (negative synchs)<br>
+&22/&32/&42: 684x384 @ 60Hz, 85x48<br>
+&23/&33/&43: 640x512 @ 60Hz, 80x64<br>
+&24/&34/&44: 640x480 @ 60Hz, 80x60<br>
+&25/&35/&45: 640x240 @ 60Hz, 80x30<br>
+&26/&36/&46: 512x384 @ 60Hz, 64x48<br>
+&27/&37/&47: 320x240 @ 60Hz, 40x30<br>
+&28/&38/&48: 320x200 @ 75Hz, 40x25<br>
+&29/&39/&49: 320x200 @ 70Hz, 40x25<br>
+&2A/&3A/&4A: 1024x768 @ 60Hz, 128x96<br>
+&2B/&3B/&4B: 1280x720 @ 60Hz, 160x90<br>
+&2C/&3C/&4C: 1368x768 @ 60Hz, TBD<br>
+&2D/&3D/&4D: reserved<br>
+&2E/&3E/&4E: reserved<br>
+&2F/&3F/&4F: reserved<br>
+
+<i><b>IMPORTANT: At present, once an application enters one
+of the OTF video modes, whether by program statement or by user
+entry at the command prompt, there is no way to exit the OTF mode, and go into a different mode, without resetting the Agon!
+Being able to change modes will be a future enhancement.</b></i>
+
 # OTF Function Codes
 
 The OTF mode uses <b>VDU 23, 30</b> as its command signature for defining and processing drawing primitives.
