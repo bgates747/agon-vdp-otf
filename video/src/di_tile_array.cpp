@@ -142,9 +142,11 @@ void DiTileArray::set_pixel(DiTileBitmapID bm_id, int32_t x, int32_t y, uint8_t 
 }
 
 void DiTileArray::set_tile(int16_t column, int16_t row, DiTileBitmapID bm_id) {
-  auto bitmap_item = m_id_to_bitmap_map.find(bm_id);
-  if (bitmap_item != m_id_to_bitmap_map.end()) {
-    m_tile_pixels[row * m_columns + column] = bitmap_item->second->get_pixels();
+  if (column >= 0 && column < m_columns && row >= 0 && row < m_rows) {
+    auto bitmap_item = m_id_to_bitmap_map.find(bm_id);
+    if (bitmap_item != m_id_to_bitmap_map.end()) {
+      m_tile_pixels[row * m_columns + column] = bitmap_item->second->get_pixels();
+    }
   }
 }
 
@@ -196,6 +198,7 @@ void DiTileArray::get_tile_coordinates(int16_t column, int16_t row,
 }
 
 void IRAM_ATTR DiTileArray::paint(volatile uint32_t* p_scan_line, uint32_t line_index) {
+  p_scan_line += m_abs_x / 4;
   auto y_offset_within_tile_array = (int32_t)line_index - m_abs_y;
   auto y_offset_within_tile = y_offset_within_tile_array % (int32_t)m_tile_height;
   auto row = y_offset_within_tile_array / (int32_t)m_tile_height;
