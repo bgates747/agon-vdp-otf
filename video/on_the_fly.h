@@ -73,24 +73,18 @@ int8_t use_otf_mode(int8_t mode) {
 	auto resolution = (mode & 15);
 
 	// Modeline for 800x600@60Hz resolution, positive syncs
-	//                                                 800+40+128+88    600+1+4+24
 	#define SVGA_800x600_60Hz_Pos "\"800x600@60Hz\" 40 800 840 968 1056 600 601 605 628 +HSync +VSync"
 
 	// Modeline for 684x384@60Hz resolution, opposite syncs
-	//                                                 1368+72+144+216 1800   768+1+3+23 795
-	//                                                  684+36+72+108  900    384+1+2+11 398
 	#define SVGA_684x384_60Hz "\"684x384@60Hz\" 42.75 684 720 792 900 384 385 387 398 -HSync +VSync DoubleScan"
 
 	// Modeline for 1368x768@60Hz resolution, opposite syncs
 	#define SVGA_1368x768_60Hz "\"1368x768@60Hz\" 85.5 1368 1440 1584 1800 768 769 772 795 -HSync +VSync"
 
 	// Modeline for 1280x720@60Hz resolution                1280 1468 1604 1664
-	//#define SVGA_1280x720_60Hz_ADJ "\"1280x720@60Hz\" 74.48 1280 1344 1480 1664 720 721 724 746 +hsync +vsync"
 	#define SVGA_1280x720_60Hz_ADJ "\"1280x720@60Hz\" 74.25 1280 1344 1480 1664 720 721 724 746 +hsync +vsync"
-	//#define SVGA_1280x720_60Hz_ADJ "\"1280x720@60Hz\" 74.25 1280 1390 1430 1650 720 725 730 750 +hsync +vsync"
 
 	// Modeline for 640x512@60Hz resolution (for pixel perfect 1280x1024 double scan resolution)
-	// 664 720, 680 736
 	#define QSVGA_640x512_60Hz_ADJ "\"640x512@60Hz\" 54     640 664 720 844 512 513 515 533 -HSync -VSync DoubleScan"
 
 	// Modeline for 320x200@75Hz resolution
@@ -155,7 +149,7 @@ int8_t use_otf_mode(int8_t mode) {
     otf_video_params.m_hfp_pixels += adj;
 	otf_video_params.m_hbp_pixels -= adj;
 
-	otf_video_params.dump();
+	//otf_video_params.dump();
 
     uint8_t oldMode = videoMode;
 	videoMode = mode;

@@ -271,7 +271,7 @@ void DiManager::initialize() {
   I2S1.int_clr.val = 0xFFFFFFFF;
 
 ///////////////////
-#define SHOWIT(dd) debug_log(#dd ": %u %X\n", dd, dd);
+#define SHOWIT(dd) /**/ /*debug_log(#dd ": %u %X\n", dd, dd);*/
   SHOWIT(I2S1.conf2.val)
   SHOWIT(I2S1.conf2.lcd_en)
   SHOWIT(I2S1.conf2.lcd_tx_wrx2_en)
@@ -353,16 +353,6 @@ void DiManager::add_primitive(DiPrimitive* prim, DiPrimitive* parent) {
 
     m_primitives[prim->get_id()] = prim;
     recompute_primitive(prim, 0, -1, -1);
-
-    /*debug_log("\n-- Groups\n");
-    for (int i = 0; i < 600; i++) {
-      auto g = &m_groups[i];
-      for (auto p = g->begin(); p != g->end(); p++) {
-        if ((*p)->get_id() > 2) {
-          debug_log("[%i] %u\n", i, (*p)->get_id());
-        }
-      }
-    }*/
 }
 
 void DiManager::remove_primitive(DiPrimitive* prim) {
@@ -395,7 +385,6 @@ void DiManager::remove_primitive(DiPrimitive* prim) {
 
 void DiManager::recompute_primitive(DiPrimitive* prim, uint16_t old_flags,
                                     int32_t old_min_group, int32_t old_max_group) {
-  //if (prim->get_id()>2) debug_log("RECOMPUTE id %hu f %04hX g %i %i ... ", prim->get_id(), old_flags, old_min_group, old_max_group);
   auto parent = prim->get_parent();
   if (parent->get_flags() & PRIM_FLAG_CLIP_KIDS) {
     prim->compute_absolute_geometry(parent->get_draw_x(), parent->get_draw_y(),
@@ -495,7 +484,6 @@ void DiManager::recompute_primitive(DiPrimitive* prim, uint16_t old_flags,
       //prim->delete_instructions();
     }
   }
-  //if (prim->get_id()>2) debug_log(" computed id %hu f %04hX g %i %i\n", prim->get_id(), prim->get_flags(), new_min_group, new_max_group);
 }
 
 DiPrimitive* DiManager::finish_create(uint16_t id, DiPrimitive* prim, DiPrimitive* parent_prim) {
@@ -1001,12 +989,8 @@ void DiManager::init_dma_descriptor(DiVideoScanLine* vscan, uint32_t scan_index,
   volatile lldesc_t * dd = &m_dma_descriptor[descr_index];
 
   if (descr_index == 0) {
-//    debug_log("a. idd vscan %X si %u di %u dd %X prior %X\n",vscan,scan_index,descr_index,dd,
-//    &m_dma_descriptor[otf_video_params.m_dma_total_descr - 1]);
     m_dma_descriptor[otf_video_params.m_dma_total_descr - 1].qe.stqe_next = (lldesc_t*)dd;
   } else {
-//    debug_log("b. idd vscan %X si %u di %u dd %X prior %X\n",vscan,scan_index,descr_index,dd,
-//    &m_dma_descriptor[descr_index - 1]);
     m_dma_descriptor[descr_index - 1].qe.stqe_next = (lldesc_t*)dd;
   }
 
@@ -2160,9 +2144,7 @@ bool DiManager::handle_otf_cmd() {
       case 120: {
         auto cmd = &cu->m_120_Create_primitive_Solid_Bitmap;
         if (m_incoming_command.size() == sizeof(*cmd)) {
-          debug_log("csb %hu %hu %04hX %u %u\n", cmd->m_id, cmd->m_pid, cmd->m_flags, cmd->m_w, cmd->m_h);
           create_solid_bitmap(cmd);
-          debug_log("csb done\n");
           m_incoming_command.clear();
           return true;
         }

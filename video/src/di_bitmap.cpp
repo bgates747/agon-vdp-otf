@@ -33,10 +33,8 @@
 #include "esp_heap_caps.h"
 #include <cstring>
 #include "di_timing.h"
-//extern void debug_log(const char* fmt, ...);
 
 DiBitmap::DiBitmap(uint32_t width, uint32_t height, uint16_t flags, bool use_psram) : DiPrimitive(flags) {
-  debug_log(" @%i ",__LINE__);
   m_width = width;
   m_height = height;
   m_save_height = height;
@@ -51,15 +49,9 @@ DiBitmap::DiBitmap(uint32_t width, uint32_t height, uint16_t flags, bool use_psr
       m_bytes_per_position = m_words_per_position * sizeof(uint32_t);
 
       if (use_psram) {
-      	debug_log("free PSRAM: %d\n\r", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
-        debug_log("large blck: %d\n\r", heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM));
         m_pixels = (uint32_t*) heap_caps_malloc(m_bytes_per_position * 4, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT | MALLOC_CAP_32BIT);
       } else {
         m_pixels = new uint32_t[m_words_per_position * 4];
-      }
-
-      if (!m_pixels) {
-        debug_log("Failed to allocate bitmap\n");
       }
 
       memset(m_pixels, 0x00, m_bytes_per_position * 4);
@@ -70,25 +62,18 @@ DiBitmap::DiBitmap(uint32_t width, uint32_t height, uint16_t flags, bool use_psr
       m_bytes_per_position = m_words_per_position * sizeof(uint32_t);
 
       if (use_psram) {
-      	debug_log("free PSRAM: %d\n\r", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
-        debug_log("large blck: %d\n\r", heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM));
         m_pixels = (uint32_t*) heap_caps_malloc(m_bytes_per_position, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT | MALLOC_CAP_32BIT);
       } else {
         m_pixels = new uint32_t[m_words_per_position];
-      }
-      if (!m_pixels) {
-        debug_log("Failed to allocate bitmap\n");
       }
 
       memset(m_pixels, 0x00, m_bytes_per_position);
   }
   m_visible_start = m_pixels;
   m_paint_code.enter_and_leave_outer_function();
-  //debug_log(" @%i ",__LINE__);
 }
 
 DiBitmap::DiBitmap(uint16_t flags, DiBitmap* ref_bitmap) : DiPrimitive(flags) {
-  //debug_log(" @%i ",__LINE__);
   m_width = ref_bitmap->m_width;
   m_height = ref_bitmap->m_height;
   m_save_height = ref_bitmap->m_save_height;
@@ -101,7 +86,6 @@ DiBitmap::DiBitmap(uint16_t flags, DiBitmap* ref_bitmap) : DiPrimitive(flags) {
   m_pixels = ref_bitmap->m_pixels;
   m_visible_start = m_pixels;
   m_paint_code.enter_and_leave_outer_function();
-  //debug_log(" @%i ",__LINE__);
 }
 
 

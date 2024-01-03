@@ -25,10 +25,6 @@
 
 #include "di_constants.h"
 #include <stdint.h>
-#define	DEBUG			1						// Serial Debug Mode: 1 = enable
-#if DEBUG
-extern void debug_log(const char* fmt, ...);
-#endif
 
 typedef struct {
     const char* m_mode_line;
@@ -52,9 +48,7 @@ typedef struct {
     uint32_t m_syncs_off_x4;
     uint32_t m_scan_count;
 
-#ifdef DEBUG
-    void dump();
-#endif
+    //void dump();
 } OtfVideoParams;
 
 extern OtfVideoParams otf_video_params;

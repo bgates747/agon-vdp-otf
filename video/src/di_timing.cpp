@@ -25,7 +25,7 @@
 
 OtfVideoParams otf_video_params;
 
-#ifdef DEBUG
+/*
 void OtfVideoParams::dump() {
     debug_log("m_active_lines: %u\n", m_active_lines);
     debug_log("m_vfp_lines: %u\n", m_vfp_lines);
@@ -47,4 +47,4 @@ void OtfVideoParams::dump() {
     debug_log("m_syncs_off_x4: %X\n", m_syncs_off_x4);
     debug_log("m_scan_count: %u\n", m_scan_count);
 }
-#endif
+*/

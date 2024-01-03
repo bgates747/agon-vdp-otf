@@ -89,17 +89,14 @@ void DiGeneralLine::make_solid_triangle(int16_t* coords, uint8_t color, uint8_t 
   m_line_details.make_solid_triangle(1, coords[0], coords[1], coords[2], coords[3], coords[4], coords[5]);
   create_functions();
 }
-extern void debug_log(const char* fmt, ...);
 
 void DiGeneralLine::init_from_coords(int16_t* coords,
           uint16_t n, uint8_t color, uint8_t opaqueness) {
-  //debug_log(" DiGeneralLine::init_from_coords: flags %04hX\n", m_flags);
   m_opaqueness = opaqueness;
   m_rel_x = min_of_pairs(coords, n);
   m_rel_y = min_of_pairs(coords+1, n);
   m_width = max_of_pairs(coords, n) - m_rel_x + 1;
   m_height = max_of_pairs(coords+1, n) - m_rel_y + 1;
-  //debug_log("%hi %hi, w %hi, h %i\n", m_rel_x, m_rel_y, m_width, m_height);
   color &= 0x3F; // remove any alpha bits
   m_color = PIXEL_COLOR_X4(color) | otf_video_params.m_syncs_off_x4;
 
@@ -142,13 +139,7 @@ void DiGeneralLine::make_solid_triangle_list(int16_t* coords,
 
 void DiGeneralLine::make_triangle_fan_outline(
           int16_t* coords, uint16_t n, uint8_t color, uint8_t opaqueness) {
-
-  //debug_log("init (%hu) %hi %hi %hi %hi\n", n, coords[0], coords[1], coords[2], coords[3]);
-  //for (uint16_t i = 4; i<n*2+4; i+=2) {
-  //  debug_log(" %hi %hi\n", coords[i], coords[i+1]);
-  //}
   init_from_coords(coords, n+2, color, opaqueness);
-
   
   auto sx0 = coords[0];
   auto sy0 = coords[1];
@@ -325,9 +316,7 @@ void DiGeneralLine::make_solid_quad_strip(
   create_functions();
 }
 
-//extern void debug_log(const char* fmt, ...);
 void DiGeneralLine::generate_instructions() {
-  //debug_log(" DiGeneralLine::generate_instructions: flags %04hX\n", m_flags);
   delete_instructions();
   EspFixups fixups;
   generate_code_for_positions(fixups, m_width, m_height);

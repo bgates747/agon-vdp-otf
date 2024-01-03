@@ -112,10 +112,8 @@ void IRAM_ATTR DiPrimitive::set_size(uint32_t width, uint32_t height) {
   m_height = height;
 }
 
-//extern void debug_log(const char* fmt, ...);
 void IRAM_ATTR DiPrimitive::compute_absolute_geometry(
   int32_t view_x, int32_t view_y, int32_t view_x_extent, int32_t view_y_extent) {
-  //debug_log("Compute %hu: vx %i vy %i vxe %i vye %i\n", m_id, view_x, view_y, view_x_extent, view_y_extent);
   if (m_flags & PRIM_FLAG_ABSOLUTE) {
     m_abs_x = m_rel_x;
     m_abs_y = m_rel_y;
@@ -143,11 +141,6 @@ void IRAM_ATTR DiPrimitive::compute_absolute_geometry(
   m_draw_y = MAX(m_abs_y, m_view_y);
   m_draw_x_extent = MIN(m_x_extent, m_view_x_extent);
   m_draw_y_extent = MIN(m_y_extent, m_view_y_extent);
-
-  /*if (m_id>2) debug_log(" GEO id %hu rel(%i,%i) abs(%i,%i), ext(%i,%i), w=%hu, h=%hu, d(%i,%i), de(%i,%i)\n",
-    m_id, m_rel_x, m_rel_y, m_abs_x, m_abs_y,
-    m_x_extent, m_y_extent, m_width, m_height,
-    m_draw_x, m_draw_y, m_draw_x_extent, m_draw_y_extent);*/
 
   if (m_paint_ptrs.size()) {
     set_current_paint_pointer();
