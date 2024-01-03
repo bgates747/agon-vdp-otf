@@ -136,6 +136,11 @@ void sendKeyboardState() {
 	processor->sendKeyboardState();
 }
 
+// Send the mode information
+void stream_send_mode_information() {
+	processor->sendModeInformation();
+}
+
 // Handle the keyboard: BBC VDU Mode
 //
 void do_keyboard() {

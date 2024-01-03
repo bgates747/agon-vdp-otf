@@ -18,10 +18,11 @@ extern uint8_t                                      _VGAColourDepth;
 
 extern void print(char const * text);
 extern int8_t change_mode(uint8_t mode);
+extern void stream_send_mode_information();
 
 DiManager* di_manager; // Used for OTF 800x600x64 mode
 
-void otf(void * options) {
+void otf_task(void * options) {
 	debug_log("OTF task running\r\n");
 	di_manager = new DiManager();
 	di_manager->create_root();
@@ -55,6 +56,8 @@ void otf(void * options) {
 		text_area->clear_screen();
 		di_manager->generate_code_for_primitive(cmd.m_id);
 	}
+
+	stream_send_mode_information();
 	debug_log("Running OTF manager...\r\n");
 	di_manager->run();
 }
@@ -64,6 +67,7 @@ int8_t use_otf_mode(int8_t mode) {
 		_VGAController->end();
 		_VGAController.reset();
 	}
+	canvas.reset();
 
 	// Modes: 32..47 (0x20..0x2F) - change mode, but create no primitives
 	// Modes: 48..63 (0x30..0x3F) - change mode, create full screen black rectangle
@@ -155,9 +159,9 @@ int8_t use_otf_mode(int8_t mode) {
 	videoMode = mode;
 
 	TaskHandle_t xHandle = NULL;
-	xTaskCreatePinnedToCore(otf, "OTF-MODE", 4096, (void*) options,
+	xTaskCreatePinnedToCore(otf_task, "OTF-MODE", 4096, (void*) options,
 							OTF_MANAGER_PRIORITY, &xHandle, 1); // Core #1
-	while(true);
+	while (videoMode == mode);
 	return 0; // success
 }
 
