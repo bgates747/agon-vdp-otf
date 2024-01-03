@@ -30,13 +30,15 @@
 
 DiTextArea::DiTextArea(uint32_t x, uint32_t y, uint8_t flags,
                         uint32_t columns, uint32_t rows, const uint8_t* font) :
-  DiTileArray(otf_video_params.m_active_pixels, otf_video_params.m_active_lines, columns, rows, 8, 8, flags) {
+  DiTileArray(columns*8, rows*8, columns, rows, 8, 8, flags) {
   m_flags |= PRIM_FLAGS_ALL_SAME;
   m_current_column = 0;
   m_current_row = 0;
   m_fg_color = PIXEL_COLOR_ARGB(3, 1, 1, 0);
   m_bg_color = PIXEL_COLOR_ARGB(3, 0, 0, 0);
   m_font = font;
+  m_rel_x = x;
+  m_rel_y = y;
 }
 
 DiTextArea::~DiTextArea() {
@@ -135,8 +137,9 @@ void DiTextArea::bring_current_position_into_view() {
     m_current_row = m_rows - 1;
   }
 }
-
+extern void debug_log(const char* fmt,...);
 void DiTextArea::write_character(uint8_t character) {
+  debug_log(" r %u c %u\n",m_current_row,m_current_column);
   bring_current_position_into_view();
 
   // Set the tile image ID using the character code.
