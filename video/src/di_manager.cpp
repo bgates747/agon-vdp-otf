@@ -446,9 +446,7 @@ void DiManager::recompute_primitive(DiPrimitive* prim, uint16_t old_flags,
           vp->push_back(prim);
         }
       }
-
       prim->add_flags(PRIM_FLAGS_CAN_DRAW);
-      //prim->generate_instructions();
     } else {
       // Just remove primitive from old groups
       for (int32_t g = old_min_group; g <= old_max_group; g++) {
@@ -459,7 +457,6 @@ void DiManager::recompute_primitive(DiPrimitive* prim, uint16_t old_flags,
         }
       }
       prim->remove_flags(PRIM_FLAGS_CAN_DRAW);
-      //prim->delete_instructions();
     }
   } else {
     if (new_use_groups) {
@@ -469,10 +466,8 @@ void DiManager::recompute_primitive(DiPrimitive* prim, uint16_t old_flags,
         vp->push_back(prim);
       }
       prim->add_flags(PRIM_FLAGS_CAN_DRAW);
-      //prim->generate_instructions();
     } else {
       prim->remove_flags(PRIM_FLAGS_CAN_DRAW);
-      //prim->delete_instructions();
     }
   }
 }
@@ -797,6 +792,7 @@ DiTextArea* DiManager::create_text_area(OtfCmd_150_Create_primitive_Text_Area* c
     m_cursor = create_solid_rectangle(&cursor_cmd);
     cursorEnabled = true;
 
+    send_cursor_position();
     return text_area;
 }
 
@@ -1011,6 +1007,7 @@ VDU 31, x, y: TAB(x, y)
 VDU 127: Backspace
 */
 bool DiManager::process_character(uint8_t character) {
+  debug_log("[%hu:%02hX]",(m_text_area?m_text_area->get_id():0),character);
   if (!m_incoming_command.size() && (character >= 0x20 && character != 0x7F)) {
     // printable character
     write_character(character);
@@ -1409,12 +1406,12 @@ bool DiManager::handle_udg_sys_cmd() {
         if (cursorEnabled) {
           if (flags & PRIM_FLAG_PAINT_THIS == 0) {
             // turn ON cursor
-            set_primitive_flags(m_cursor->get_id(), flags | PRIM_FLAG_PAINT_THIS);
+            m_cursor->add_flags(PRIM_FLAG_PAINT_THIS|PRIM_FLAG_PAINT_KIDS);
           }
         } else {
           if (flags & PRIM_FLAG_PAINT_THIS != 0) {
             // turn OFF cursor
-            set_primitive_flags(m_cursor->get_id(), flags ^ PRIM_FLAG_PAINT_THIS);
+            m_cursor->remove_flags(PRIM_FLAG_PAINT_THIS|PRIM_FLAG_PAINT_KIDS);
           }
         }
       }
@@ -2310,10 +2307,7 @@ bool DiManager::handle_otf_cmd() {
       case 151: {
         auto cmd = &cu->m_151_Select_Active_Text_Area;
         if (m_incoming_command.size() == sizeof(*cmd)) {
-          DiTextArea* text_area = (DiTextArea*) get_safe_primitive(cmd->m_id);
-          if (text_area) {
-            m_text_area = text_area;
-          }
+          select_active_text_area(cmd);
           m_incoming_command.clear();
           return true;
         }
@@ -3066,4 +3060,18 @@ void DiManager::set_tile_array_bitmap_id(OtfCmd_84_Set_bitmap_ID_for_tile_in_Til
 void DiManager::set_tile_map_bitmap_id(OtfCmd_104_Set_bitmap_ID_for_tile_in_Tile_Map* cmd) {
   DiTileMap* prim; if (!(prim = (DiTileMap*)get_safe_primitive(cmd->m_id))) return;
   prim->set_tile(cmd->m_column, cmd->m_row, cmd->m_bmid);
+}
+
+void DiManager::select_active_text_area(OtfCmd_151_Select_Active_Text_Area* cmd) {
+  DiTextArea* text_area = (DiTextArea*) get_safe_primitive(cmd->m_id);
+  if (text_area) {
+    if (m_text_area) {
+      auto old_cursor = m_text_area->get_first_child();
+      old_cursor->remove_flags(PRIM_FLAG_PAINT_THIS|PRIM_FLAG_PAINT_KIDS);
+    }
+    m_text_area = text_area;
+    m_cursor = text_area->get_first_child();
+    m_cursor->add_flags(PRIM_FLAG_PAINT_THIS|PRIM_FLAG_PAINT_KIDS);
+    send_cursor_position();
+  }
 }

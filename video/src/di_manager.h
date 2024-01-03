@@ -73,6 +73,7 @@ class DiManager {
   DiTileMap* create_tile_map(OtfCmd_100_Create_primitive_Tile_Map* cmd);
   DiTileArray* create_tile_array(OtfCmd_80_Create_primitive_Tile_Array* cmd);
   DiTextArea* create_text_area(OtfCmd_150_Create_primitive_Text_Area* cmd, const uint8_t* font);
+  void select_active_text_area(OtfCmd_151_Select_Active_Text_Area* cmd);
   DiBitmap* create_solid_bitmap(OtfCmd_120_Create_primitive_Solid_Bitmap* cmd);
   DiBitmap* create_masked_bitmap(OtfCmd_121_Create_primitive_Masked_Bitmap* cmd);
   DiBitmap* create_transparent_bitmap(OtfCmd_122_Create_primitive_Transparent_Bitmap* cmd);
@@ -167,7 +168,7 @@ class DiManager {
   uint32_t                    m_num_buffer_chars;
   uint32_t                    m_command_data_index;
   DiTextArea*                 m_text_area;
-  DiSolidRectangle*           m_cursor;
+  DiPrimitive*                m_cursor;
   uint8_t                     m_flash_count;
   uint8_t                     m_incoming_data[INCOMING_DATA_BUFFER_SIZE];
   std::vector<uint8_t>        m_incoming_command;
