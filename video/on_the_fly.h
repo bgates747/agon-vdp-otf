@@ -52,9 +52,32 @@ void otf_task(void * options) {
 		cmd.m_columns = otf_video_params.m_active_pixels / 8;
 		cmd.m_rows = otf_video_params.m_active_lines / 8;
 		auto text_area = di_manager->create_text_area(&cmd, fabgl::FONT_AGON_DATA);
-		text_area->define_character_range(0x20, 0x7E, PIXEL_ALPHA_100_MASK|0x05, PIXEL_ALPHA_100_MASK|0x00);
+		text_area->set_background_color(PIXEL_ALPHA_100_MASK|0x00);
+		text_area->set_foreground_color(PIXEL_ALPHA_100_MASK|0x05);
 		text_area->clear_screen();
+		text_area->write_character(0x45);
+		text_area->write_character(0x65);
 		di_manager->generate_code_for_primitive(cmd.m_id);
+
+		OtfCmd_150_Create_primitive_Text_Area cmd2;
+		cmd2.m_flags = PRIM_FLAGS_DEFAULT;
+		cmd2.m_id = 5;
+		cmd2.m_pid = ROOT_PRIMITIVE_ID;
+		cmd2.m_x = 400;
+		cmd2.m_y = 200;
+		cmd2.m_columns = 10;
+		cmd2.m_rows = 5;
+		text_area = di_manager->create_text_area(&cmd2, fabgl::FONT_AGON_DATA);
+		text_area->set_background_color(PIXEL_ALPHA_100_MASK|0x15);
+		text_area->set_foreground_color(PIXEL_ALPHA_100_MASK|0x30);
+		text_area->clear_screen();
+		text_area->write_character(0x41);
+		text_area->write_character(0x62);
+		di_manager->generate_code_for_primitive(cmd2.m_id);
+
+		/*OtfCmd_151_Select_Active_Text_Area cmd_sel;
+		cmd_sel.m_id = cmd.m_id;
+		di_manager->select_active_text_area(&cmd_sel);*/
 	}
 
 	stream_send_mode_information();

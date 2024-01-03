@@ -774,6 +774,11 @@ DiTextArea* DiManager::create_text_area(OtfCmd_150_Create_primitive_Text_Area* c
     finish_create(cmd->m_id, text_area, parent_prim);
     m_text_area = text_area;
 
+    if (m_cursor) {
+      // Hide the current cursor (from another text area)
+      set_primitive_flags(m_cursor->get_id(), m_cursor->get_flags() & ~(PRIM_FLAG_PAINT_THIS|PRIM_FLAG_PAINT_KIDS));
+    }
+
     // Create a child rectangle as a text cursor.
     int16_t cx, cy, cx_extent, cy_extent;
     cx = cy = cx_extent = cy_extent = 0;
@@ -1007,7 +1012,6 @@ VDU 31, x, y: TAB(x, y)
 VDU 127: Backspace
 */
 bool DiManager::process_character(uint8_t character) {
-  debug_log("[%hu:%02hX]",(m_text_area?m_text_area->get_id():0),character);
   if (!m_incoming_command.size() && (character >= 0x20 && character != 0x7F)) {
     // printable character
     write_character(character);
@@ -1406,12 +1410,12 @@ bool DiManager::handle_udg_sys_cmd() {
         if (cursorEnabled) {
           if (flags & PRIM_FLAG_PAINT_THIS == 0) {
             // turn ON cursor
-            m_cursor->add_flags(PRIM_FLAG_PAINT_THIS|PRIM_FLAG_PAINT_KIDS);
+            set_primitive_flags(m_cursor->get_id(), flags | (PRIM_FLAG_PAINT_THIS|PRIM_FLAG_PAINT_KIDS));
           }
         } else {
           if (flags & PRIM_FLAG_PAINT_THIS != 0) {
             // turn OFF cursor
-            m_cursor->remove_flags(PRIM_FLAG_PAINT_THIS|PRIM_FLAG_PAINT_KIDS);
+            set_primitive_flags(m_cursor->get_id(), flags & ~(PRIM_FLAG_PAINT_THIS|PRIM_FLAG_PAINT_KIDS));
           }
         }
       }
@@ -3065,9 +3069,8 @@ void DiManager::set_tile_map_bitmap_id(OtfCmd_104_Set_bitmap_ID_for_tile_in_Tile
 void DiManager::select_active_text_area(OtfCmd_151_Select_Active_Text_Area* cmd) {
   DiTextArea* text_area = (DiTextArea*) get_safe_primitive(cmd->m_id);
   if (text_area) {
-    if (m_text_area) {
-      auto old_cursor = m_text_area->get_first_child();
-      old_cursor->remove_flags(PRIM_FLAG_PAINT_THIS|PRIM_FLAG_PAINT_KIDS);
+    if (m_cursor) {
+      set_primitive_flags(m_cursor->get_id(), m_cursor->get_flags() & ~(PRIM_FLAG_PAINT_THIS|PRIM_FLAG_PAINT_KIDS));
     }
     m_text_area = text_area;
     m_cursor = text_area->get_first_child();

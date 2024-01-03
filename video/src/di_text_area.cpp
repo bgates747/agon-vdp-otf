@@ -137,14 +137,12 @@ void DiTextArea::bring_current_position_into_view() {
     m_current_row = m_rows - 1;
   }
 }
-extern void debug_log(const char* fmt,...);
+
 void DiTextArea::write_character(uint8_t character) {
-  debug_log(" r %u c %u\n",m_current_row,m_current_column);
   bring_current_position_into_view();
 
   // Set the tile image ID using the character code.
-  auto bm_id = get_bitmap_id(character);
-  set_tile(m_current_column, m_current_row, bm_id);
+  set_character(m_current_column, m_current_row, character);
 
   // Advance the current position
   if (++m_current_column >= m_columns) {
