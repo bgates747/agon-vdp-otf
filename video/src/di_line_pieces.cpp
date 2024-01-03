@@ -34,7 +34,6 @@ typedef union {
 } Overlay;
 
 void DiLineSections::add_piece(uint8_t id, int16_t x, uint16_t width, bool solid) {
-  //debug_log("\n====\nDiLineSections::add_piece(%hu, %hi, %hu, %i)\n", id, x, width, solid);
   auto xe = x + width;
   auto encloser = m_pieces.end();
 
@@ -73,11 +72,8 @@ void DiLineSections::add_piece(uint8_t id, int16_t x, uint16_t width, bool solid
         auto pe = piece->m_x + piece->m_width;
         if (solid || pe >= next_piece->m_x) {
           auto ne = next_piece->m_x + next_piece->m_width;
-          //debug_log("== merging ne %hi\n", ne);
           auto nw = ne - piece->m_x;
-          //debug_log(" nw %hi\n", nw);
           piece->m_width = MAX(piece->m_width, nw);
-          //debug_log(" pw %hi\n", piece->m_width);
           m_pieces.erase(next_piece);
         } else {
           break;
@@ -115,7 +111,6 @@ DiLineDetails::~DiLineDetails() {
 }
 
 void DiLineDetails::make_line(uint8_t id, int16_t x1, int16_t y1, int16_t x2, int16_t y2, bool solid) {
-  //debug_log("\nDiLineDetails::make_line(%hi, %hi, %hi, %hi)\n", x1, y1, x2, y2);
   auto min_x = MIN(x1, x2);
   auto max_x = MAX(x1, x2);
   auto min_y = MIN(y1, y2);
@@ -229,14 +224,11 @@ void DiLineDetails::make_triangle_outline(uint8_t id, int16_t x1, int16_t y1, in
   make_line(id, x2, y2, x3, y3, false);
   make_line(id, x3, y3, x1, y1, false);
 
-  //debug_log("\n%hi,%hi to %hi,%hi\n", m_min_x, m_min_y, m_max_x, m_max_y);
   auto y = m_min_y;
   for (auto sections = m_sections.begin(); sections != m_sections.end(); sections++) {
-    //debug_log(" -- y %hi --\n", y);
     for (auto piece = sections->m_pieces.begin();
           piece != sections->m_pieces.end();
           piece++) {
-      //debug_log("  %hi,%hi %hu\n", piece->m_x, y, piece->m_width);
     }
     y++;
   }
@@ -265,7 +257,6 @@ void DiLineDetails::make_solid_quad(uint8_t id, int16_t x1, int16_t y1, int16_t 
 }
 
 void DiLineDetails::add_piece(uint8_t id, int16_t x, int16_t y, uint16_t width, bool solid) {
-  //debug_log("DiLineDetails::add_piece(%hu, %hi, %hi, %hu, %i)\n", id, x, y, width, solid);
   if (m_sections.size()) {
     // determine whether to add a new section
     if (y < m_min_y) {
@@ -298,19 +289,16 @@ void DiLineDetails::add_piece(uint8_t id, int16_t x, int16_t y, uint16_t width, 
     m_max_x = x;
     m_max_y = y;
   }
-  //debug_log("min %hi %hi, max %hi %hi\n", m_min_x, m_min_y, m_max_x, m_max_y);
 }
 
 void DiLineDetails::merge(const DiLineDetails& details) {
   auto y = details.m_min_y;
-  //debug_log("\nmerge %hi\n", y);
   for (auto sections = details.m_sections.begin();
       sections != details.m_sections.end();
       sections++) {
     for (auto piece = sections->m_pieces.begin();
           piece != sections->m_pieces.end();
           piece++) {
-      //debug_log(" add id=%hu x=%hi y=%hi w=%hu\n",piece->m_id, piece->m_x, y, piece->m_width);
       add_piece(piece->m_id, piece->m_x, y, piece->m_width, false);
     }
     y++;

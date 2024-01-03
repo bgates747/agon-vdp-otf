@@ -112,14 +112,11 @@ void DiGeneralLine::make_triangle_list_outline(int16_t* coords,
 
   uint8_t id = 1;
   while (n--) {
-    //debug_log("tri %hi %hi %hi %hi %hi %hi\n", coords[0], coords[1],
-    //  coords[2], coords[3], coords[4], coords[5]);
     m_line_details.make_triangle_outline(id++, coords[0], coords[1],
       coords[2], coords[3], coords[4], coords[5]);
     coords += 6;
   }
   create_functions();
-  //debug_log("prim x %i y %i w %u h %u ld %u\n", m_rel_x, m_rel_y, m_width, m_height, m_line_details.m_sections.size());
 }
 
 void DiGeneralLine::make_solid_triangle_list(int16_t* coords,
@@ -149,7 +146,6 @@ void DiGeneralLine::make_triangle_fan_outline(
 
   uint8_t id = 1;
   while (n--) {
-    //debug_log("fan %hi %hi %hi %hi %hi %hi\n",sx0, sy0, sx1, sy1, coords[0], coords[1]);
     m_line_details.make_triangle_outline(id++, sx0, sy0, sx1, sy1, coords[0], coords[1]);
     sx1 = coords[0];
     sy1 = coords[1];
@@ -364,10 +360,5 @@ void DiGeneralLine::generate_code_for_draw_area(EspFixups& fixups, uint32_t x_of
 }
 
 void IRAM_ATTR DiGeneralLine::paint(volatile uint32_t* p_scan_line, uint32_t line_index) {
- //debug_log("this=%X, line=%X, idx=%u, absx=%u, paint=%X\n", this, p_scan_line, line_index, m_abs_x, m_cur_paint_ptr.m_address);
- //debug_log("code %08X %08X %08X ... %08X %08X %08X\n",
- //  m_paint_code.get_code(0), m_paint_code.get_code(1), m_paint_code.get_code(2),
- //  m_paint_code.get_code(0x44), m_paint_code.get_code(0x45), m_paint_code.get_code(0x46));
  (*(m_cur_paint_ptr.m_a5))(this, p_scan_line, line_index, m_abs_x);
- //debug_log("-- back --\n");
 }

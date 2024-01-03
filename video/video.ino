@@ -84,7 +84,7 @@ void setup() {
 	setupKeyboardAndMouse();
 	init_audio();
 	copy_font();
-	set_mode(0x47);
+	set_mode(1);
 	processor->sendModeInformation();
 	boot_screen();
 }

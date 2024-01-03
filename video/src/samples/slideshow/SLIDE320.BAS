@@ -1,6 +1,6 @@
 10 REM OTF Slideshow Demo
 20 REM This demo shows various images using On-the-Fly mode.
-30 REM MODE &47: REM OTF 320x240x64, with 40x30 Text Area
+30 MODE &47: REM OTF 320x240x64, with 40x30 Text Area
 40 CLS: VDU 23,1,0;0;0;0;
 50 FDFLT%=&000F: FHIDE%=&000E
 60 OTF%=&1E17
@@ -20,8 +20,6 @@
 170 NEXT Y%
 180 CLOSE#infile
 190 VDU OTF%;4,ID%;
-192 REM IF ID%>1 THEN VDU OTF%;0,ID%-1;FHIDE%;
-195 REM VDU OTF%;0,ID%;FDFLT%;
 200 NEXT ID%
 205 VDU OTF%;3,1;: REM Delete text area
 205 REM -- Cycle through loaded bitmaps

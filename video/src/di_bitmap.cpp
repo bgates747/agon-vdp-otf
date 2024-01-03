@@ -100,18 +100,14 @@ DiBitmap::~DiBitmap() {
 }
 
 void IRAM_ATTR DiBitmap::set_relative_position(int32_t x, int32_t y) {
-  //debug_log(" @%i ",__LINE__);
   DiPrimitive::set_relative_position(x, y);
   m_visible_start = m_pixels;
-  //debug_log(" @%i ",__LINE__);
 }
 
 void DiBitmap::set_slice_position(int32_t x, int32_t y, uint32_t start_line, uint32_t height) {
-  //debug_log(" @%i ",__LINE__);
   DiPrimitive::set_relative_position(x, y);
   m_height = height;
   m_visible_start = m_pixels + start_line * m_words_per_line;
-  //debug_log(" @%i ",__LINE__);
 }
 
 void DiBitmap::set_transparent_pixel(int32_t x, int32_t y, uint8_t color) {
@@ -169,7 +165,6 @@ void DiBitmap::generate_code_for_draw_area(EspFixups& fixups, uint32_t x_offset,
 }
 
 void IRAM_ATTR DiBitmap::paint(volatile uint32_t* p_scan_line, uint32_t line_index) {
-  //debug_log("id %hu, p %X\n", m_id, m_cur_paint_ptr.m_address);
   if (!m_cur_paint_ptr.m_address) return;
   auto line_offset = line_index - m_abs_y;
   uint32_t pixels = (uint32_t)(m_visible_start + (m_words_per_line * line_offset));

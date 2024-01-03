@@ -53,7 +53,7 @@ void otf(void * options) {
 		auto text_area = di_manager->create_text_area(&cmd, fabgl::FONT_AGON_DATA);
 		text_area->define_character_range(0x20, 0x7E, PIXEL_ALPHA_100_MASK|0x05, PIXEL_ALPHA_100_MASK|0x00);
 		text_area->clear_screen();
-		di_manager->generate_code_for_primitive(1);
+		di_manager->generate_code_for_primitive(cmd.m_id);
 	}
 	debug_log("Running OTF manager...\r\n");
 	di_manager->run();

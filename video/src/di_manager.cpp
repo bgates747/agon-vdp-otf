@@ -128,7 +128,6 @@ void DiManager::create_root() {
 }
 
 void DiManager::initialize() {
-  //debug_log("otf_video_params.m_dma_total_descr %u\n", otf_video_params.m_dma_total_descr);
   size_t new_size = (size_t)(sizeof(lldesc_t) * otf_video_params.m_dma_total_descr);
   void* p = heap_caps_malloc(new_size, MALLOC_CAP_32BIT|MALLOC_CAP_8BIT|MALLOC_CAP_DMA);
   m_dma_descriptor = (volatile lldesc_t *)p;
@@ -137,11 +136,9 @@ void DiManager::initialize() {
   m_front_porch = new DiVideoScanLine(1);
   m_vertical_sync = new DiVideoScanLine(1);
   m_back_porch = new DiVideoScanLine(1);
-//debug_log("@%i\n",__LINE__);
   // DMA buffer chain: ACT
   uint32_t descr_index = 0;
   m_video_lines->init_to_black();
-//debug_log("@%i\n",__LINE__);
   for (uint32_t i = 0; i < otf_video_params.m_active_lines; i++) {
     if (otf_video_params.m_scan_count == 1) {
       init_dma_descriptor(m_video_lines, (i & (NUM_ACTIVE_BUFFERS - 1)), descr_index++);
@@ -155,31 +152,24 @@ void DiManager::initialize() {
       init_dma_descriptor(m_video_lines, (i & (NUM_ACTIVE_BUFFERS - 1)), descr_index++);
     }
   }
-//debug_log("@%i\n",__LINE__);
 
   // DMA buffer chain: VFP
   m_front_porch->init_to_black();
-//debug_log("@%i\n",__LINE__);
   for (uint i = 0; i < otf_video_params.m_vfp_lines; i++) {
     init_dma_descriptor(m_front_porch, 0, descr_index++);
   }
-//debug_log("@%i\n",__LINE__);
 
   // DMA buffer chain: VS
   m_vertical_sync->init_for_vsync();
-//debug_log("@%i\n",__LINE__);
   for (uint i = 0; i < otf_video_params.m_vs_lines; i++) {
     init_dma_descriptor(m_vertical_sync, 0, descr_index++);
   }
-//debug_log("@%i\n",__LINE__);
   
   // DMA buffer chain: VBP
   m_back_porch->init_to_black();
-//debug_log("@%i\n",__LINE__);
   for (uint i = 0; i < otf_video_params.m_vbp_lines; i++) {
     init_dma_descriptor(m_back_porch, 0, descr_index++);
   }
-//debug_log("@%i di %u ------\n",__LINE__,descr_index);
 
   // GPIO configuration for color bits
   setupGPIO(GPIO_RED_0,   VGA_RED_BIT,   GPIO_MODE_OUTPUT);
@@ -271,7 +261,8 @@ void DiManager::initialize() {
   I2S1.int_clr.val = 0xFFFFFFFF;
 
 ///////////////////
-#define SHOWIT(dd) /**/ /*debug_log(#dd ": %u %X\n", dd, dd);*/
+/*
+#define SHOWIT(dd) debug_log(#dd ": %u %X\n", dd, dd);
   SHOWIT(I2S1.conf2.val)
   SHOWIT(I2S1.conf2.lcd_en)
   SHOWIT(I2S1.conf2.lcd_tx_wrx2_en)
@@ -315,7 +306,7 @@ void DiManager::initialize() {
   SHOWIT(I2S1.int_clr.val)
   SHOWIT(I2S1.out_link.start)
   SHOWIT(I2S1.conf.tx_start)
-
+*/
 ///////////////////
 
   // Start DMA
@@ -816,7 +807,6 @@ void IRAM_ATTR DiManager::run() {
 }
 
 void IRAM_ATTR DiManager::loop() {
-//debug_log("@%i\n",__LINE__);
   uint32_t current_line_index = 0;
   uint32_t current_buffer_index = 0;
   uint32_t frame_count = 0;
@@ -835,8 +825,6 @@ void IRAM_ATTR DiManager::loop() {
       descr_index_div = descr_index;
     }
 
-//debug_log("@%i da %X aa %X di %u\n",__LINE__,descr_addr,m_dma_descriptor,descr_index);
-
     if (descr_index_div < otf_video_params.m_active_lines) {
 
       uint32_t dma_buffer_index = descr_index_div & (NUM_ACTIVE_BUFFERS-1);
@@ -844,41 +832,18 @@ void IRAM_ATTR DiManager::loop() {
         draw_primitives(m_video_lines->get_buffer_ptr(dma_buffer_index), descr_index_div);
         current_buffer_index = dma_buffer_index;
       }
-/*
-      // Draw enough lines to stay ahead of DMA.
-      while (current_line_index < otf_video_params.m_active_lines && current_buffer_index != dma_buffer_index) {
-        auto buf_inx = current_line_index & (NUM_ACTIVE_BUFFERS - 1);
-//debug_log("@%i di%u dbi%u cli%u bi%u\n",__LINE__,descr_index_div,dma_buffer_index,current_line_index,buf_inx);
-        //memset((void*)m_video_lines->get_buffer_ptr(buf_inx),otf_video_params.m_syncs_off|0x04,otf_video_params.m_active_pixels);
-        draw_primitives(m_video_lines->get_buffer_ptr(buf_inx), current_line_index);
-//debug_log("@%i\n",__LINE__);
-        ++current_line_index;
-        if (++current_buffer_index >= NUM_ACTIVE_BUFFERS) {
-          current_buffer_index = 0;
-        }
-//debug_log("@%i\n",__LINE__);
-      }
-*/
-//debug_log("@%i\n",__LINE__);
       loop_state = LoopState::WritingActiveLines;
 
       while (stream_byte_available()) {
         store_character(stream_read_byte());
       }
-//debug_log("@%i\n",__LINE__);
     } else if (loop_state == LoopState::WritingActiveLines) {
       // Timing just moved into the vertical blanking area.
-//debug_log("@%i\n",__LINE__);
       process_stored_characters();
-//debug_log("@%i\n",__LINE__);
       while (stream_byte_available()) {
-//debug_log("@%i\n",__LINE__);
         process_character(stream_read_byte());
-//debug_log("@%i\n",__LINE__);
       }
-//debug_log("@%i\n",__LINE__);
       (*m_on_vertical_blank_cb)();
-//debug_log("@%i\n",__LINE__);
 
       if (cursorEnabled && m_cursor) {
         auto flags = m_cursor->get_flags();
@@ -907,10 +872,8 @@ void IRAM_ATTR DiManager::loop() {
         }
       }
 
-//debug_log("@%i\n",__LINE__);
       do_keyboard();
       do_mouse();
-//debug_log("@%i\n",__LINE__);
 
       if (++frame_count == 60*4) {
         store_string("\r\n");
@@ -938,34 +901,29 @@ void IRAM_ATTR DiManager::loop() {
       loop_state = LoopState::ProcessingIncomingData;
       
     } else if (loop_state == LoopState::ProcessingIncomingData) {
-//debug_log("@%i di %u td %u\n",__LINE__,descr_index,otf_video_params.m_dma_total_descr);
       if (descr_index >= otf_video_params.m_dma_total_descr - NUM_ACTIVE_BUFFERS - 1) {
         // Prepare the start of the next frame.
         for (current_line_index = 0;
               current_line_index < NUM_ACTIVE_BUFFERS;
               current_line_index++) {
-          //memset((void*)m_video_lines->get_buffer_ptr(current_line_index),otf_video_params.m_syncs_off|0x10,otf_video_params.m_active_pixels);
           draw_primitives(m_video_lines->get_buffer_ptr(current_line_index), current_line_index);
         }
-//debug_log("@%i\n",__LINE__);
 
         loop_state = LoopState::NearNewFrameStart;
         current_line_index = NUM_ACTIVE_BUFFERS;
         current_buffer_index = 0;
       } else {
-//debug_log("@%i\n",__LINE__);
         // Keep handling incoming characters
         if (stream_byte_available()) {
           process_character(stream_read_byte());
         }
-//debug_log("@%i\n",__LINE__);
       }
     } else {
       // LoopState::NearNewFrameStart
       // Keep storing incoming characters
-      //if (stream_byte_available()) {
-      //  store_character(stream_read_byte());
-      //}
+      if (stream_byte_available()) {
+        store_character(stream_read_byte());
+      }
     }
   }
 }
@@ -1706,9 +1664,7 @@ bool DiManager::handle_otf_cmd() {
         auto len = m_incoming_command.size();
         if (len >= sizeof(*cmd)) {
           auto total_size = sizeof(*cmd) - sizeof(cmd->m_coords) + ((uint32_t)cmd->m_n * 2 * sizeof(uint16_t));
-          //debug_log(" %u/%u ", len, total_size);
           if (len >= total_size) {
-            //debug_log("\n\n");
             create_triangle_fan_outline(cmd);
             m_incoming_command.clear();
             return true;
@@ -2162,9 +2118,7 @@ bool DiManager::handle_otf_cmd() {
       case 122: {
         auto cmd = &cu->m_122_Create_primitive_Transparent_Bitmap;
         if (m_incoming_command.size() == sizeof(*cmd)) {
-          //debug_log("ctb %hu %hu %04hX %u %u %02hX\n", cmd->m_id, cmd->m_pid, cmd->m_flags, cmd->m_w, cmd->m_h, cmd->m_color);
           create_transparent_bitmap(cmd);
-          //debug_log("ctb done\n");
           m_incoming_command.clear();
           return true;
         }
@@ -2749,10 +2703,8 @@ void DiManager::delete_primitive(uint16_t id) {
 
 void DiManager::generate_code_for_primitive(uint16_t id) {
   DiPrimitive* prim; if (!(prim = (DiPrimitive*)get_safe_primitive(id))) return;
-  //debug_log("\nGEN CODE FOR %hu at x %i y %i dx %i dy %i, flags %04hX\n", id, prim->get_absolute_x(), prim->get_absolute_y(), prim->get_draw_x(), prim->get_draw_y(), prim->get_flags());
   prim->delete_instructions();
   prim->generate_instructions();
-  //debug_log("\n gen end\n");
 }
 
 DiPrimitive* DiManager::create_rectangle_outline(OtfCmd_40_Create_primitive_Rectangle_Outline* cmd) {
@@ -2760,7 +2712,6 @@ DiPrimitive* DiManager::create_rectangle_outline(OtfCmd_40_Create_primitive_Rect
     DiPrimitive* parent_prim; if (!(parent_prim = get_safe_primitive(cmd->m_pid))) return NULL;
 
     auto prim = new DiRectangle(cmd->m_flags);
-    //debug_log("%hX %hi %hi %hu %hu %02hX\n",cmd->m_flags, cmd->m_x, cmd->m_y, cmd->m_w, cmd->m_h, cmd->m_color);
     prim->make_rectangle_outline(cmd->m_x, cmd->m_y, cmd->m_w, cmd->m_h, cmd->m_color);
 
     return finish_create(cmd->m_id, prim, parent_prim);
