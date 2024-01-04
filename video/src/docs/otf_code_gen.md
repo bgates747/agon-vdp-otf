@@ -1,3 +1,5 @@
+<i>This is an early release of the OTF capability. Please read [Issues and Considerations](otf_issues.md)!</i>
+
 # OTF Dynamic Code Generation
 
 As mentioned above, the OTF mode uses some built-in ESP32 assembler functions to help with drawing primitives quickly; however, it

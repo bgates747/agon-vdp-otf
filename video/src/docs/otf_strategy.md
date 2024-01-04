@@ -1,3 +1,5 @@
+<i>This is an early release of the OTF capability. Please read [Issues and Considerations](otf_issues.md)!</i>
+
 # OTF Strategy
 
 In the OTF mode, each drawing primitive is a node in a tree of primitives. The tree branches (nesting) can

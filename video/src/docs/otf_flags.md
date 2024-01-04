@@ -1,3 +1,5 @@
+<i>This is an early release of the OTF capability. Please read [Issues and Considerations](otf_issues.md)!</i>
+
 # OTF Primitve Flags
 
 The OTF mode uses flags to control certain aspects of primitives.

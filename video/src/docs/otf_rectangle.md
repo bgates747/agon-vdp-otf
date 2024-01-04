@@ -1,3 +1,5 @@
+<i>This is an early release of the OTF capability. Please read [Issues and Considerations](otf_issues.md)!</i>
+
 ## Create primitive: Rectangle Outline
 <b>VDU 23, 30, 40, id; pid; flags; x; y; w; h; color</b> : Create primitive: Rectangle Outline
 

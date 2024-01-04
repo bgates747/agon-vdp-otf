@@ -1,3 +1,5 @@
+<i>This is an early release of the OTF capability. Please read [Issues and Considerations](otf_issues.md)!</i>
+
 ## Introduction to 3D Render Commands
 
 A 3D scene is composed of one or more object models (meshes), each of which uses

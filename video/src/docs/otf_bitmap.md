@@ -1,3 +1,5 @@
+<i>This is an early release of the OTF capability. Please read [Issues and Considerations](otf_issues.md)!</i>
+
 ## Create primitive: Solid Bitmap
 <b>VDU 23, 30, 120, id; pid; flags; w; h; psram</b> : Create primitive: Solid Bitmap
 

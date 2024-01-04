@@ -1,3 +1,5 @@
+<i>This is an early release of the OTF capability. Please read [Issues and Considerations](otf_issues.md)!</i>
+
 ## Create primitive: Text Area
 <b>VDU 23, 30, 150, id; pid; flags; x; y; columns; rows; fgcolor, bgcolor</b> : Create primitive: Text Area
 

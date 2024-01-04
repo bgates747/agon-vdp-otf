@@ -1,3 +1,5 @@
+<i>This is an early release of the OTF capability. Please read [Issues and Considerations](otf_issues.md)!</i>
+
 ## Create primitive: Group
 <b>VDU 23, 30, 140, id; pid; flags; x; y; w; h;</b> : Create primitive: Group
 

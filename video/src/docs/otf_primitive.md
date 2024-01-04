@@ -1,3 +1,5 @@
+<i>This is an early release of the OTF capability. Please read [Issues and Considerations](otf_issues.md)!</i>
+
 ## Set flags for primitive
 <b>VDU 23, 30, 0, id; flags;</b> :  Set flags for primitive
 

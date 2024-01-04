@@ -1,3 +1,5 @@
+<i>This is an early release of the OTF capability. Please read [Issues and Considerations](otf_issues.md)!</i>
+
 ## Create primitive: Point
 <b>VDU 23, 30, 10, id; pid; flags; x; y; color</b> :  Create primitive: Point
 

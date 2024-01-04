@@ -1,3 +1,5 @@
+<i>This is an early release of the OTF capability. Please read [Issues and Considerations](otf_issues.md)!</i>
+
 # OTF Colors
 
 The OTF mode can display all 64 colors that the Agon is capable

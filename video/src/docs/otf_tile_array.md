@@ -1,3 +1,5 @@
+<i>This is an early release of the OTF capability. Please read [Issues and Considerations](otf_issues.md)!</i>
+
 ## Create primitive: Tile Array
 <b>VDU 23, 30, 80, id; pid; flags; columns; rows; tw; th; w; h;</b> : Create primitive: Tile Array
 

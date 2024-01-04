@@ -1,3 +1,5 @@
+<i>This is an early release of the OTF capability. Please read [Issues and Considerations](otf_issues.md)!</i>
+
 ## Create primitive: Quad Outline
 <b>VDU 23, 30, 60, id; pid; flags; color, x1; y1; x2; y2; x3; y3; x4; y4;</b> : Create primitive: Quad Outline
 
