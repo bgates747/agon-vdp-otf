@@ -863,7 +863,6 @@ void IRAM_ATTR DiManager::loop() {
             m_text_area->get_position(col, row);
             m_text_area->get_rel_tile_coordinates(col, row, cx, cy, cx_extent, cy_extent);
             auto w = cx_extent - cx;
-            debug_log("%u %hi %hi %hi %hi %hu %hu %hi\n",frame_count,cx,cy,cx_extent,cy_extent,col,row,w);
             set_primitive_flags(cid, flags | PRIM_FLAG_PAINT_THIS);
             set_primitive_position(cid, cx, cy_extent-2);
             m_flash_count = 0;
@@ -879,32 +878,7 @@ void IRAM_ATTR DiManager::loop() {
 
       do_keyboard();
       do_mouse();
-
-      if (++frame_count == 60*4) {
-        store_string("\r\n");
-        store_string(otf_video_params.m_mode_line);
-        store_string("\r\n");
-        auto cols = otf_video_params.m_active_pixels / 8;
-        char n[10];
-        sprintf(n, "%u\r\n", cols);
-        store_string(n);
-        auto rows = otf_video_params.m_active_lines / 8;
-        sprintf(n, "%u\r\n", rows);
-        store_string(n);
-        for (uint32_t c = 0; c < cols; c++) {
-          sprintf(n, "%u", (c / 10) % 10);
-          store_string(n);
-        }
-        store_string("\r\n");
-        for (uint32_t c = 0; c < cols; c++) {
-          sprintf(n, "%u", c % 10);
-          store_string(n);
-        }
-        store_string("\r\n");
-      }
-
       loop_state = LoopState::ProcessingIncomingData;
-      
     } else if (loop_state == LoopState::ProcessingIncomingData) {
       if (descr_index >= otf_video_params.m_dma_total_descr - NUM_ACTIVE_BUFFERS - 1) {
         // Prepare the start of the next frame.

@@ -54,27 +54,7 @@ void otf_task(void * options) {
 		cmd.m_bgcolor = PIXEL_ALPHA_100_MASK|0x00;
 		cmd.m_fgcolor = PIXEL_ALPHA_100_MASK|0x05;
 		auto text_area = di_manager->create_text_area(&cmd, fabgl::FONT_AGON_DATA);
-		text_area->write_character('*');
-		text_area->write_character('X');
-		text_area->write_character('9');
 		di_manager->generate_code_for_primitive(cmd.m_id);
-
-		OtfCmd_150_Create_primitive_Text_Area cmd2;
-		cmd2.m_flags = PRIM_FLAGS_DEFAULT;
-		cmd2.m_id = 5;
-		cmd2.m_pid = ROOT_PRIMITIVE_ID;
-		cmd2.m_x = 400;
-		cmd2.m_y = 200;
-		cmd2.m_columns = 10;
-		cmd2.m_rows = 5;
-		cmd2.m_bgcolor = PIXEL_ALPHA_100_MASK|0x15;
-		cmd2.m_fgcolor = PIXEL_ALPHA_100_MASK|0x30;
-		text_area = di_manager->create_text_area(&cmd2, fabgl::FONT_AGON_DATA);
-		di_manager->generate_code_for_primitive(cmd2.m_id);
-
-		/*OtfCmd_151_Select_Active_Text_Area cmd_sel;
-		cmd_sel.m_id = cmd.m_id;
-		di_manager->select_active_text_area(&cmd_sel);*/
 	}
 
 	stream_send_mode_information();
