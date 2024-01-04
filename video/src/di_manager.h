@@ -95,10 +95,10 @@ class DiManager {
   void set_primitive_flags(uint16_t id, uint16_t flags);
 
   // Move an existing primitive to an absolute position.
-  void move_primitive_absolute(uint16_t id, int32_t x, int32_t y);
+  void set_primitive_position(uint16_t id, int32_t x, int32_t y);
 
   // Move an existing primitive to a relative position.
-  void move_primitive_relative(uint16_t id, int32_t x, int32_t y);
+  void adjust_primitive_position(uint16_t id, int32_t x, int32_t y);
 
   // Delete an existing primitive.
   void delete_primitive(uint16_t id);

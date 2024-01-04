@@ -1,5 +1,5 @@
 ## Create primitive: Text Area
-<b>VDU 23, 30, 150, id; pid; flags; x; y; columns; rows;</b> : Create primitive: Text Area
+<b>VDU 23, 30, 150, id; pid; flags; x; y; columns; rows; fgcolor, bgcolor</b> : Create primitive: Text Area
 
 This command creates a text area primitive, which is a tile array
 used to show text characters. The text area supports a flashing
@@ -22,6 +22,15 @@ equal to the text area's ID plus one. Be sure not to use the ID
 of the cursor for some other new primitive, or the cursor will
 not function properly, and your new primitive may get moved
 as text area characters are displayed.
+
+The given foreground and background colors are set as the initial
+current colors for the text area, so that when characters are printed,
+they use those colors. The colors may be changed with the COLOUR statement
+in BASIC, or with the proper VDU command.
+
+The given foreground color is also used as the color of the blinking cursor,
+which is a horizontal bar by default. In the future, it may be possible to
+change the appearance of the cursor.
 
 ## Select Active Text Area
 <b>VDU 23, 30, 151, id;</b> : Select Active Text Area

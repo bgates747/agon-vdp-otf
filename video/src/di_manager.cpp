@@ -773,6 +773,9 @@ DiTextArea* DiManager::create_text_area(OtfCmd_150_Create_primitive_Text_Area* c
 
     finish_create(cmd->m_id, text_area, parent_prim);
     m_text_area = text_area;
+    text_area->set_background_color(cmd->m_bgcolor);
+    text_area->set_foreground_color(cmd->m_fgcolor);
+    text_area->clear_screen();
 
     if (m_cursor) {
       // Hide the current cursor (from another text area)
@@ -782,7 +785,7 @@ DiTextArea* DiManager::create_text_area(OtfCmd_150_Create_primitive_Text_Area* c
     // Create a child rectangle as a text cursor.
     int16_t cx, cy, cx_extent, cy_extent;
     cx = cy = cx_extent = cy_extent = 0;
-    m_text_area->get_tile_coordinates(0, 0, cx, cy, cx_extent, cy_extent);
+    m_text_area->get_rel_tile_coordinates(0, 0, cx, cy, cx_extent, cy_extent);
     auto w = cx_extent - cx;
 
     OtfCmd_41_Create_primitive_Solid_Rectangle cursor_cmd;
@@ -793,7 +796,7 @@ DiTextArea* DiManager::create_text_area(OtfCmd_150_Create_primitive_Text_Area* c
     cursor_cmd.m_y = cy_extent - 2;
     cursor_cmd.m_w = w;
     cursor_cmd.m_h = 2;
-    cursor_cmd.m_color = 0xFF;
+    cursor_cmd.m_color = cmd->m_fgcolor;
     m_cursor = create_solid_rectangle(&cursor_cmd);
     cursorEnabled = true;
 
@@ -858,10 +861,11 @@ void IRAM_ATTR DiManager::loop() {
             uint16_t col = 0;
             uint16_t row = 0;
             m_text_area->get_position(col, row);
-            m_text_area->get_tile_coordinates(col, row, cx, cy, cx_extent, cy_extent);
+            m_text_area->get_rel_tile_coordinates(col, row, cx, cy, cx_extent, cy_extent);
             auto w = cx_extent - cx;
+            debug_log("%u %hi %hi %hi %hi %hu %hu %hi\n",frame_count,cx,cy,cx_extent,cy_extent,col,row,w);
             set_primitive_flags(cid, flags | PRIM_FLAG_PAINT_THIS);
-            move_primitive_absolute(cid, cx, cy_extent-2);
+            set_primitive_position(cid, cx, cy_extent-2);
             m_flash_count = 0;
           }
         } else {
@@ -1558,7 +1562,7 @@ bool DiManager::handle_otf_cmd() {
       case 1: {
         auto cmd = &cu->m_1_Set_primitive_position;
         if (m_incoming_command.size() == sizeof(*cmd)) {
-          move_primitive_absolute(cmd->m_id, cmd->m_x, cmd->m_y);
+          set_primitive_position(cmd->m_id, cmd->m_x, cmd->m_y);
           m_incoming_command.clear();
           return true;
         }
@@ -1567,7 +1571,7 @@ bool DiManager::handle_otf_cmd() {
       case 2: {
         auto cmd = &cu->m_2_Adjust_primitive_position;
         if (m_incoming_command.size() == sizeof(*cmd)) {
-          move_primitive_relative(cmd->m_id, cmd->m_ix, cmd->m_iy);
+          adjust_primitive_position(cmd->m_id, cmd->m_ix, cmd->m_iy);
           m_incoming_command.clear();
           return true;
         }
@@ -2670,7 +2674,7 @@ void DiManager::set_primitive_flags(uint16_t id, uint16_t flags) {
   recompute_primitive(prim, old_flags, old_min_group, old_max_group);
 }
 
-void DiManager::move_primitive_absolute(uint16_t id, int32_t x, int32_t y) {
+void DiManager::set_primitive_position(uint16_t id, int32_t x, int32_t y) {
   DiPrimitive* prim; if (!(prim = (DiPrimitive*)get_safe_primitive(id))) return;
   auto old_flags = prim->get_flags();
   int32_t old_min_group = -1, old_max_group = -1;
@@ -2681,7 +2685,7 @@ void DiManager::move_primitive_absolute(uint16_t id, int32_t x, int32_t y) {
   recompute_primitive(prim, old_flags, old_min_group, old_max_group);
 }
 
-void DiManager::move_primitive_relative(uint16_t id, int32_t x, int32_t y) {
+void DiManager::adjust_primitive_position(uint16_t id, int32_t x, int32_t y) {
   DiPrimitive* prim; if (!(prim = (DiPrimitive*)get_safe_primitive(id))) return;
   auto old_flags = prim->get_flags();
   int32_t old_min_group = -1, old_max_group = -1;
@@ -3074,7 +3078,7 @@ void DiManager::select_active_text_area(OtfCmd_151_Select_Active_Text_Area* cmd)
     }
     m_text_area = text_area;
     m_cursor = text_area->get_first_child();
-    m_cursor->add_flags(PRIM_FLAG_PAINT_THIS|PRIM_FLAG_PAINT_KIDS);
+    set_primitive_flags(m_cursor->get_id(), m_cursor->get_flags() | (PRIM_FLAG_PAINT_THIS|PRIM_FLAG_PAINT_KIDS));
     send_cursor_position();
   }
 }

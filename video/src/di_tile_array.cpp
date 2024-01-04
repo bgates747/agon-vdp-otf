@@ -189,7 +189,15 @@ DiTileBitmapID DiTileArray::get_tile(int16_t column, int16_t row) {
   return (DiTileBitmapID)0;
 }
 
-void DiTileArray::get_tile_coordinates(int16_t column, int16_t row,
+void DiTileArray::get_rel_tile_coordinates(int16_t column, int16_t row,
+          int16_t& x, int16_t& y, int16_t& x_extent, int16_t& y_extent) {
+    x = column * m_tile_width;
+    x_extent = x + m_tile_width;
+    y = row * m_tile_height;
+    y_extent = y + m_tile_height;
+}
+
+void DiTileArray::get_abs_tile_coordinates(int16_t column, int16_t row,
           int16_t& x, int16_t& y, int16_t& x_extent, int16_t& y_extent) {
     x = column * m_tile_width + m_abs_x;
     x_extent = x + m_tile_width;

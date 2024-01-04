@@ -51,12 +51,12 @@ void otf_task(void * options) {
 		cmd.m_y = 0;
 		cmd.m_columns = otf_video_params.m_active_pixels / 8;
 		cmd.m_rows = otf_video_params.m_active_lines / 8;
+		cmd.m_bgcolor = PIXEL_ALPHA_100_MASK|0x00;
+		cmd.m_fgcolor = PIXEL_ALPHA_100_MASK|0x05;
 		auto text_area = di_manager->create_text_area(&cmd, fabgl::FONT_AGON_DATA);
-		text_area->set_background_color(PIXEL_ALPHA_100_MASK|0x00);
-		text_area->set_foreground_color(PIXEL_ALPHA_100_MASK|0x05);
-		text_area->clear_screen();
-		text_area->write_character(0x45);
-		text_area->write_character(0x65);
+		text_area->write_character('*');
+		text_area->write_character('X');
+		text_area->write_character('9');
 		di_manager->generate_code_for_primitive(cmd.m_id);
 
 		OtfCmd_150_Create_primitive_Text_Area cmd2;
@@ -67,12 +67,9 @@ void otf_task(void * options) {
 		cmd2.m_y = 200;
 		cmd2.m_columns = 10;
 		cmd2.m_rows = 5;
+		cmd2.m_bgcolor = PIXEL_ALPHA_100_MASK|0x15;
+		cmd2.m_fgcolor = PIXEL_ALPHA_100_MASK|0x30;
 		text_area = di_manager->create_text_area(&cmd2, fabgl::FONT_AGON_DATA);
-		text_area->set_background_color(PIXEL_ALPHA_100_MASK|0x15);
-		text_area->set_foreground_color(PIXEL_ALPHA_100_MASK|0x30);
-		text_area->clear_screen();
-		text_area->write_character(0x41);
-		text_area->write_character(0x62);
 		di_manager->generate_code_for_primitive(cmd2.m_id);
 
 		/*OtfCmd_151_Select_Active_Text_Area cmd_sel;
