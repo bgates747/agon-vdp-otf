@@ -901,9 +901,9 @@ typedef struct tag_Pingo3dControl {
             rotation.z = atan2(m_camera.m_transform.elements[4], m_camera.m_transform.elements[0]);
 
             // Print the rotation and translation values
-            printf("Camera rotation: x = %.1f, y = %.1f, z = %.1f\n",
+            printf("Camera rot: %.1f, %.1f, %.1f ",
                 m_camera.m_rotation.x * 180 / pi, m_camera.m_rotation.y * 180 / pi, m_camera.m_rotation.z * 180 / pi);
-            printf("Camera translation: x = %.1f, y = %.1f, z = %.1f\n",
+            printf("trans: %.1f, %.1f, %.1f\n",
                 m_camera.m_translation.x, m_camera.m_translation.y, m_camera.m_translation.z);
         }
         //debug_log("Camera:\n");
