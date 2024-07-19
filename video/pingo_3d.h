@@ -7,7 +7,9 @@
 #include <map>
 #include "esp_heap_caps.h"
 #include "sprites.h"
+#include "vdu_stream_processor.h"
 
+float pi = 3.14159265358979323846f;
 namespace p3d {
 
     extern "C" {
@@ -141,12 +143,13 @@ typedef struct tag_Pingo3dControl {
     Transformable       m_scene;            // Scene transformation settings
     std::map<uint16_t, p3d::Mesh>* m_meshes;    // Map of meshes for use by objects
     std::map<uint16_t, TexObject>* m_objects;   // Map of textured objects that use meshes and have transforms
+    uint8_t             m_dither_type;      // Dithering type and options to be applied to rendered bitmap
 
     void show_free_ram() {
         debug_log("Free PSRAM: %u\n", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
     }
 
-    // VDU 23, 0, &A0, sid; &48, 0, 1 :  Initialize Control Structure
+    // VDU 23, 0, &A0, sid; &49, 0, 1 :  Initialize Control Structure
     void initialize(VDUStreamProcessor& processor, uint16_t width, uint16_t height) {
         debug_log("initialize: pingo creating control structure for %ux%u scene\n", width, height);
         memset(this, 0, sizeof(tag_Pingo3dControl));
@@ -183,9 +186,12 @@ typedef struct tag_Pingo3dControl {
 
         m_meshes = new std::map<uint16_t, p3d::Mesh>;
         m_objects = new std::map<uint16_t, TexObject>;
+
+        // set dithering type to zero by default
+        m_dither_type = 0;
     }
 
-    // VDU 23, 0, &A0, sid; &48, 0, 0 :  Deinitialize Control Structure
+    // VDU 23, 0, &A0, sid; &49, 0, 0 :  Deinitialize Control Structure
     void deinitialize(VDUStreamProcessor& processor) {
     }
 
@@ -212,18 +218,22 @@ typedef struct tag_Pingo3dControl {
             case 11: set_object_y_rotation_angle(); break;
             case 12: set_object_z_rotation_angle(); break;
             case 13: set_object_xyz_rotation_angles(); break;
+            case 141: set_object_xyz_rotation_angles_local(); break;
             case 14: set_object_x_translation_distance(); break;
             case 15: set_object_y_translation_distance(); break;
             case 16: set_object_z_translation_distance(); break;
             case 17: set_object_xyz_translation_distances(); break;
+            case 145: set_object_xyz_translation_distances_local(); break;
             case 18: set_camera_x_rotation_angle(); break;
             case 19: set_camera_y_rotation_angle(); break;
             case 20: set_camera_z_rotation_angle(); break;
             case 21: set_camera_xyz_rotation_angles(); break;
+            case 149: set_camera_xyz_rotation_angles_local(); break;
             case 22: set_camera_x_translation_distance(); break;
             case 23: set_camera_y_translation_distance(); break;
             case 24: set_camera_z_translation_distance(); break;
             case 25: set_camera_xyz_translation_distances(); break;
+            case 153: set_camera_xyz_translation_distances_local(); break;
             case 26: set_scene_x_scale_factor(); break;
             case 27: set_scene_y_scale_factor(); break;
             case 28: set_scene_z_scale_factor(); break;
@@ -237,6 +247,8 @@ typedef struct tag_Pingo3dControl {
             case 36: set_scene_z_translation_distance(); break;
             case 37: set_scene_xyz_translation_distances(); break;
             case 38: render_to_bitmap(); break;
+            // case 39: delete_control_structure(); break; // not implemented yet
+            case 41: set_rendering_dither_type(); break;
         }
     }
 
@@ -282,7 +294,7 @@ typedef struct tag_Pingo3dControl {
         return NULL;
     }
 
-    // VDU 23, 0, &A0, sid; &48, 1, mid; n; x0; y0; z0; ... :  Define Mesh Vertices
+    // VDU 23, 0, &A0, sid; &49, 1, mid; n; x0; y0; z0; ... :  Define Mesh Vertices
     void define_mesh_vertices() {
         auto mesh = get_mesh();
         if (mesh->positions) {
@@ -315,7 +327,7 @@ typedef struct tag_Pingo3dControl {
         }
     }
 
-    // VDU 23, 0, &A0, sid; &48, 2, mid; n; i0; ... :  Set Mesh Vertex Indexes
+    // VDU 23, 0, &A0, sid; &49, 2, mid; n; i0; ... :  Set Mesh Vertex Indexes
     void set_mesh_vertex_indexes() {
         auto mesh = get_mesh();
         if (mesh->pos_indices) {
@@ -345,7 +357,7 @@ typedef struct tag_Pingo3dControl {
         }
     }
 
-    // VDU 23, 0, &A0, sid; &48, 3, mid; n; u0; v0; ... :  Define Mesh Texture Coordinates
+    // VDU 23, 0, &A0, sid; &49, 3, mid; n; u0; v0; ... :  Define Mesh Texture Coordinates
     void define_mesh_texture_coordinates() {
         auto mesh = get_mesh();
         if (mesh->textCoord) {
@@ -374,7 +386,7 @@ typedef struct tag_Pingo3dControl {
         }
     }
 
-    // VDU 23, 0, &A0, sid; &48, 40, oid; n; u0; v0; ... :  Define Object Texture Coordinates
+    // VDU 23, 0, &A0, sid; &49, 40, oid; n; u0; v0; ... :  Define Object Texture Coordinates
     void define_object_texture_coordinates() {
         auto object = get_object();
         if (object->m_object.textCoord) {
@@ -403,7 +415,7 @@ typedef struct tag_Pingo3dControl {
         }
     }
 
-    // VDU 23, 0, &A0, sid; &48, 4, mid; n; i0; ... :  Set Texture Coordinate Indexes
+    // VDU 23, 0, &A0, sid; &49, 4, mid; n; i0; ... :  Set Texture Coordinate Indexes
     void set_texture_coordinate_indexes() {
         auto mesh = get_mesh();
         if (mesh->tex_indices) {
@@ -430,7 +442,7 @@ typedef struct tag_Pingo3dControl {
         }
     }
 
-    // VDU 23, 0, &A0, sid; &48, 5, oid; mid; bmid; :  Create Object
+    // VDU 23, 0, &A0, sid; &49, 5, oid; mid; bmid; :  Create Object
     void create_object() {
         auto object = get_object();
         auto mesh = get_mesh();
@@ -486,7 +498,7 @@ typedef struct tag_Pingo3dControl {
         return ((p3d::F_TYPE) value) * factor;
     }
 
-    // VDU 23, 0, &A0, sid; &48, 6, oid; scalex; :  Set Object X Scale Factor
+    // VDU 23, 0, &A0, sid; &49, 6, oid; scalex; :  Set Object X Scale Factor
     void set_object_x_scale_factor() {
         auto object = get_object();
         auto value = m_proc->readWord_t();
@@ -496,7 +508,7 @@ typedef struct tag_Pingo3dControl {
         }
     }
 
-    // VDU 23, 0, &A0, sid; &48, 7, oid; scaley; :  Set Object Y Scale Factor
+    // VDU 23, 0, &A0, sid; &49, 7, oid; scaley; :  Set Object Y Scale Factor
     void set_object_y_scale_factor() {
         auto object = get_object();
         auto value = m_proc->readWord_t();
@@ -506,7 +518,7 @@ typedef struct tag_Pingo3dControl {
         }
     }
 
-    // VDU 23, 0, &A0, sid; &48, 8, oid; scalez; :  Set Object Z Scale Factor
+    // VDU 23, 0, &A0, sid; &49, 8, oid; scalez; :  Set Object Z Scale Factor
     void set_object_z_scale_factor() {
         auto object = get_object();
         auto value = m_proc->readWord_t();
@@ -516,7 +528,7 @@ typedef struct tag_Pingo3dControl {
         }
     }
 
-    // VDU 23, 0, &A0, sid; &48, 9, oid; scalex; scaley; scalez :  Set Object XYZ Scale Factors
+    // VDU 23, 0, &A0, sid; &49, 9, oid; scalex; scaley; scalez :  Set Object XYZ Scale Factors
     void set_object_xyz_scale_factors() {
         auto object = get_object();
         auto valuex = m_proc->readWord_t();
@@ -530,7 +542,7 @@ typedef struct tag_Pingo3dControl {
         }
     }
 
-    // VDU 23, 0, &A0, sid; &48, 10, oid; anglex; :  Set Object X Rotation Angle
+    // VDU 23, 0, &A0, sid; &49, 10, oid; anglex; :  Set Object X Rotation Angle
     void set_object_x_rotation_angle() {
         auto object = get_object();
         auto value = m_proc->readWord_t();
@@ -540,7 +552,7 @@ typedef struct tag_Pingo3dControl {
         }
     }
 
-    // VDU 23, 0, &A0, sid; &48, 11, oid; angley; :  Set Object Y Rotation Angle
+    // VDU 23, 0, &A0, sid; &49, 11, oid; angley; :  Set Object Y Rotation Angle
     void set_object_y_rotation_angle() {
         auto object = get_object();
         auto value = m_proc->readWord_t();
@@ -550,7 +562,7 @@ typedef struct tag_Pingo3dControl {
         }
     }
 
-    // VDU 23, 0, &A0, sid; &48, 12, oid; anglez; :  Set Object Z Rotation Angle
+    // VDU 23, 0, &A0, sid; &49, 12, oid; anglez; :  Set Object Z Rotation Angle
     void set_object_z_rotation_angle() {
         auto object = get_object();
         auto value = m_proc->readWord_t();
@@ -560,7 +572,7 @@ typedef struct tag_Pingo3dControl {
         }
     }
 
-    // VDU 23, 0, &A0, sid; &48, 13, oid; anglex; angley; anglez; :  Set Object XYZ Rotation Angles
+    // VDU 23, 0, &A0, sid; &49, 13, oid; anglex; angley; anglez; :  Set Object XYZ Rotation Angles
     void set_object_xyz_rotation_angles() {
         auto object = get_object();
         auto valuex = m_proc->readWord_t();
@@ -574,7 +586,21 @@ typedef struct tag_Pingo3dControl {
         }
     }
 
-    // VDU 23, 0, &A0, sid; &48, 14, oid; distx; :  Set Object X Translation Distance
+    // VDU 23, 0, &A0, sid; &49, 141, oid; anglex; angley; anglez; :  Set Object XYZ Rotation Angles Local
+    void set_object_xyz_rotation_angles_local() {
+        auto object = get_object();
+        auto valuex = m_proc->readWord_t();
+        auto valuey = m_proc->readWord_t();
+        auto valuez = m_proc->readWord_t();
+        if (object) {
+            object->m_rotation.x = convert_rotation_value(valuex);
+            object->m_rotation.y = convert_rotation_value(valuey);
+            object->m_rotation.z = convert_rotation_value(valuez);
+            object->m_modified = true;
+        }
+    }
+
+    // VDU 23, 0, &A0, sid; &49, 14, oid; distx; :  Set Object X Translation Distance
     void set_object_x_translation_distance() {
         auto object = get_object();
         auto value = m_proc->readWord_t();
@@ -584,7 +610,7 @@ typedef struct tag_Pingo3dControl {
         }
     }
 
-    // VDU 23, 0, &A0, sid; &48, 15, oid; disty; :  Set Object Y Translation Distance
+    // VDU 23, 0, &A0, sid; &49, 15, oid; disty; :  Set Object Y Translation Distance
     void set_object_y_translation_distance() {
         auto object = get_object();
         auto value = m_proc->readWord_t();
@@ -594,7 +620,7 @@ typedef struct tag_Pingo3dControl {
         }
     }
 
-    // VDU 23, 0, &A0, sid; &48, 16, oid; distz; :  Set Object Z Translation Distance
+    // VDU 23, 0, &A0, sid; &49, 16, oid; distz; :  Set Object Z Translation Distance
     void set_object_z_translation_distance() {
         auto object = get_object();
         auto value = m_proc->readWord_t();
@@ -604,7 +630,7 @@ typedef struct tag_Pingo3dControl {
         }
     }
 
-    // VDU 23, 0, &A0, sid; &48, 17, oid; distx; disty; distz :  Set Object XYZ Translation Distances
+    // VDU 23, 0, &A0, sid; &49, 17, oid; distx; disty; distz :  Set Object XYZ Translation Distances
     void set_object_xyz_translation_distances() {
         auto object = get_object();
         auto valuex = m_proc->readWord_t();
@@ -618,28 +644,42 @@ typedef struct tag_Pingo3dControl {
         }
     }
 
-    // VDU 23, 0, &A0, sid; &48, 18, oid; anglex; :  Set Camera X Rotation Angle
+    // VDU 23, 0, &A0, sid; &49, 145, oid; distx; disty; distz :  Set Object XYZ Translation Distances Local
+    void set_object_xyz_translation_distances_local() {
+        auto object = get_object();
+        auto valuex = m_proc->readWord_t();
+        auto valuey = m_proc->readWord_t();
+        auto valuez = m_proc->readWord_t();
+        if (object) {
+            object->m_translation.x = convert_translation_value(valuex);
+            object->m_translation.y = convert_translation_value(valuey);
+            object->m_translation.z = convert_translation_value(valuez);
+            object->m_modified = true;
+        }
+    }
+
+    // VDU 23, 0, &A0, sid; &49, 18; anglex; :  Set Camera X Rotation Angle
     void set_camera_x_rotation_angle() {
         auto value = m_proc->readWord_t();
         m_camera.m_rotation.x = convert_rotation_value(value);
         m_camera.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &48, 19, oid; angley; :  Set Camera Y Rotation Angle
+    // VDU 23, 0, &A0, sid; &49, 19; angley; :  Set Camera Y Rotation Angle
     void set_camera_y_rotation_angle() {
         auto value = m_proc->readWord_t();
         m_camera.m_rotation.y = convert_rotation_value(value);
         m_camera.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &48, 20, oid; anglez; :  Set Camera Z Rotation Angle
+    // VDU 23, 0, &A0, sid; &49, 20; anglez; :  Set Camera Z Rotation Angle
     void set_camera_z_rotation_angle() {
         auto value = m_proc->readWord_t();
         m_camera.m_rotation.z = convert_rotation_value(value);
         m_camera.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &48, 21, oid; anglex; angley; anglez; :  Set Camera XYZ Rotation Angles
+    // VDU 23, 0, &A0, sid; &49, 21; anglex; angley; anglez; :  Set Camera XYZ Rotation Angles
     void set_camera_xyz_rotation_angles() {
         auto valuex = m_proc->readWord_t();
         auto valuey = m_proc->readWord_t();
@@ -650,28 +690,39 @@ typedef struct tag_Pingo3dControl {
         m_camera.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &48, 22, oid; distx; :  Set Camera X Translation Distance
+    // VDU 23, 0, &A0, sid; &49, 149; anglex; angley; anglez; : Set Camera XYZ Rotation Angles (Local)
+    void set_camera_xyz_rotation_angles_local() {
+        auto valuex = m_proc->readWord_t();
+        auto valuey = m_proc->readWord_t();
+        auto valuez = m_proc->readWord_t();
+        m_camera.m_rotation.x += convert_rotation_value(valuex);
+        m_camera.m_rotation.y += convert_rotation_value(valuey);
+        m_camera.m_rotation.z += convert_rotation_value(valuez);
+        m_camera.m_modified = true;
+    }
+
+    // VDU 23, 0, &A0, sid; &49, 22; distx; :  Set Camera X Translation Distance
     void set_camera_x_translation_distance() {
         auto value = m_proc->readWord_t();
         m_camera.m_translation.x = convert_translation_value(value);
         m_camera.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &48, 23, oid; disty; :  Set Camera Y Translation Distance
+    // VDU 23, 0, &A0, sid; &49, 23; disty; :  Set Camera Y Translation Distance
     void set_camera_y_translation_distance() {
         auto value = m_proc->readWord_t();
         m_camera.m_translation.y = convert_translation_value(value);
         m_camera.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &48, 24, oid; distz; :  Set Camera Z Translation Distance
+    // VDU 23, 0, &A0, sid; &49, 24; distz; :  Set Camera Z Translation Distance
     void set_camera_z_translation_distance() {
         auto value = m_proc->readWord_t();
         m_camera.m_translation.z = convert_translation_value(value);
         m_camera.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &48, 25, oid; distx; disty; distz :  Set Camera XYZ Translation Distances
+    // VDU 23, 0, &A0, sid; &49, 25, distx; disty; distz :  Set Camera XYZ Translation Distances
     void set_camera_xyz_translation_distances() {
         auto valuex = m_proc->readWord_t();
         auto valuey = m_proc->readWord_t();
@@ -682,7 +733,18 @@ typedef struct tag_Pingo3dControl {
         m_camera.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &48, 26, oid; scalex; :  Set Scene X Scale Factor
+    // VDU 23, 0, &A0, sid; &49, 153, distx; disty; distz :  Set Camera XYZ Translation Distances (Local)
+    void set_camera_xyz_translation_distances_local() {
+        auto valuex = m_proc->readWord_t();
+        auto valuey = m_proc->readWord_t();
+        auto valuez = m_proc->readWord_t();
+        m_camera.m_translation.x += convert_translation_value(valuex);
+        m_camera.m_translation.y += convert_translation_value(valuey);
+        m_camera.m_translation.z += convert_translation_value(valuez);
+        m_camera.m_modified = true;
+    }
+
+    // VDU 23, 0, &A0, sid; &49, 26, oid; scalex; :  Set Scene X Scale Factor
     void set_scene_x_scale_factor() {
         auto value = m_proc->readWord_t();
         if (value >= 0) {
@@ -691,7 +753,7 @@ typedef struct tag_Pingo3dControl {
         }
     }
 
-    // VDU 23, 0, &A0, sid; &48, 27, oid; scaley; :  Set Scene Y Scale Factor
+    // VDU 23, 0, &A0, sid; &49, 27, oid; scaley; :  Set Scene Y Scale Factor
     void set_scene_y_scale_factor() {
         auto value = m_proc->readWord_t();
         if (value >= 0) {
@@ -700,7 +762,7 @@ typedef struct tag_Pingo3dControl {
         }
     }
 
-    // VDU 23, 0, &A0, sid; &48, 28, oid; scalez; :  Set Scene Z Scale Factor
+    // VDU 23, 0, &A0, sid; &49, 28, oid; scalez; :  Set Scene Z Scale Factor
     void set_scene_z_scale_factor() {
         auto value = m_proc->readWord_t();
         if (value >= 0) {
@@ -709,7 +771,7 @@ typedef struct tag_Pingo3dControl {
         }
     }
 
-    // VDU 23, 0, &A0, sid; &48, 29, oid; scalex; scaley; scalez :  Set Scene XYZ Scale Factors
+    // VDU 23, 0, &A0, sid; &49, 29, oid; scalex; scaley; scalez :  Set Scene XYZ Scale Factors
     void set_scene_xyz_scale_factors() {
         auto valuex = m_proc->readWord_t();
         auto valuey = m_proc->readWord_t();
@@ -722,28 +784,28 @@ typedef struct tag_Pingo3dControl {
         }
     }
 
-    // VDU 23, 0, &A0, sid; &48, 30, oid; anglex; :  Set Scene X Rotation Angle
+    // VDU 23, 0, &A0, sid; &49, 30, oid; anglex; :  Set Scene X Rotation Angle
     void set_scene_x_rotation_angle() {
         auto value = m_proc->readWord_t();
         m_scene.m_rotation.x = convert_rotation_value(value);
         m_scene.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &48, 31, oid; angley; :  Set Scene Y Rotation Angle
+    // VDU 23, 0, &A0, sid; &49, 31, oid; angley; :  Set Scene Y Rotation Angle
     void set_scene_y_rotation_angle() {
         auto value = m_proc->readWord_t();
         m_scene.m_rotation.y = convert_rotation_value(value);
         m_scene.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &48, 32, oid; anglez; :  Set Scene Z Rotation Angle
+    // VDU 23, 0, &A0, sid; &49, 32, oid; anglez; :  Set Scene Z Rotation Angle
     void set_scene_z_rotation_angle() {
         auto value = m_proc->readWord_t();
         m_scene.m_rotation.z = convert_rotation_value(value);
         m_scene.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &48, 33, oid; anglex; angley; anglez; :  Set Scene XYZ Rotation Angles
+    // VDU 23, 0, &A0, sid; &49, 33, oid; anglex; angley; anglez; :  Set Scene XYZ Rotation Angles
     void set_scene_xyz_rotation_angles() {
         auto valuex = m_proc->readWord_t();
         auto valuey = m_proc->readWord_t();
@@ -754,28 +816,28 @@ typedef struct tag_Pingo3dControl {
         m_scene.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &48, 34, oid; distx; :  Set Scene X Translation Distance
+    // VDU 23, 0, &A0, sid; &49, 34, oid; distx; :  Set Scene X Translation Distance
     void set_scene_x_translation_distance() {
         auto value = m_proc->readWord_t();
         m_scene.m_translation.x = convert_translation_value(value);
         m_scene.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &48, 35, oid; disty; :  Set Scene Y Translation Distance
+    // VDU 23, 0, &A0, sid; &49, 35, oid; disty; :  Set Scene Y Translation Distance
     void set_scene_y_translation_distance() {
         auto value = m_proc->readWord_t();
         m_scene.m_translation.y = convert_translation_value(value);
         m_scene.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &48, 36, oid; distz; :  Set Scene Z Translation Distance
+    // VDU 23, 0, &A0, sid; &49, 36, oid; distz; :  Set Scene Z Translation Distance
     void set_scene_z_translation_distance() {
         auto value = m_proc->readWord_t();
         m_scene.m_translation.z = convert_translation_value(value);
         m_scene.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &48, 37, oid; distx; disty; distz :  Set Scene XYZ Translation Distances
+    // VDU 23, 0, &A0, sid; &49, 37, oid; distx; disty; distz :  Set Scene XYZ Translation Distances
     void set_scene_xyz_translation_distances() {
         auto valuex = m_proc->readWord_t();
         auto valuey = m_proc->readWord_t();
@@ -786,7 +848,7 @@ typedef struct tag_Pingo3dControl {
         m_scene.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &48, 38, bmid; :  Render To Bitmap
+    // VDU 23, 0, &A0, sid; &49, 38, bmid; :  Render To Bitmap
     void render_to_bitmap() {
         auto bmid = m_proc->readWord_t();
         if (bmid < 0) {
@@ -832,6 +894,17 @@ typedef struct tag_Pingo3dControl {
 
         if (m_camera.m_modified) {
             m_camera.compute_transformation_matrix();
+
+            p3d::Vec3f rotation;
+            rotation.x = atan2(m_camera.m_transform.elements[9], m_camera.m_transform.elements[10]);
+            rotation.y = atan2(-m_camera.m_transform.elements[8], sqrt(m_camera.m_transform.elements[9] * m_camera.m_transform.elements[9] + m_camera.m_transform.elements[10] * m_camera.m_transform.elements[10]));
+            rotation.z = atan2(m_camera.m_transform.elements[4], m_camera.m_transform.elements[0]);
+
+            // Print the rotation and translation values
+            printf("Camera rotation: x = %.1f, y = %.1f, z = %.1f\n",
+                m_camera.m_rotation.x * 180 / pi, m_camera.m_rotation.y * 180 / pi, m_camera.m_rotation.z * 180 / pi);
+            printf("Camera translation: x = %.1f, y = %.1f, z = %.1f\n",
+                m_camera.m_translation.x, m_camera.m_translation.y, m_camera.m_translation.z);
         }
         //debug_log("Camera:\n");
         //m_camera.dump();
@@ -847,6 +920,22 @@ typedef struct tag_Pingo3dControl {
 
         rendererRender(&renderer);
 
+        // Apply dithering to the rendered image before copying to the destination bitmap
+        switch (m_dither_type) {
+            case 0:
+                break; // no dithering applied
+            case 1:
+                dither_bayer((uint8_t*)m_frame, m_width, m_height);
+                break;
+            case 2:
+                dither_floyd_steinberg((uint8_t*)m_frame, m_width, m_height);
+                break;
+            default:
+                m_dither_type = 0; // no dithering applied
+                debug_log("Invalid dithering type %u\n", m_dither_type);
+                break;
+        }
+
         memcpy(dst_pix, m_frame, sizeof(p3d::Pixel) * m_width * m_height);
 
         //auto stop = millis();
@@ -855,6 +944,109 @@ typedef struct tag_Pingo3dControl {
         //debug_log("Frame data:  %02hX %02hX %02hX %02hX\n", m_frame->r, m_frame->g, m_frame->b, m_frame->a);
         //debug_log("Final data:  %02hX %02hX %02hX %02hX\n", dst_pix->r, dst_pix->g, dst_pix->b, dst_pix->a);
     }
+
+
+    void dither_bayer(uint8_t* rgba, int width, int height) {
+        static const uint8_t bayer[4][4] = {
+            { 15, 135,  45, 165},
+            {195,  75, 225, 105},
+            { 60, 180,  30, 150},
+            {240, 120, 210,  90}
+        };
+        
+        static const uint8_t quant_levels[4] = {0, 85, 170, 255};
+
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                uint8_t* pixel = &rgba[(y * width + x) * 4];
+                if (pixel[3] < 255) {
+                    // Skip dithering for pixels with alpha channel value < 255
+                    continue;
+                }
+                for (int color = 0; color < 3; color++) { // Only process R, G, B channels
+                    uint8_t normalized_pixel_value = pixel[color];
+                    uint8_t threshold = bayer[x % 4][y % 4];
+                    
+                    // Determine the quantization level
+                    int level_index = (normalized_pixel_value * 3) / 255;
+                    
+                    if (normalized_pixel_value > threshold) {
+                        level_index = (level_index < 3) ? level_index + 1 : 3;
+                    }
+
+                    pixel[color] = quant_levels[level_index];
+                }
+            }
+        }
+    }
+
+    // Clamp function to ensure pixel values stay within the valid range
+    uint8_t clamp(int value) {
+        if (value < 0) return 0;
+        if (value > 255) return 255;
+        return (uint8_t)value;
+    }
+
+    // Find the closest color value (0, 85, 170, 255)
+    uint8_t closest_color(uint8_t value) {
+        if (value < 43) return 0;
+        if (value < 128) return 85;
+        if (value < 213) return 170;
+        return 255;
+    }
+
+    void dither_floyd_steinberg(uint8_t* rgba, int width, int height) {
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                uint8_t* pixel = &rgba[(y * width + x) * 4];
+                if (pixel[3] < 255) {
+                    // Skip dithering for pixels with alpha channel value < 255
+                    continue;
+                }
+                for (int color = 0; color < 3; color++) {
+                    int old_pixel = pixel[color];
+                    int new_pixel = closest_color(old_pixel);
+                    pixel[color] = new_pixel;
+                    int error = old_pixel - new_pixel;
+
+                    if (x + 1 < width) {
+                        rgba[(y * width + (x + 1)) * 4 + color] = clamp(rgba[(y * width + (x + 1)) * 4 + color] + (error * 7 / 16));
+                    }
+                    if (y + 1 < height) {
+                        if (x > 0) {
+                            rgba[((y + 1) * width + (x - 1)) * 4 + color] = clamp(rgba[((y + 1) * width + (x - 1)) * 4 + color] + (error * 3 / 16));
+                        }
+                        rgba[((y + 1) * width + x) * 4 + color] = clamp(rgba[((y + 1) * width + x) * 4 + color] + (error * 5 / 16));
+                        if (x + 1 < width) {
+                            rgba[((y + 1) * width + (x + 1)) * 4 + color] = clamp(rgba[((y + 1) * width + (x + 1)) * 4 + color] + (error * 1 / 16));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // VDU 23, 0, &A0, sid; &49, 42, type : Set Rendering Dither Type
+    void set_rendering_dither_type() {
+        auto type = m_proc->readByte_t();
+        m_dither_type = type & 0x03; // Mask the first two bits
+        switch (m_dither_type) {
+            case 0:
+                debug_log("Dithering disabled\n");
+                break;
+            case 1:
+                debug_log("Dithering enabled (Bayer)\n");
+                break;
+            case 2:
+                debug_log("Dithering enabled (Floyd-Steinberg)\n");
+                break;
+            default:
+                m_dither_type = 0;
+                debug_log("Invalid dithering type %u\n", m_dither_type);
+                break;
+        }
+    }
+
 
 } Pingo3dControl;
 
