@@ -38,6 +38,11 @@ typedef struct tag_Transformable {
     p3d::Vec3f      m_translation;
     p3d::Mat4       m_transform;
     bool            m_modified;
+    p3d::Vec3f      m_rotation_delta;
+    p3d::Vec3f      m_translation_delta;
+    p3d::Mat4       m_transform_delta;
+    bool            m_modified_delta;
+
 
     void initialize_scale() {
         m_scale.x = 1.0f;
@@ -46,9 +51,16 @@ typedef struct tag_Transformable {
         m_modified = true;
     }
 
+    void initialize_delta_transforms() {
+        m_rotation_delta = p3d::Vec3f{0.0f, 0.0f, 0.0f};
+        m_translation_delta = p3d::Vec3f{0.0f, 0.0f, 0.0f};
+        m_modified_delta = false;
+    }
+
     void initialize() {
         memset(this, 0, sizeof(struct tag_Transformable));
         initialize_scale();
+        initialize_delta_transforms();
     }
 
     void compute_transformation_matrix() {
@@ -69,6 +81,26 @@ typedef struct tag_Transformable {
             auto t = p3d::mat4Translate(m_translation);
             m_transform = mat4MultiplyM(&m_transform, &t);
         }
+        m_modified = false;
+    }
+
+    void compute_transformation_matrix_local() {
+        // scale transformation matrix
+        m_transform_delta = p3d::mat4Scale(m_scale);
+
+        // rotate transformation matrix
+        auto rx = p3d::mat4RotateX(m_rotation_delta.x);
+        auto ry = p3d::mat4RotateY(m_rotation_delta.y);
+        auto rz = p3d::mat4RotateZ(m_rotation_delta.z);
+        auto r = p3d::mat4MultiplyM(&ry, &rx);
+        r = p3d::mat4MultiplyM(&rz, &r);
+        m_transform_delta = p3d::mat4MultiplyM(&r, &m_transform);
+
+        // translate transformation matrix
+        auto t = p3d::mat4Translate(m_translation_delta);
+        m_transform = p3d::mat4MultiplyM(&m_transform, &t);
+
+        // reset modified flag
         m_modified = false;
     }
 
@@ -498,6 +530,32 @@ typedef struct tag_Pingo3dControl {
         return ((p3d::F_TYPE) value) * factor;
     }
 
+///////// LOCAL TRANSFORMATIONS /////////
+
+    // VDU 23, 0, &A0, sid; &49, 149; anglex; angley; anglez; : Set Camera XYZ Rotation Angles (Local)
+    void set_camera_xyz_rotation_angles_local() {
+        auto valuex = m_proc->readWord_t();
+        auto valuey = m_proc->readWord_t();
+        auto valuez = m_proc->readWord_t();
+        m_camera.m_rotation_delta.x = convert_rotation_value(valuex);
+        m_camera.m_rotation_delta.y = convert_rotation_value(valuey);
+        m_camera.m_rotation_delta.z = convert_rotation_value(valuez);
+        m_camera.m_modified_delta = true;
+    }
+
+    // VDU 23, 0, &A0, sid; &49, 153, distx; disty; distz :  Set Camera XYZ Translation Distances (Local)
+    void set_camera_xyz_translation_distances_local() {
+        auto valuex = m_proc->readWord_t();
+        auto valuey = m_proc->readWord_t();
+        auto valuez = m_proc->readWord_t();
+        m_camera.m_translation_delta.x = convert_translation_value(valuex);
+        m_camera.m_translation_delta.y = convert_translation_value(valuey);
+        m_camera.m_translation_delta.z = convert_translation_value(valuez);
+        m_camera.m_modified_delta = true;
+    }
+
+///////// END LOCAL TRANSFORMATIONS /////////
+
     // VDU 23, 0, &A0, sid; &49, 6, oid; scalex; :  Set Object X Scale Factor
     void set_object_x_scale_factor() {
         auto object = get_object();
@@ -690,17 +748,6 @@ typedef struct tag_Pingo3dControl {
         m_camera.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &49, 149; anglex; angley; anglez; : Set Camera XYZ Rotation Angles (Local)
-    void set_camera_xyz_rotation_angles_local() {
-        auto valuex = m_proc->readWord_t();
-        auto valuey = m_proc->readWord_t();
-        auto valuez = m_proc->readWord_t();
-        m_camera.m_rotation.x += convert_rotation_value(valuex);
-        m_camera.m_rotation.y += convert_rotation_value(valuey);
-        m_camera.m_rotation.z += convert_rotation_value(valuez);
-        m_camera.m_modified = true;
-    }
-
     // VDU 23, 0, &A0, sid; &49, 22; distx; :  Set Camera X Translation Distance
     void set_camera_x_translation_distance() {
         auto value = m_proc->readWord_t();
@@ -730,17 +777,6 @@ typedef struct tag_Pingo3dControl {
         m_camera.m_translation.x = convert_translation_value(valuex);
         m_camera.m_translation.y = convert_translation_value(valuey);
         m_camera.m_translation.z = convert_translation_value(valuez);
-        m_camera.m_modified = true;
-    }
-
-    // VDU 23, 0, &A0, sid; &49, 153, distx; disty; distz :  Set Camera XYZ Translation Distances (Local)
-    void set_camera_xyz_translation_distances_local() {
-        auto valuex = m_proc->readWord_t();
-        auto valuey = m_proc->readWord_t();
-        auto valuez = m_proc->readWord_t();
-        m_camera.m_translation.x += convert_translation_value(valuex);
-        m_camera.m_translation.y += convert_translation_value(valuey);
-        m_camera.m_translation.z += convert_translation_value(valuez);
         m_camera.m_modified = true;
     }
 
@@ -892,8 +928,9 @@ typedef struct tag_Pingo3dControl {
         renderer.camera_projection =
             p3d::mat4Perspective( 1, 2500.0, (p3d::F_TYPE)size.x / (p3d::F_TYPE)size.y, 0.6);
 
-        if (m_camera.m_modified) {
-            m_camera.compute_transformation_matrix();
+        if (m_camera.m_modified_delta) {
+            // m_camera.compute_transformation_matrix();
+            m_camera.compute_transformation_matrix_local();
 
             p3d::Vec3f rotation;
             rotation.x = atan2(m_camera.m_transform.elements[9], m_camera.m_transform.elements[10]);
