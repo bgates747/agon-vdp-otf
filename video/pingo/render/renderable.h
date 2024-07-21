@@ -4,7 +4,12 @@
 
 typedef struct Renderer Renderer;
 
-/// A basic type which provide a render function pointer
+/// @brief A basic type which provides a render function pointer.
 typedef struct {
-  int (*render)(void *this, Mat4 transform, Renderer *renderer);
+    /// @brief Pointer to the render function.
+    /// @param renderable Pointer to the renderable object.
+    /// @param transform Transformation matrix for rendering.
+    /// @param renderer Pointer to the renderer.
+    /// @return Status code indicating success or error.
+    int (*render)(void *renderable, Mat4 transform, Renderer *renderer);
 } Renderable;

@@ -7,42 +7,41 @@
 #include "depth.h"
 #include "backend.h"
 
-int renderer_init(Renderer * r, Vec2i size, Backend * backend) {
-    r->root_renderable = 0;
-    r->clear = 1;
-    r->clear_color = PIXELBLACK;
-    r->backend = backend;
-    r->backend->init(r, r->backend, (Vec4i) { 0, 0, 0, 0 });
+int renderer_init(Renderer *renderer, Vec2i size, Backend *backend)
+{
+    renderer->root_renderable = NULL;
+    renderer->clear = true;
+    renderer->clear_color = PIXELBLACK;
+    renderer->backend = backend;
+    renderer->backend->init(renderer, renderer->backend, (Vec4i){0, 0, 0, 0});
 
     int e = 0;
-    e = texture_init( &r->framebuffer, size, backend->getFrameBuffer(r, backend));
+    e = texture_init(&renderer->framebuffer, size, backend->getFrameBuffer(renderer, backend));
     if (e) return e;
 
     return 0;
 }
 
-
-
-int renderer_render(Renderer *r)
+int renderer_render(Renderer *renderer)
 {
-    Backend *be = r->backend;
+    Backend *backend = renderer->backend;
 
-    int pixels = r->framebuffer.size.x * r->framebuffer.size.y;
-    memset(be->getZetaBuffer(r,be), 0, pixels * sizeof (PingoDepth));
+    int pixels = renderer->framebuffer.size.x * renderer->framebuffer.size.y;
+    memset(backend->getZetaBuffer(renderer, backend), 0, pixels * sizeof(PingoDepth));
 
-    be->beforeRender(r, be);
+    backend->beforeRender(renderer, backend);
 
-    //get current framebuffe from Backend
-    r->framebuffer.frameBuffer = be->getFrameBuffer(r, be);
+    // Get current framebuffer from Backend
+    renderer->framebuffer.frameBuffer = backend->getFrameBuffer(renderer, backend);
 
-    //Clear draw buffer before rendering
-    if (r->clear) {
-        memset(be->getFrameBuffer(r,be), 0, pixels * sizeof (Pixel));
+    // Clear draw buffer before rendering
+    if (renderer->clear) {
+        memset(backend->getFrameBuffer(renderer, backend), 0, pixels * sizeof(Pixel));
     }
 
-    r->root_renderable->render(r->root_renderable, mat4Identity(), r);
+    renderer->root_renderable->render(renderer->root_renderable, mat4Identity(), renderer);
 
-    be->afterRender(r, be);
+    backend->afterRender(renderer, backend);
 
     return 0;
 }

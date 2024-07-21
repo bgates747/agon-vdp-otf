@@ -4,9 +4,9 @@
 #include "state.h"
 #include <stddef.h>
 
-int entity_render(void *this, Mat4 transform, Renderer *renderer)
+int entity_render(void *entity_ptr, Mat4 transform, Renderer *renderer)
 {
-    Entity *entity = this;
+    Entity *entity = (Entity *)entity_ptr;
     IF_NULL_RETURN(entity, RENDER_ERROR);
     IF_NULL_RETURN(renderer, RENDER_ERROR);
 
@@ -23,34 +23,40 @@ int entity_render(void *this, Mat4 transform, Renderer *renderer)
     Renderable *renderable = entity->entity_renderable;
 
     return renderable->render(renderable, new_transform, renderer);
-};
+}
 
-int entity_init(Entity *this, Renderable *renderable, Mat4 transform)
+int entity_init(Entity *entity, Renderable *renderable, Mat4 transform)
 {
-    IF_NULL_RETURN(this, INIT_ERROR);
+    // Check for null pointers to avoid segmentation faults
+    IF_NULL_RETURN(entity, INIT_ERROR);
     IF_NULL_RETURN(renderable, INIT_ERROR);
 
-    this->entity_renderable = renderable;
-    this->renderable.render = &entity_render;
-    this->transform = transform;
-    this->visible = true;
+    // Initialize entity fields
+    entity->entity_renderable = renderable;
+    entity->renderable.render = &entity_render;
+    entity->transform = transform;
+    entity->visible = true;
 
-    array_init(&this->children_entities, 0, 0);
+    // Initialize children entities array with zero initial size
+    array_init(&entity->children_entities, 0, 0);
 
     return OK;
 }
 
-int entity_init_children(Entity *this, Renderable *renderable, Mat4 transform, Entity children[], size_t children_count)
+int entity_init_children(Entity *entity, Renderable *renderable, Mat4 transform, Entity children[], size_t children_count)
 {
-    IF_NULL_RETURN(this, INIT_ERROR);
+    // Check for null pointers to avoid segmentation faults
+    IF_NULL_RETURN(entity, INIT_ERROR);
     IF_NULL_RETURN(renderable, INIT_ERROR);
 
-    this->entity_renderable = renderable;
-    this->renderable.render = &entity_render;
-    this->transform = transform;
-    this->visible = true;
+    // Initialize entity fields
+    entity->entity_renderable = renderable;
+    entity->renderable.render = &entity_render;
+    entity->transform = transform;
+    entity->visible = true;
 
-    array_init(&this->children_entities, children_count, children);
+    // Initialize children entities array with provided children
+    array_init(&entity->children_entities, children_count, children);
 
     return OK;
 }

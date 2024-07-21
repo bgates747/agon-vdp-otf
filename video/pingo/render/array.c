@@ -1,21 +1,22 @@
-#pragma once
-
 #include "array.h"
 #include "state.h"
 
-int array_init(Array *this, size_t size, void *data)
+int array_init(Array *array, size_t size, void *data)
 {
-    IF_NULL_RETURN(this, INIT_ERROR);
+    // Check for null pointer to avoid segmentation fault
+    IF_NULL_RETURN(array, INIT_ERROR);
 
-    this->size = size;
+    array->size = size;
 
     if (size == 0) {
-        data = 0;
+        data = NULL; // Set data to NULL if size is 0
+        array->data = data;
         return OK;
     }
 
+    // Check for null data pointer when size is not 0
     IF_NULL_RETURN(data, INIT_ERROR);
-    this->data = data;
+    array->data = data;
 
     return OK;
 }

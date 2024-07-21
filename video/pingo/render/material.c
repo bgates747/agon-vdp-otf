@@ -1,11 +1,11 @@
 #include "material.h"
 #include "../render/state.h"
 
-int material_init(Material *this, Texture *texture)
+int material_init(Material *material, Texture *texture)
 {
-    IF_NULL_RETURN(this, INIT_ERROR);
+    IF_NULL_RETURN(material, INIT_ERROR);
     IF_NULL_RETURN(texture, INIT_ERROR);
 
-    this->texture = texture;
+    material->texture = texture;
     return OK;
 }

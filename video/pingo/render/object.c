@@ -8,9 +8,9 @@
 #include "renderer.h"
 #include "state.h"
 
-int object_render(void *this, Mat4 m, Renderer *r)
+int object_render(void *object_ptr, Mat4 m, Renderer *r)
 {
-    Object *o = this;
+    Object *o = object_ptr;
 
     IF_NULL_RETURN(o, RENDER_ERROR);
     IF_NULL_RETURN(r, RENDER_ERROR);
@@ -170,15 +170,15 @@ int object_render(void *this, Mat4 m, Renderer *r)
     return OK;
 };
 
-int object_init(Object *this, Mesh *mesh, Material *material)
+int object_init(Object *o, Mesh *mesh, Material *material)
 {
-    IF_NULL_RETURN(this, INIT_ERROR);
+    IF_NULL_RETURN(o, INIT_ERROR);
     IF_NULL_RETURN(mesh, INIT_ERROR);
     //IF_NULL_RETURN(material, INIT_ERROR);
 
-    this->material = material;
-    this->mesh = mesh;
-    this->renderable.render = &object_render;
+    o->material = material;
+    o->mesh = mesh;
+    o->renderable.render = &object_render;
 
     return OK;
 }
