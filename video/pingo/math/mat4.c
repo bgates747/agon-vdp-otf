@@ -21,9 +21,9 @@ Mat4 mat4Translate(Vec3f l) {
     F_TYPE z = l.z;
     return (Mat4){{
             1,  0,  0, x,
-            0,  1,  0, y,
-            0,  0,  1, z,
-            0,  0,  0, 1,
+                    0,  1,  0, y,
+                    0,  0,  1, z,
+                    0,  0,  0, 1,
         }};
 }
 
@@ -33,8 +33,8 @@ Mat4 mat4RotateX(F_TYPE phi) {
     return (Mat4){{
             1,  0,  0, 0,
             0,  c, -s, 0,
-            0,  s,  c, 0,
-            0,  0,  0, 1,
+                    0,  s,  c, 0,
+                    0,  0,  0, 1,
         }};
 }
 Mat4 mat4RotateY(F_TYPE phi) {
@@ -42,9 +42,9 @@ Mat4 mat4RotateY(F_TYPE phi) {
     F_TYPE c = cos(phi);
     return (Mat4){{
             c,  0,  s, 0,
-            0,  1,  0, 0,
-            -s,  0,  c, 0,
-            0,  0,  0, 1,
+                    0,  1,  0, 0,
+                    -s,  0,  c, 0,
+                    0,  0,  0, 1,
         }};
 }
 Mat4 mat4RotateZ(F_TYPE phi) {
@@ -52,9 +52,9 @@ Mat4 mat4RotateZ(F_TYPE phi) {
     F_TYPE c = cos(phi);
     return (Mat4){{
             c, -s,  0, 0,
-            s,  c,  0, 0,
-            0,  0,  1, 0,
-            0,  0,  0, 1,
+                    s,  c,  0, 0,
+                    0,  0,  1, 0,
+                    0,  0,  0, 1,
         }};
 }
 
@@ -281,19 +281,38 @@ Mat4 mat4Inverse(Mat4 * mat)
     return out;
 }
 
-Mat4 mat4Perspective(float near, float far, float aspect, float fov)
+Mat4 mat4Perspective2(float near, float far, float aspect, float fovy)
 {
-    float h = cos(fov/2.0) / sin(fov/2.0);
-    float w = h / aspect;
-    float nearFar = near * far;
-    float farNear = far - near;
+    F_TYPE h = 1.0 / tan(fovy * 0.5);
+    F_TYPE w = h / aspect;
+    F_TYPE d = far - near;
+
+    F_TYPE x = far / d;
+    F_TYPE y = -(far * near) / d;
 
     Mat4 m = {{
-                  w,          0,          0,                  0,
-                  0,          h,          0,                  0,
-                  0,          0,          far/(farNear),      1,
-                  0,          0,          -nearFar/farNear,   0
-              }};
+        w,    0,    0,    0,
+        0,    h,    0,    0,
+        0,    0,    x,    -1,
+        0,    0,    y,    0
+    }};
+
+    return m;
+}
+
+Mat4 mat4Perspective(float near, float far, float aspect, float fovy)
+{
+    F_TYPE h = 1.0 / tan(  fovy * 0.5 ) ;
+    F_TYPE w = 1.0 / tan(  aspect * fovy * 0.5 ) ;
+    F_TYPE x =  ( (far) / ( far - near ) );
+    F_TYPE y =  ( 2 * far * near ) / ( far - near ) ;
+
+    Mat4 m = {{
+        w,          0,          0,                  0,
+        0,          h,          0,                  0,
+        0,          0,          x,                  -1,
+        0,          0,          -y,                  0
+    }};
 
     return m;
 }

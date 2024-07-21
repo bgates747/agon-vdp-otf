@@ -1,32 +1,27 @@
 #pragma once
 
-#include "texture.h"
-#include "renderable.h"
 #include "pixel.h"
-#include "../math/vec4.h"
+#include "texture.h"
+#include <stdbool.h>
 
-typedef struct tag_Scene Scene;
-typedef struct tag_BackEnd BackEnd;
+typedef struct Backend Backend;
 
-typedef struct tag_Renderer{
-    Vec4i camera;
-    Scene * scene;
+typedef struct Renderer {
+  Renderable *root_renderable;
 
-    Texture frameBuffer;
-    Pixel clearColor;
-    int clear;
+  Texture framebuffer;
+  Pixel clear_color;
+  bool clear;
 
-    Mat4 camera_projection;
-    Mat4 camera_view;
+  Mat4 camera_projection;
+  Mat4 camera_view;
 
-    BackEnd * backEnd;
+  Backend *backend;
 
 } Renderer;
 
-extern int rendererRender(Renderer *);
+extern int renderer_render(Renderer *);
 
-extern int rendererInit(Renderer *, Vec2i size, struct tag_BackEnd * backEnd);
+extern int renderer_init(Renderer *, Vec2i size, Backend *backend);
 
-extern int rendererSetScene(Renderer *r, Scene *s);
-
-extern int rendererSetCamera(Renderer *r, Vec4i camera);
+extern int renderer_set_root_renderable(Renderer *renderer, Renderable *root);
