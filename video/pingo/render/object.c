@@ -1,10 +1,10 @@
 #include "object.h"
 #include "backend.h"
 #include "depth.h"
-#include "math/fun.h"
-#include "math/mat4.h"
+#include "../math/fun.h"
+#include "../math/mat4.h"
 #include "mesh.h"
-#include "render/material.h"
+#include "../render/material.h"
 #include "renderer.h"
 #include "state.h"
 

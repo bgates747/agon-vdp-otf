@@ -1,6 +1,6 @@
 #include "sprite.h"
-#include "math/mat4.h"
-#include "render/rasterizer.h"
+#include "../math/mat4.h"
+#include "../render/rasterizer.h"
 #include "renderer.h"
 #include "state.h"
 

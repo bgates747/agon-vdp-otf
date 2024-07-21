@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdio.h>
-#include "math/mat4.h"
-#include "render/state.h"
+#include "../math/mat4.h"
+#include "../render/state.h"
 #include "renderer.h"
 #include "pixel.h"
 #include "depth.h"

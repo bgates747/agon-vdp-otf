@@ -1,6 +1,6 @@
 #include "entity.h"
-#include "math/mat4.h"
-#include "render/array.h"
+#include "../math/mat4.h"
+#include "../render/array.h"
 #include "state.h"
 #include <stddef.h>
 

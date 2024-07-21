@@ -1,5 +1,5 @@
 #include "material.h"
-#include "render/state.h"
+#include "../render/state.h"
 
 int material_init(Material *this, Texture *texture)
 {

@@ -21,7 +21,7 @@ namespace p3d {
         #include "pingo/render/object.h"
         #include "pingo/render/pixel.h"
         #include "pingo/render/renderer.h"
-        #include "pingo/render/scene.h"
+        // #include "pingo/render/scene.h"
         #include "pingo/render/backend.h"
         #include "pingo/render/depth.h"
 

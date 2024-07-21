@@ -1,5 +1,5 @@
 #include "rasterizer.h"
-#include "math/mat4.h"
+#include "../math/mat4.h"
 #include "renderer.h"
 
 #define MIN(a,b) (((a)<(b))?(a):(b))

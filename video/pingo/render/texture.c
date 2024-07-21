@@ -1,5 +1,5 @@
 #include "texture.h"
-#include "render/state.h"
+#include "../render/state.h"
 #include <stdio.h>
 
 int texture_init( Texture *f, Vec2i size, Pixel *buf )
