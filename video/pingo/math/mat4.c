@@ -58,6 +58,22 @@ Mat4 mat4RotateZ(F_TYPE phi) {
         }};
 }
 
+Mat4 mat4RotateXYZ(F_TYPE phiX, F_TYPE phiY, F_TYPE phiZ) {
+    F_TYPE sx = sin(phiX);
+    F_TYPE cx = cos(phiX);
+    F_TYPE sy = sin(phiY);
+    F_TYPE cy = cos(phiY);
+    F_TYPE sz = sin(phiZ);
+    F_TYPE cz = cos(phiZ);
+
+    return (Mat4){{
+        cy * cz, -cy * sz, sy, 0,
+        sx * sy * cz + cx * sz, -sx * sy * sz + cx * cz, -sx * cy, 0,
+        -cx * sy * cz + sx * sz, cx * sy * sz + sx * cz, cx * cy, 0,
+        0, 0, 0, 1
+    }};
+}
+
 extern Mat4 mat4Scale(Vec3f s) {
     F_TYPE p = s.x;
     F_TYPE q = s.y;

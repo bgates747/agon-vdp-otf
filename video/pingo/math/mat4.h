@@ -19,6 +19,7 @@ Mat4 mat4Translate(Vec3f l);
 Mat4 mat4RotateX(F_TYPE phi);
 Mat4 mat4RotateY(F_TYPE phi);
 Mat4 mat4RotateZ(F_TYPE phi);
+Mat4 mat4RotateXYZ(F_TYPE phiX, F_TYPE phiY, F_TYPE phiZ);
 
 Vec2f mat4MultiplyVec2(Vec2f *v, Mat4 *t);
 Vec3f mat4MultiplyVec3(Vec3f *v, Mat4 *t);
