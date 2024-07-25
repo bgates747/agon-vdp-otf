@@ -1,8 +1,6 @@
 #pragma once
 
 #include "texture.h"
-#include "renderable.h"
-#include "pixel.h"
 #include "../math/vec4.h"
 
 typedef struct tag_Scene Scene;

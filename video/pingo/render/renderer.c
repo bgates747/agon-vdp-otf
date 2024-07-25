@@ -95,14 +95,16 @@ void backendDrawPixel (Renderer * r, Texture * f, Vec2i pos, Pixel color, float 
     }
 }
 
-int renderObject(Mat4 object_transform, Renderer * r, Renderable ren) {
-
+int renderObject(Mat4 object_transform, Renderer *r, Renderable ren) {
     const Vec2i scrSize = r->frameBuffer.size;
-    Object * o = ren.impl;
-    Vec2f * tex_coords = o->textCoord;
-    if (!tex_coords) {
-        tex_coords = o->mesh->textCoord;
-    }
+    Object *o = ren.impl;
+    Vec2f *tex_coords = o->mesh->textCoord;
+    // TODO: REVIEW ME: Check why o->textCoord assignment causes a segfault
+    // or indeed why we try to do that first instead of the assignment above which does work
+    // Vec2f *tex_coords = o->textCoord;
+    // if (!tex_coords) {
+    //     tex_coords = o->mesh->textCoord;
+    // }
 
     // MODEL MATRIX
     Mat4 m = mat4MultiplyM( &o->transform, &object_transform  );
