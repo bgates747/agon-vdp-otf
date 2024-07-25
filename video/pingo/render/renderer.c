@@ -289,6 +289,7 @@ int rendererRender(Renderer * r) {
     //get current framebuffe from backend
     r->frameBuffer.frameBuffer = r->backEnd->getFrameBuffer(r, r->backEnd);
 
+    //TODO: make this an option so that we can render over a background image
     //Clear draw buffer before rendering
     if (r->clear) {
         memset(r->backEnd->getFrameBuffer(r,r->backEnd), 0, pixels * sizeof (Pixel));
