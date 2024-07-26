@@ -96,10 +96,10 @@ int renderObject(Mat4 object_transform, Renderer *r, Renderable ren) {
     // MODEL MATRIX
     Mat4 m = mat4MultiplyM( &o->transform, &object_transform  );
 
-    // // Check if normals are already computed
-    // if (o->mesh->normals == NULL) {
-    //     computeMeshNormals(o->mesh);
-    // }
+    // Check if normals are already computed
+    if (o->mesh->normals == NULL) {
+        computeMeshNormals(o->mesh);
+    }
 
     // VIEW MATRIX
     Mat4 v = r->camera_view;
@@ -128,13 +128,13 @@ int renderObject(Mat4 object_transform, Renderer *r, Renderable ren) {
         b = mat4MultiplyVec4( &b, &m);
         c = mat4MultiplyVec4( &c, &m);
 
-        //Calc Face Normal
-        Vec3f na = vec3fsubV(*((Vec3f*)(&a)), *((Vec3f*)(&b)));
-        Vec3f nb = vec3fsubV(*((Vec3f*)(&a)), *((Vec3f*)(&c)));
-        Vec3f normal = vec3Normalize(vec3Cross(na, nb));
+        // //Calc Face Normal
+        // Vec3f na = vec3fsubV(*((Vec3f*)(&a)), *((Vec3f*)(&b)));
+        // Vec3f nb = vec3fsubV(*((Vec3f*)(&a)), *((Vec3f*)(&c)));
+        // Vec3f normal = vec3Normalize(vec3Cross(na, nb));
 
-        // // Use precomputed face normals
-        // Vec3f normal = o->mesh->normals[o->mesh->pos_indices[i]]; 
+        // Use precomputed face normals
+        Vec3f normal = o->mesh->normals[o->mesh->pos_indices[i]]; 
 
         // Apply lighting to normal
         Vec3f light = vec3Normalize((Vec3f){-8,-5,5});
