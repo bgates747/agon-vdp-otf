@@ -54,19 +54,6 @@ void renderRenderable(Mat4 transform, Renderer * r, Renderable ren) {
     renderingFunctions[ren.renderableType](transform, r, ren);
 };
 
-int renderScene(Mat4 transform, Renderer * r, Renderable ren) {
-    Scene * s = ren.impl;
-    if (!s->visible)
-        return 0;
-
-    //Apply hierarchy transfom
-    Mat4 newTransform = mat4MultiplyM( & s->transform, & transform);
-    for (int i = 0; i < s->numberOfRenderables; i++) {
-        renderRenderable(newTransform, r, s->renderables[i]);
-    }
-    return 0;
-};
-
 #define MIN(a, b)(((a) < (b)) ? (a) : (b))
 #define MAX(a, b)(((a) > (b)) ? (a) : (b))
 
@@ -109,6 +96,11 @@ int renderObject(Mat4 object_transform, Renderer *r, Renderable ren) {
     // MODEL MATRIX
     Mat4 m = mat4MultiplyM( &o->transform, &object_transform  );
 
+    // // Check if normals are already computed
+    // if (o->mesh->normals == NULL) {
+    //     computeMeshNormals(o->mesh);
+    // }
+
     // VIEW MATRIX
     Mat4 v = r->camera_view;
     Mat4 p = r->camera_projection;
@@ -140,6 +132,11 @@ int renderObject(Mat4 object_transform, Renderer *r, Renderable ren) {
         Vec3f na = vec3fsubV(*((Vec3f*)(&a)), *((Vec3f*)(&b)));
         Vec3f nb = vec3fsubV(*((Vec3f*)(&a)), *((Vec3f*)(&c)));
         Vec3f normal = vec3Normalize(vec3Cross(na, nb));
+
+        // // Use precomputed face normals
+        // Vec3f normal = o->mesh->normals[o->mesh->pos_indices[i]]; 
+
+        // Apply lighting to normal
         Vec3f light = vec3Normalize((Vec3f){-8,-5,5});
         float diffuseLight = (1.0 + vec3Dot(normal, light)) *0.5;
         diffuseLight = MIN(1.0, MAX(diffuseLight, 0));
@@ -262,20 +259,32 @@ int renderObject(Mat4 object_transform, Renderer *r, Renderable ren) {
     return 0;
 };
 
+int renderScene(Mat4 transform, Renderer * r, Renderable ren) {
+    Scene * s = ren.impl;
+    if (!s->visible)
+        return 0;
+
+    Mat4 newTransform = mat4MultiplyM(&s->transform, &transform);
+    for (int i = 0; i < s->numberOfRenderables; i++) {
+        renderRenderable(newTransform, r, s->renderables[i]);
+    }
+
+    return 0;
+}
+
 int rendererInit(Renderer * r, Vec2i size, BackEnd * backEnd) {
-    renderingFunctions[RENDERABLE_SPRITE] = & renderSprite;
-    renderingFunctions[RENDERABLE_SCENE] = & renderScene;
-    renderingFunctions[RENDERABLE_OBJECT] = & renderObject;
+    renderingFunctions[RENDERABLE_SPRITE] = &renderSprite;
+    renderingFunctions[RENDERABLE_SCENE] = &renderScene;
+    renderingFunctions[RENDERABLE_OBJECT] = &renderObject;
 
     r->scene = 0;
     r->clear = 1;
     r->clearColor = PIXELBLACK;
     r->backEnd = backEnd;
 
-    r->backEnd->init(r, r->backEnd, (Vec4i) { 0, 0, 0, 0 });
+    r->backEnd->init(r, r->backEnd, (Vec4i) {0, 0, size.x, size.y});
 
-    int e = 0;
-    e = texture_init( & (r->frameBuffer), size, backEnd->getFrameBuffer(r, backEnd));
+    int e = texture_init(&(r->frameBuffer), size, backEnd->getFrameBuffer(r, backEnd));
     if (e) return e;
 
     return 0;

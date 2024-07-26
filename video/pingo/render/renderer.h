@@ -23,7 +23,7 @@ typedef struct tag_Renderer{
 
 extern int rendererRender(Renderer *);
 
-extern int rendererInit(Renderer *, Vec2i size, struct tag_BackEnd * backEnd);
+extern int rendererInit(Renderer *, Vec2i size, BackEnd * backEnd);
 
 extern int rendererSetScene(Renderer *r, Scene *s);
 

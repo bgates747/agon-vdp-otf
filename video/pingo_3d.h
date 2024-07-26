@@ -7,6 +7,7 @@
 #include <map>
 #include "esp_heap_caps.h"
 #include "sprites.h"
+#include "vdu_stream_processor.h"
 
 namespace p3d {
 
@@ -21,6 +22,8 @@ namespace p3d {
         #include "pingo/render/scene.h"
         #include "pingo/render/backend.h"
         #include "pingo/render/depth.h"
+
+        #include "pingo/render/_.h"
 
     } // extern "C"
 
@@ -130,7 +133,7 @@ extern "C" {
 
 typedef struct tag_Pingo3dControl {
     uint32_t            m_tag;              // Used to verify the existence of this structure
-    uint32_t            m_size;             // Used to verify the existence of this structure
+    uint32_t            m_size;             // Used to verify the size of this structure
     VDUStreamProcessor* m_proc;             // Used by subcommands to obtain more data
     p3d::BackEnd        m_backend;          // Used by the renderer
     p3d::Pixel*         m_frame;            // Frame buffer for rendered pixels
@@ -142,11 +145,15 @@ typedef struct tag_Pingo3dControl {
     std::map<uint16_t, p3d::Mesh>* m_meshes;    // Map of meshes for use by objects
     std::map<uint16_t, TexObject>* m_objects;   // Map of textured objects that use meshes and have transforms
 
+    // Timing and frame counting
+    int64_t             lastFrameTime;      // Last frame time in milliseconds
+    long long           totalFrameTime;     // Accumulated total frame time to calculate average
+    int                 frameCount;         // Counter for frames rendered
+
     void show_free_ram() {
         debug_log("Free PSRAM: %u\n", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
     }
 
-    // VDU 23, 0, &A0, sid; &48, 0, 1 :  Initialize Control Structure
     void initialize(VDUStreamProcessor& processor, uint16_t width, uint16_t height) {
         debug_log("initialize: pingo creating control structure for %ux%u scene\n", width, height);
         memset(this, 0, sizeof(tag_Pingo3dControl));
@@ -183,6 +190,11 @@ typedef struct tag_Pingo3dControl {
 
         m_meshes = new std::map<uint16_t, p3d::Mesh>;
         m_objects = new std::map<uint16_t, TexObject>;
+
+        // Initialize timing and frame counting
+        lastFrameTime = p3d::timeInMilliseconds();
+        totalFrameTime = 0;
+        frameCount = 0;
     }
 
     // VDU 23, 0, &A0, sid; &48, 0, 0 :  Deinitialize Control Structure
@@ -204,6 +216,8 @@ typedef struct tag_Pingo3dControl {
             case 4: set_texture_coordinate_indexes(); break;
             case 5: create_object(); break;
             case 40: define_object_texture_coordinates(); break;
+
+        // OBJECT TRANSFORM FUNCTIONS
             case 6: set_object_x_scale_factor(); break;
             case 7: set_object_y_scale_factor(); break;
             case 8: set_object_z_scale_factor(); break;
@@ -216,14 +230,23 @@ typedef struct tag_Pingo3dControl {
             case 15: set_object_y_translation_distance(); break;
             case 16: set_object_z_translation_distance(); break;
             case 17: set_object_xyz_translation_distances(); break;
+
+        // CAMERA TRANSFORM FUNCTIONS
+            // rotations
             case 18: set_camera_x_rotation_angle(); break;
             case 19: set_camera_y_rotation_angle(); break;
             case 20: set_camera_z_rotation_angle(); break;
             case 21: set_camera_xyz_rotation_angles(); break;
+            case 149: rel_camera_xyz_rotation_angles(); break;
+
+            // translations
             case 22: set_camera_x_translation_distance(); break;
             case 23: set_camera_y_translation_distance(); break;
             case 24: set_camera_z_translation_distance(); break;
             case 25: set_camera_xyz_translation_distances(); break;
+            case 153: rel_camera_xyz_translation_distances(); break;
+
+        // SCENE TRANSFORM FUNCTIONS
             case 26: set_scene_x_scale_factor(); break;
             case 27: set_scene_y_scale_factor(); break;
             case 28: set_scene_z_scale_factor(); break;
@@ -236,6 +259,8 @@ typedef struct tag_Pingo3dControl {
             case 35: set_scene_y_translation_distance(); break;
             case 36: set_scene_z_translation_distance(); break;
             case 37: set_scene_xyz_translation_distances(); break;
+
+        // RENDERING FUNCTIONS
             case 38: render_to_bitmap(); break;
         }
     }
@@ -650,6 +675,28 @@ typedef struct tag_Pingo3dControl {
         m_camera.m_modified = true;
     }
 
+    // // VDU 23, 0, &A0, sid; &48, 149, oid; anglex; angley; anglez; :  Set Camera XYZ Relative Rotation Angles
+    // void rel_camera_xyz_rotation_angles() {
+    //     auto valuex = m_proc->readWord_t();
+    //     auto valuey = m_proc->readWord_t();
+    //     auto valuez = m_proc->readWord_t();
+    //     m_camera.m_rotation.x += convert_rotation_value(valuex);
+    //     m_camera.m_rotation.y += convert_rotation_value(valuey);
+    //     m_camera.m_rotation.z += convert_rotation_value(valuez);
+    //     m_camera.m_modified = true;
+    // }
+
+    // VDU 23, 0, &A0, sid; &48, 149, oid; anglex; angley; anglez; :  Set Camera XYZ Relative Rotation Angles
+    void rel_camera_xyz_rotation_angles() {
+        auto valuex = m_proc->readWord_t();
+        auto valuey = m_proc->readWord_t();
+        auto valuez = m_proc->readWord_t();
+        m_scene.m_rotation.x += convert_rotation_value(valuex);
+        m_scene.m_rotation.y += convert_rotation_value(valuey);
+        m_scene.m_rotation.z += convert_rotation_value(valuez);
+        m_scene.m_modified = true;
+    }
+
     // VDU 23, 0, &A0, sid; &48, 22, oid; distx; :  Set Camera X Translation Distance
     void set_camera_x_translation_distance() {
         auto value = m_proc->readWord_t();
@@ -680,6 +727,28 @@ typedef struct tag_Pingo3dControl {
         m_camera.m_translation.y = convert_translation_value(valuey);
         m_camera.m_translation.z = convert_translation_value(valuez);
         m_camera.m_modified = true;
+    }
+
+    // // VDU 23, 0, &A0, sid; &48, 153, oid; distx; disty; distz :  Set Camera XYZ Relative Translation Distances
+    // void rel_camera_xyz_translation_distances() {
+    //     auto valuex = m_proc->readWord_t();
+    //     auto valuey = m_proc->readWord_t();
+    //     auto valuez = m_proc->readWord_t();
+    //     m_camera.m_translation.x += convert_translation_value(valuex);
+    //     m_camera.m_translation.y += convert_translation_value(valuey);
+    //     m_camera.m_translation.z += convert_translation_value(valuez);
+    //     m_camera.m_modified = true;
+    // }
+
+    // VDU 23, 0, &A0, sid; &48, 153, oid; distx; disty; distz :  Set Camera XYZ Relative Translation Distances
+    void rel_camera_xyz_translation_distances() {
+        auto valuex = m_proc->readWord_t();
+        auto valuey = m_proc->readWord_t();
+        auto valuez = m_proc->readWord_t();
+        m_scene.m_translation.x += convert_translation_value(valuex);
+        m_scene.m_translation.y += convert_translation_value(valuey);
+        m_scene.m_translation.z += convert_translation_value(valuez);
+        m_scene.m_modified = true;
     }
 
     // VDU 23, 0, &A0, sid; &48, 26, oid; scalex; :  Set Scene X Scale Factor
@@ -786,6 +855,7 @@ typedef struct tag_Pingo3dControl {
         m_scene.m_modified = true;
     }
 
+#define FRAME_STATS_INTERVAL 10
     // VDU 23, 0, &A0, sid; &48, 38, bmid; :  Render To Bitmap
     void render_to_bitmap() {
         auto bmid = m_proc->readWord_t();
@@ -803,15 +873,14 @@ typedef struct tag_Pingo3dControl {
         }
 
         if (!dst_pix) {
-            debug_log("render_to_bitmap: output bitmap %u not found or invalid\n", bmid);
+            printf("render_to_bitmap: output bitmap %u not found or invalid\n", bmid);
             return;
         }
 
-        //auto start = millis();
         auto size = p3d::Vec2i{(p3d::I_TYPE)m_width, (p3d::I_TYPE)m_height};
         p3d::Renderer renderer;
-        rendererInit(&renderer, size, &m_backend );
-        rendererSetCamera(&renderer,(p3d::Vec4i){0,0,size.x,size.y});
+        rendererInit(&renderer, size, &m_backend);
+        rendererSetCamera(&renderer, (p3d::Vec4i){0, 0, size.x, size.y});
 
         p3d::Scene scene;
         sceneInit(&scene);
@@ -821,20 +890,15 @@ typedef struct tag_Pingo3dControl {
             object->second.bind();
             if (object->second.m_modified) {
                 object->second.update_transformation_matrix();
-                //object->second.dump();
             }
             sceneAddRenderable(&scene, p3d::object_as_renderable(&object->second.m_object));
         }
 
-        // Set the projection matrix
-        renderer.camera_projection =
-            p3d::mat4Perspective( 1, 2500.0, (p3d::F_TYPE)size.x / (p3d::F_TYPE)size.y, 0.6);
+        renderer.camera_projection = p3d::mat4Perspective(1, 2500.0, (p3d::F_TYPE)size.x / (p3d::F_TYPE)size.y, 0.6);
 
         if (m_camera.m_modified) {
             m_camera.compute_transformation_matrix();
         }
-        //debug_log("Camera:\n");
-        //m_camera.dump();
         renderer.camera_view = m_camera.m_transform;
 
         if (m_scene.m_modified) {
@@ -842,19 +906,99 @@ typedef struct tag_Pingo3dControl {
         }
         scene.transform = m_scene.m_transform;
 
-        //debug_log("Frame data:  %02hX %02hX %02hX %02hX\n", m_frame->r, m_frame->g, m_frame->b, m_frame->a);
-        //debug_log("Destination: %02hX %02hX %02hX %02hX\n", dst_pix->r, dst_pix->g, dst_pix->b, dst_pix->a);
+        // Timing start
+        int64_t start_ms = p3d::timeInMilliseconds();
 
         rendererRender(&renderer);
 
         memcpy(dst_pix, m_frame, sizeof(p3d::Pixel) * m_width * m_height);
 
-        //auto stop = millis();
-        //auto diff = stop - start;
-        //debug_log("Render to %ux%u took %u ms\n", m_width, m_height, diff);
-        //debug_log("Frame data:  %02hX %02hX %02hX %02hX\n", m_frame->r, m_frame->g, m_frame->b, m_frame->a);
-        //debug_log("Final data:  %02hX %02hX %02hX %02hX\n", dst_pix->r, dst_pix->g, dst_pix->b, dst_pix->a);
+        // Timing end and reporting
+        int64_t end_ms = p3d::timeInMilliseconds();
+        long long frame_render_time = end_ms - start_ms;
+        totalFrameTime += frame_render_time;
+        frameCount++;
+        lastFrameTime = start_ms;
+
+        if (frameCount % FRAME_STATS_INTERVAL == 0) {
+            long long averageFrameTime = totalFrameTime / FRAME_STATS_INTERVAL;
+            double fps = 1000.0 / averageFrameTime;
+            printf("%d frames in %lld ms = %.2f fps. Render time: %lld ms/frame = %.2f fps\n",
+                FRAME_STATS_INTERVAL, totalFrameTime, fps, averageFrameTime, fps);
+            totalFrameTime = 0;
+            frameCount = 0;
+        }
     }
+
+    // // VDU 23, 0, &A0, sid; &48, 38, bmid; :  Render To Bitmap
+    // void render_to_bitmap() {
+    //     auto bmid = m_proc->readWord_t();
+    //     if (bmid < 0) {
+    //         return;
+    //     }
+
+    //     p3d::Pixel* dst_pix = NULL;
+    //     auto old_bitmap = getBitmap(bmid);
+    //     if (old_bitmap) {
+    //         auto bitmap = old_bitmap.get();
+    //         if (bitmap && bitmap->width == m_width && bitmap->height == m_height) {
+    //             dst_pix = (p3d::Pixel*) bitmap->data;
+    //         }
+    //     }
+
+    //     if (!dst_pix) {
+    //         debug_log("render_to_bitmap: output bitmap %u not found or invalid\n", bmid);
+    //         return;
+    //     }
+
+    //     //auto start = millis();
+    //     auto size = p3d::Vec2i{(p3d::I_TYPE)m_width, (p3d::I_TYPE)m_height};
+    //     p3d::Renderer renderer;
+    //     rendererInit(&renderer, size, &m_backend );
+    //     rendererSetCamera(&renderer,(p3d::Vec4i){0,0,size.x,size.y});
+
+    //     p3d::Scene scene;
+    //     sceneInit(&scene);
+    //     p3d::rendererSetScene(&renderer, &scene);
+
+    //     for (auto object = m_objects->begin(); object != m_objects->end(); object++) {
+    //         object->second.bind();
+    //         if (object->second.m_modified) {
+    //             object->second.update_transformation_matrix();
+    //             //object->second.dump();
+    //         }
+    //         sceneAddRenderable(&scene, p3d::object_as_renderable(&object->second.m_object));
+    //     }
+
+    //     // Set the projection matrix
+    //     renderer.camera_projection =
+    //         p3d::mat4Perspective( 1, 2500.0, (p3d::F_TYPE)size.x / (p3d::F_TYPE)size.y, 0.6);
+
+    //     if (m_camera.m_modified) {
+    //         m_camera.compute_transformation_matrix();
+    //     }
+    //     //debug_log("Camera:\n");
+    //     //m_camera.dump();
+    //     renderer.camera_view = m_camera.m_transform;
+
+    //     if (m_scene.m_modified) {
+    //         m_scene.compute_transformation_matrix();
+    //     }
+    //     scene.transform = m_scene.m_transform;
+
+    //     //debug_log("Frame data:  %02hX %02hX %02hX %02hX\n", m_frame->r, m_frame->g, m_frame->b, m_frame->a);
+    //     //debug_log("Destination: %02hX %02hX %02hX %02hX\n", dst_pix->r, dst_pix->g, dst_pix->b, dst_pix->a);
+
+    //     rendererRender(&renderer);
+
+    //     memcpy(dst_pix, m_frame, sizeof(p3d::Pixel) * m_width * m_height);
+
+    //     //auto stop = millis();
+    //     //auto diff = stop - start;
+    //     //debug_log("Render to %ux%u took %u ms\n", m_width, m_height, diff);
+    //     //debug_log("Frame data:  %02hX %02hX %02hX %02hX\n", m_frame->r, m_frame->g, m_frame->b, m_frame->a);
+    //     //debug_log("Final data:  %02hX %02hX %02hX %02hX\n", dst_pix->r, dst_pix->g, dst_pix->b, dst_pix->a);
+    // }
 
 } Pingo3dControl;
 
