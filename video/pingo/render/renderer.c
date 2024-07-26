@@ -8,6 +8,7 @@
 #include "scene.h"
 #include "rasterizer.h"
 #include "object.h"
+#include "mesh.h"
 /*#include "../backend/ttgobackend.h"*/
 
 #if DEBUG
@@ -54,9 +55,6 @@ void renderRenderable(Mat4 transform, Renderer * r, Renderable ren) {
     renderingFunctions[ren.renderableType](transform, r, ren);
 };
 
-#define MIN(a, b)(((a) < (b)) ? (a) : (b))
-#define MAX(a, b)(((a) > (b)) ? (a) : (b))
-
 int edgeFunction(const Vec2f * a, const Vec2f * b, const Vec2f * c) {
     return (c->x - a->x) * (b->y - a->y) - (c->y - a->y) * (b->x - a->x);
 }
@@ -101,6 +99,11 @@ int renderObject(Mat4 object_transform, Renderer *r, Renderable ren) {
         computeMeshNormals(o->mesh);
     }
 
+    // Check if lighting is already computed
+    if (o->mesh->diffuseLight == NULL) {
+        precomputeLighting(o->mesh, (Vec3f){-8,-5,5});
+    }
+
     // VIEW MATRIX
     Mat4 v = r->camera_view;
     Mat4 p = r->camera_projection;
@@ -136,10 +139,13 @@ int renderObject(Mat4 object_transform, Renderer *r, Renderable ren) {
         // Use precomputed face normals
         Vec3f normal = o->mesh->normals[o->mesh->pos_indices[i]]; 
 
-        // Apply lighting to normal
-        Vec3f light = vec3Normalize((Vec3f){-8,-5,5});
-        float diffuseLight = (1.0 + vec3Dot(normal, light)) *0.5;
-        diffuseLight = MIN(1.0, MAX(diffuseLight, 0));
+        // // Apply lighting to normal
+        // Vec3f light = vec3Normalize((Vec3f){-8,-5,5});
+        // float diffuseLight = (1.0 + vec3Dot(normal, light)) *0.5;
+        // diffuseLight = MIN(1.0, MAX(diffuseLight, 0));
+
+        // Apply precomputed lighting
+        float diffuseLight = o->mesh->diffuseLight[o->mesh->pos_indices[i]];
 
         a = mat4MultiplyVec4( &a, &v);
         b = mat4MultiplyVec4( &b, &v);

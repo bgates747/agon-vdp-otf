@@ -1,6 +1,7 @@
 #include "mesh.h"
 #include "../math/vec3.h"
 #include <stdlib.h>
+// #include <math.h>
 
 void computeMeshNormals(Mesh *mesh) {
     if (mesh->normals == NULL) {
@@ -26,3 +27,18 @@ void computeMeshNormals(Mesh *mesh) {
     }
 }
 
+// Precomputes diffuse lighting for each vertex based on precomputed normals
+void precomputeLighting(Mesh *mesh, Vec3f light) {
+    mesh->diffuseLight = malloc(sizeof(float) * mesh->indexes_count);
+
+    for (int i = 0; i < mesh->indexes_count; i++) {
+        Vec3f normal = mesh->normals[i];
+
+        // Compute the dot product and adjust the result to range [0, 1]
+        float intensity = (1.0 + vec3Dot(normal, light)) *0.5;
+        intensity = MIN(1.0, MAX(intensity, 0));
+        // intensity = fmin(1.0, fmax(intensity, 0.0));
+
+        mesh->diffuseLight[i] = intensity;
+    }
+}
