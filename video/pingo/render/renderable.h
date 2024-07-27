@@ -8,8 +8,7 @@ typedef enum  {
     RENDERABLE_SCENE  =0,
     RENDERABLE_SPRITE,
     RENDERABLE_OBJECT,
-    RENDERABLE_COUNT,
-    RENDERABLE_OBJECT_PREBAKE
+    RENDERABLE_COUNT
 } RenderableType;
 
 typedef struct {

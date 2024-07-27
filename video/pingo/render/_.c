@@ -15,3 +15,5 @@ long long timeInMilliseconds(void) {
 }
 
 #endif
+
+const Vec3f DIFFUSE_LIGHT = { -8, -5, 5 };

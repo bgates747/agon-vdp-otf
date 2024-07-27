@@ -15,12 +15,11 @@ typedef struct Prebake {
     float light;      // Precomputed lighting value
 } Prebake;
 
-typedef struct ObjectPrebake {
-    Mesh *mesh;
-    Mat4 transform;
-    Material *material;
-    Vec2f *textCoord;
-    Prebake *prebake;
-} ObjectPrebake;
+void copyPositions(Prebake *prebake, Mesh *mesh);
+void copyNormals(Prebake *prebake, Mesh *mesh);
+void copyTexCoords(Prebake *prebake, Mesh *mesh);
 
-Renderable objectprebake_as_renderable(ObjectPrebake * objectprebake);
+void prebakePositions(Prebake *prebake, Mesh *mesh, Mat4 *transform);
+void prebakeNormals(Prebake *prebake, Mesh *mesh);
+void prebakeLight(Prebake *prebake, Mesh *mesh);
+void prebakeTexCoords(Prebake *prebake, Mesh *mesh, Vec2f *textCoord);
