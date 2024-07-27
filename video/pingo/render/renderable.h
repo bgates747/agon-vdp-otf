@@ -9,6 +9,7 @@ typedef enum  {
     RENDERABLE_SPRITE,
     RENDERABLE_OBJECT,
     RENDERABLE_COUNT,
+    RENDERABLE_OBJECT_PREBAKE
 } RenderableType;
 
 typedef struct {

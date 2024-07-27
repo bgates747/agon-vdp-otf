@@ -11,6 +11,8 @@
 #include "mesh.h"
 /*#include "../backend/ttgobackend.h"*/
 
+#include "prebake.h"
+
 #if DEBUG
 extern void show_pixel(float x, float y, uint8_t a, uint8_t b, uint8_t g, uint8_t r);
 #endif
