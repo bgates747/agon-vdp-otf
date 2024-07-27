@@ -24,7 +24,6 @@ namespace p3d {
         #include "pingo/render/depth.h"
 
         #include "pingo/render/_.h"
-        #include "pingo/render/prebake.h"
 
     } // extern "C"
 
@@ -115,125 +114,6 @@ typedef struct tag_TexObject : public Transformable {
                     m_material.texture->size.y, m_material.texture->frameBuffer);
     }
 } TexObject;
-
-#define MIN(a, b)(((a) < (b)) ? (a) : (b))
-#define MAX(a, b)(((a) > (b)) ? (a) : (b))
-
-// Function declarations
-void copyPositions(p3d::Prebake *prebake, p3d::Mesh *mesh);
-void copyNormals(p3d::Prebake *prebake, p3d::Mesh *mesh);
-void copytextCoord(p3d::Prebake *prebake, p3d::Mesh *mesh);
-void prebakeNormals(p3d::Prebake *prebake, p3d::Mesh *mesh);
-void prebakeLight(p3d::Prebake *prebake, p3d::Mesh *mesh, p3d::Vec3f light);
-
-typedef struct tag_TextPrebake : public Transformable {
-    p3d::ObjectPrebake  m_object;
-    p3d::Texture        m_texture;
-    p3d::Material       m_material;
-    p3d::Prebake*       m_prebake;
-    uint16_t            m_oid;
-
-    // Bind method to link material and texture
-    void bind() {
-        m_object.material = &m_material;
-        m_material.texture = &m_texture;
-    }
-
-    // Initialize method to set up default values and bind
-    void initialize(p3d::Mesh* mesh) {
-        Transformable::initialize();
-        bind();
-        initialize_prebake(mesh);
-    }
-
-    // Method to allocate and initialize prebake data
-    void initialize_prebake(p3d::Mesh* mesh) {
-        if (m_prebake == NULL) {
-            m_prebake = (p3d::Prebake*) heap_caps_malloc(sizeof(p3d::Prebake) * mesh->indexes_count, MALLOC_CAP_SPIRAM);
-            if (!m_prebake) {
-                fprintf(stderr, "Failed to allocate memory for prebake.\n");
-                exit(1);
-            }
-            // Copy relevant data into prebake
-            copyPositions(m_prebake, mesh);
-            copyNormals(m_prebake, mesh);
-            copytextCoord(m_prebake, mesh);
-            prebakeNormals(m_prebake, mesh);
-            prebakeLight(m_prebake, mesh, {1.0f, 1.0f, 1.0f}); // Assuming a directional light for example
-        }
-    }
-
-    // Method to free prebake data
-    void free_prebake() {
-        if (m_prebake) {
-            heap_caps_free(m_prebake);
-            m_prebake = NULL;
-        }
-    }
-
-    // Dump method for debugging
-    void dump() {
-        Transformable::dump();
-        debug_log("TextPrebake: %p %u\n", this, m_oid);
-        debug_log("Object: %p %p %p %p\n", &m_object, m_object.material, m_object.mesh,
-                  m_object.transform.elements);
-        debug_log("Texture: %p %u %u %p\n", &m_texture, m_texture.size.x, m_texture.size.y, m_texture.frameBuffer);
-        debug_log("Material: %p %p %u %u %p\n", &m_material, m_material.texture, m_material.texture->size.x,
-                  m_material.texture->size.y, m_material.texture->frameBuffer);
-    }
-} TextPrebake;
-
-// Function definitions
-void copyPositions(p3d::Prebake *prebake, p3d::Mesh *mesh) {
-    for (int i = 0; i < mesh->indexes_count; i++) {
-        prebake[i].position = mesh->positions[mesh->pos_indices[i]];
-    }
-}
-
-void copyNormals(p3d::Prebake *prebake, p3d::Mesh *mesh) {
-    for (int i = 0; i < mesh->indexes_count; i++) {
-        prebake[i].normal = mesh->normals[mesh->nor_indices[i]];
-    }
-}
-
-void copytextCoord(p3d::Prebake *prebake, p3d::Mesh *mesh) {
-    for (int i = 0; i < mesh->indexes_count; i++) {
-        prebake[i].textCoord = mesh->textCoord[mesh->tex_indices[i]];
-    }
-}
-
-void prebakePositions(p3d::Prebake *prebake, p3d::Mesh *mesh, p3d::Mat4 *transform) {
-    for (int i = 0; i < mesh->indexes_count; i++) {
-        prebake[i].position = p3d::mat4MultiplyVec3(&prebake[i].position, transform);
-    }
-}
-
-void prebakeNormals(p3d::Prebake *prebake, p3d::Mesh *mesh) {
-    for (int i = 0; i < mesh->indexes_count; i += 3) {
-        p3d::Vec3f *v0 = &mesh->positions[mesh->pos_indices[i]];
-        p3d::Vec3f *v1 = &mesh->positions[mesh->pos_indices[i + 1]];
-        p3d::Vec3f *v2 = &mesh->positions[mesh->pos_indices[i + 2]];
-
-        p3d::Vec3f edge1 = p3d::vec3fsubV(*v1, *v0);
-        p3d::Vec3f edge2 = p3d::vec3fsubV(*v2, *v0);
-        p3d::Vec3f normal = p3d::vec3Cross(edge1, edge2);
-        normal = p3d::vec3Normalize(normal);
-
-        // Assuming flat shading, apply the same normal to all vertices of the triangle in the Prebake array
-        prebake[mesh->pos_indices[i]].normal = normal;
-        prebake[mesh->pos_indices[i + 1]].normal = normal;
-        prebake[mesh->pos_indices[i + 2]].normal = normal;
-    }
-}
-
-void prebakeLight(p3d::Prebake *prebake, p3d::Mesh *mesh, p3d::Vec3f light) {
-    for (int i = 0; i < mesh->indexes_count; i++) {
-        p3d::Vec3f normal = prebake[i].normal; // Use normals from prebake
-        float intensity = (1.0 + p3d::vec3Dot(normal, light)) * 0.5;
-        intensity = MIN(1.0, MAX(intensity, 0));
-        prebake[i].light = intensity;
-    }
-}
 
 struct tag_Pingo3dControl;
 
