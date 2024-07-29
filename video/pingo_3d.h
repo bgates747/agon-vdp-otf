@@ -24,12 +24,16 @@ namespace p3d {
         #include "pingo/render/depth.h"
 
         #include "pingo/render/_.h"
+        #include "pingo/render/prebake.h"
 
     } // extern "C"
 
 } // namespace p3d
 
 #define PINGO_3D_CONTROL_TAG    0x43443350 // "P3DC"
+#define pi                     3.14159265358979323846
+#define deg2rad(deg)           ((deg) * pi / 180.0)
+#define rad2deg(rad)           ((rad) * 180.0 / pi)
 
 class VDUStreamProcessor;
 
@@ -55,14 +59,17 @@ typedef struct tag_Transformable {
     void compute_transformation_matrix() {
         m_transform = p3d::mat4Scale(m_scale);
         if (m_rotation.x) {
+            m_rotation.x = fmodf(m_rotation.x, 2.0f * pi);
             auto t = p3d::mat4RotateX(m_rotation.x);
             m_transform = mat4MultiplyM(&m_transform, &t);
         }
         if (m_rotation.y) {
+            m_rotation.y = fmodf(m_rotation.y, 2.0f * pi);
             auto t = p3d::mat4RotateY(m_rotation.y);
             m_transform = mat4MultiplyM(&m_transform, &t);
         }
         if (m_rotation.z) {
+            m_rotation.z = fmodf(m_rotation.z, 2.0f * pi);
             auto t = p3d::mat4RotateZ(m_rotation.z);
             m_transform = mat4MultiplyM(&m_transform, &t);
         }
@@ -72,6 +79,73 @@ typedef struct tag_Transformable {
         }
         m_modified = false;
     }
+
+    // void compute_transformation_matrix() {
+    //     // Start with an identity matrix
+    //     m_transform = p3d::mat4Identity();
+
+    //     // Temporary matrix to hold intermediate results
+    //     p3d::Mat4 temp;
+
+    //     // Apply translation first
+    //     if (m_translation.x || m_translation.y || m_translation.z) {
+    //         temp = p3d::mat4Translate(m_translation);
+    //         m_transform = mat4MultiplyM(&m_transform, &temp);
+    //     }
+
+    //     // Apply rotations in the order of Z, Y, X
+    //     if (m_rotation.z) {
+    //         m_rotation.z = fmodf(m_rotation.z, 2.0f * pi);
+    //         temp = p3d::mat4RotateZ(m_rotation.z);
+    //         m_transform = mat4MultiplyM(&m_transform, &temp);
+    //     }
+    //     if (m_rotation.y) {
+    //         m_rotation.y = fmodf(m_rotation.y, 2.0f * pi);
+    //         temp = p3d::mat4RotateY(m_rotation.y);
+    //         m_transform = mat4MultiplyM(&m_transform, &temp);
+    //     }
+    //     if (m_rotation.x) {
+    //         m_rotation.x = fmodf(m_rotation.x, 2.0f * pi);
+    //         temp = p3d::mat4RotateX(m_rotation.x);
+    //         m_transform = mat4MultiplyM(&m_transform, &temp);
+    //     }
+
+    //     // Apply scaling last
+    //     temp = p3d::mat4Scale(m_scale);
+    //     m_transform = mat4MultiplyM(&m_transform, &temp);
+
+    //     m_modified = false;
+        // }
+
+    // void compute_transformation_matrix() {
+    //     m_transform = p3d::mat4Scale(m_scale);
+
+    //     if (m_rotation.x) {
+    //         m_rotation.x = fmodf(m_rotation.x, 2.0f * pi);
+    //         auto t = p3d::mat4RotateX(m_rotation.x);
+    //         m_transform = mat4MultiplyM(&t, &m_transform);
+    //     }
+
+    //     if (m_rotation.y) {
+    //         m_rotation.y = fmodf(m_rotation.y, 2.0f * pi);
+    //         auto t = p3d::mat4RotateY(m_rotation.y);
+    //         m_transform = mat4MultiplyM(&t, &m_transform);
+    //     }
+
+    //     if (m_rotation.z) {
+    //         m_rotation.z = fmodf(m_rotation.z, 2.0f * pi);
+    //         auto t = p3d::mat4RotateZ(m_rotation.z);
+    //         m_transform = mat4MultiplyM(&t, &m_transform);
+    //     }
+
+    //     if (m_translation.x || m_translation.y || m_translation.z) {
+    //         auto t = p3d::mat4Translate(m_translation);
+    //         m_transform = mat4MultiplyM(&t, &m_transform);
+    //     }
+
+    //     m_modified = false;
+    // }
+
 
     void dump() {
         for (int i = 0; i < 16; i++) {
@@ -88,10 +162,12 @@ typedef struct tag_TexObject : public Transformable {
     p3d::Texture    m_texture;
     p3d::Material   m_material;
     uint16_t        m_oid;
+    // p3d::Prebake    m_prebake;
 
     void bind() {
         m_object.material = &m_material;
         m_material.texture = &m_texture;
+        // m_object.prebake = &m_prebake;
     }
 
     void initialize() {
@@ -144,6 +220,7 @@ typedef struct tag_Pingo3dControl {
     Transformable       m_scene;            // Scene transformation settings
     std::map<uint16_t, p3d::Mesh>* m_meshes;    // Map of meshes for use by objects
     std::map<uint16_t, TexObject>* m_objects;   // Map of textured objects that use meshes and have transforms
+    uint8_t             m_dither_type;      // Dithering type and options to be applied to rendered bitmap
 
     // Timing and frame counting
     int64_t             lastFrameTime;      // Last frame time in milliseconds
@@ -216,6 +293,8 @@ typedef struct tag_Pingo3dControl {
             case 4: set_texture_coordinate_indexes(); break;
             case 5: create_object(); break;
             case 40: define_object_texture_coordinates(); break;
+            case 129: define_mesh_normals(); break;
+            case 130: set_mesh_normal_indexes(); break;
 
         // OBJECT TRANSFORM FUNCTIONS
             case 6: set_object_x_scale_factor(); break;
@@ -262,6 +341,7 @@ typedef struct tag_Pingo3dControl {
 
         // RENDERING FUNCTIONS
             case 38: render_to_bitmap(); break;
+            case 41: set_rendering_dither_type(); break;
         }
     }
 
@@ -452,6 +532,69 @@ typedef struct tag_Pingo3dControl {
                 }
                 if (!(i & 0x1F)) debug_log("%u %hu\n", i, index);
             }
+        }
+    }
+
+    // VDU 23, 0, &A0, sid; &49, 129, mid; n; x0; y0; z0; ... :  Define Mesh Normals
+    void define_mesh_normals() {
+        auto mesh = get_mesh();
+        if (mesh->normals) {
+            heap_caps_free(mesh->normals);
+            mesh->normals = NULL;
+        }
+        auto n = (uint32_t) m_proc->readWord_t();
+        if (n > 0) {
+            auto size = n * sizeof(p3d::Vec3f);
+            mesh->normals = (p3d::Vec3f*) heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
+            auto nor = mesh->normals;
+            if (!nor) {
+                debug_log("define_mesh_normals: failed to allocate %u bytes\n", size);
+                show_free_ram();
+            }
+            debug_log("Reading %u normals\n", n);
+            for (uint32_t i = 0; i < n; i++) {
+                uint16_t x = m_proc->readWord_t();
+                uint16_t y = m_proc->readWord_t();
+                uint16_t z = m_proc->readWord_t();
+                if (nor) {
+                    nor->x = convert_position_value(x);
+                    nor->y = convert_position_value(y);
+                    nor->z = convert_position_value(z);
+                    if (!(i & 0x1F)) debug_log("%u %f %f %f\n", i, nor->x, nor->y, nor->z);
+                    nor++;
+                }
+            }
+            debug_log("\n");
+        }
+    }
+
+    // VDU 23, 0, &A0, sid; &49, 130, mid; n; i0; ... :  Set Mesh Normal Indexes
+    void set_mesh_normal_indexes() {
+        auto mesh = get_mesh();
+        if (mesh->nor_indices) {
+            heap_caps_free(mesh->nor_indices);
+            mesh->nor_indices = NULL;
+            mesh->indexes_count = 0;
+        }
+        auto n = (uint32_t) m_proc->readWord_t();
+        if (n > 0) {
+            mesh->indexes_count = n;
+            auto size = n * sizeof(uint16_t);
+            mesh->nor_indices = (uint16_t*) heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
+            auto idx = mesh->nor_indices;
+            if (!idx) {
+                debug_log("set_mesh_normal_indexes: failed to allocate %u bytes\n", size);
+                show_free_ram();
+            }
+            debug_log("Reading %u normal indexes\n", n);
+            for (uint32_t i = 0; i < n; i++) {
+                uint16_t index = m_proc->readWord_t();
+                if (idx) {
+                    *idx++ = index;
+                }
+                if (!(i & 0x1F)) debug_log("%u %hu\n", i, index);
+            }
+            debug_log("\n");
         }
     }
 
@@ -672,29 +815,20 @@ typedef struct tag_Pingo3dControl {
         m_camera.m_rotation.x = convert_rotation_value(valuex);
         m_camera.m_rotation.y = convert_rotation_value(valuey);
         m_camera.m_rotation.z = convert_rotation_value(valuez);
+        printf("Camera rotation: %f %f %f\n", m_camera.m_rotation.x, m_camera.m_rotation.y, m_camera.m_rotation.z);
         m_camera.m_modified = true;
     }
-
-    // // VDU 23, 0, &A0, sid; &49, 149, oid; anglex; angley; anglez; :  Set Camera XYZ Relative Rotation Angles
-    // void rel_camera_xyz_rotation_angles() {
-    //     auto valuex = m_proc->readWord_t();
-    //     auto valuey = m_proc->readWord_t();
-    //     auto valuez = m_proc->readWord_t();
-    //     m_camera.m_rotation.x += convert_rotation_value(valuex);
-    //     m_camera.m_rotation.y += convert_rotation_value(valuey);
-    //     m_camera.m_rotation.z += convert_rotation_value(valuez);
-    //     m_camera.m_modified = true;
-    // }
 
     // VDU 23, 0, &A0, sid; &49, 149, oid; anglex; angley; anglez; :  Set Camera XYZ Relative Rotation Angles
     void rel_camera_xyz_rotation_angles() {
         auto valuex = m_proc->readWord_t();
         auto valuey = m_proc->readWord_t();
         auto valuez = m_proc->readWord_t();
-        m_scene.m_rotation.x += convert_rotation_value(valuex);
-        m_scene.m_rotation.y += convert_rotation_value(valuey);
-        m_scene.m_rotation.z += convert_rotation_value(valuez);
-        m_scene.m_modified = true;
+        m_camera.m_rotation.x += convert_rotation_value(valuex);
+        m_camera.m_rotation.y += convert_rotation_value(valuey);
+        m_camera.m_rotation.z += convert_rotation_value(valuez);
+        printf("Camera rotation: %f %f %f\n", rad2deg(m_camera.m_rotation.x), rad2deg(m_camera.m_rotation.y), rad2deg(m_camera.m_rotation.z));
+        m_camera.m_modified = true;
     }
 
     // VDU 23, 0, &A0, sid; &49, 22, oid; distx; :  Set Camera X Translation Distance
@@ -729,26 +863,16 @@ typedef struct tag_Pingo3dControl {
         m_camera.m_modified = true;
     }
 
-    // // VDU 23, 0, &A0, sid; &49, 153, oid; distx; disty; distz :  Set Camera XYZ Relative Translation Distances
-    // void rel_camera_xyz_translation_distances() {
-    //     auto valuex = m_proc->readWord_t();
-    //     auto valuey = m_proc->readWord_t();
-    //     auto valuez = m_proc->readWord_t();
-    //     m_camera.m_translation.x += convert_translation_value(valuex);
-    //     m_camera.m_translation.y += convert_translation_value(valuey);
-    //     m_camera.m_translation.z += convert_translation_value(valuez);
-    //     m_camera.m_modified = true;
-    // }
-
     // VDU 23, 0, &A0, sid; &49, 153, oid; distx; disty; distz :  Set Camera XYZ Relative Translation Distances
     void rel_camera_xyz_translation_distances() {
         auto valuex = m_proc->readWord_t();
         auto valuey = m_proc->readWord_t();
         auto valuez = m_proc->readWord_t();
-        m_scene.m_translation.x += convert_translation_value(valuex);
-        m_scene.m_translation.y += convert_translation_value(valuey);
-        m_scene.m_translation.z += convert_translation_value(valuez);
-        m_scene.m_modified = true;
+        m_camera.m_translation.x += convert_translation_value(valuex);
+        m_camera.m_translation.y += convert_translation_value(valuey);
+        m_camera.m_translation.z += convert_translation_value(valuez);
+        printf("Camera translation: %f %f %f\n", m_camera.m_translation.x, m_camera.m_translation.y, m_camera.m_translation.z);
+        m_camera.m_modified = true;
     }
 
     // VDU 23, 0, &A0, sid; &49, 26, oid; scalex; :  Set Scene X Scale Factor
@@ -855,7 +979,7 @@ typedef struct tag_Pingo3dControl {
         m_scene.m_modified = true;
     }
 
-#define FRAME_STATS_INTERVAL 10
+#define FRAME_STATS_INTERVAL 1
     // VDU 23, 0, &A0, sid; &49, 38, bmid; :  Render To Bitmap
     void render_to_bitmap() {
         auto bmid = m_proc->readWord_t();
@@ -906,10 +1030,29 @@ typedef struct tag_Pingo3dControl {
         }
         scene.transform = m_scene.m_transform;
 
-        // Timing start
-        int64_t start_ms = p3d::timeInMilliseconds();
+        // // Timing start
+        // int64_t start_ms = p3d::timeInMilliseconds();
 
         rendererRender(&renderer);
+
+        // Apply dithering to the rendered image before copying to the destination bitmap
+        switch (m_dither_type) {
+            case 0:
+                break; // no dithering applied
+            case 1:
+                dither_bayer((uint8_t*)m_frame, m_width, m_height);
+                break;
+            case 2:
+                dither_floyd_steinberg((uint8_t*)m_frame, m_width, m_height);
+                break;
+            default:
+                m_dither_type = 0; // no dithering applied
+                debug_log("Invalid dithering type %u\n", m_dither_type);
+                break;
+        }
+
+        // Timing start
+        int64_t start_ms = p3d::timeInMilliseconds();
 
         memcpy(dst_pix, m_frame, sizeof(p3d::Pixel) * m_width * m_height);
 
@@ -927,6 +1070,110 @@ typedef struct tag_Pingo3dControl {
                 FRAME_STATS_INTERVAL, totalFrameTime, fps, averageFrameTime, fps);
             totalFrameTime = 0;
             frameCount = 0;
+        }
+
+        // memcpy(dst_pix, m_frame, sizeof(p3d::Pixel) * m_width * m_height);
+    }
+
+
+    void dither_bayer(uint8_t* rgba, int width, int height) {
+        static const uint8_t bayer[4][4] = {
+            { 15, 135,  45, 165},
+            {195,  75, 225, 105},
+            { 60, 180,  30, 150},
+            {240, 120, 210,  90}
+        };
+        
+        static const uint8_t quant_levels[4] = {0, 85, 170, 255};
+
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                uint8_t* pixel = &rgba[(y * width + x) * 4];
+                if (pixel[3] < 255) {
+                    // Skip dithering for pixels with alpha channel value < 255
+                    continue;
+                }
+                for (int color = 0; color < 3; color++) { // Only process R, G, B channels
+                    uint8_t normalized_pixel_value = pixel[color];
+                    uint8_t threshold = bayer[x % 4][y % 4];
+                    
+                    // Determine the quantization level
+                    int level_index = (normalized_pixel_value * 3) / 255;
+                    
+                    if (normalized_pixel_value > threshold) {
+                        level_index = (level_index < 3) ? level_index + 1 : 3;
+                    }
+
+                    pixel[color] = quant_levels[level_index];
+                }
+            }
+        }
+    }
+
+    // Clamp function to ensure pixel values stay within the valid range
+    uint8_t clamp(int value) {
+        if (value < 0) return 0;
+        if (value > 255) return 255;
+        return (uint8_t)value;
+    }
+
+    // Find the closest color value (0, 85, 170, 255)
+    uint8_t closest_color(uint8_t value) {
+        if (value < 43) return 0;
+        if (value < 128) return 85;
+        if (value < 213) return 170;
+        return 255;
+    }
+
+    void dither_floyd_steinberg(uint8_t* rgba, int width, int height) {
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                uint8_t* pixel = &rgba[(y * width + x) * 4];
+                if (pixel[3] < 255) {
+                    // Skip dithering for pixels with alpha channel value < 255
+                    continue;
+                }
+                for (int color = 0; color < 3; color++) {
+                    int old_pixel = pixel[color];
+                    int new_pixel = closest_color(old_pixel);
+                    pixel[color] = new_pixel;
+                    int error = old_pixel - new_pixel;
+
+                    if (x + 1 < width) {
+                        rgba[(y * width + (x + 1)) * 4 + color] = clamp(rgba[(y * width + (x + 1)) * 4 + color] + (error * 7 / 16));
+                    }
+                    if (y + 1 < height) {
+                        if (x > 0) {
+                            rgba[((y + 1) * width + (x - 1)) * 4 + color] = clamp(rgba[((y + 1) * width + (x - 1)) * 4 + color] + (error * 3 / 16));
+                        }
+                        rgba[((y + 1) * width + x) * 4 + color] = clamp(rgba[((y + 1) * width + x) * 4 + color] + (error * 5 / 16));
+                        if (x + 1 < width) {
+                            rgba[((y + 1) * width + (x + 1)) * 4 + color] = clamp(rgba[((y + 1) * width + (x + 1)) * 4 + color] + (error * 1 / 16));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // VDU 23, 0, &A0, sid; &49, 42, type : Set Rendering Dither Type
+    void set_rendering_dither_type() {
+        auto type = m_proc->readByte_t();
+        m_dither_type = type & 0x03; // Mask the first two bits
+        switch (m_dither_type) {
+            case 0:
+                debug_log("Dithering disabled\n");
+                break;
+            case 1:
+                debug_log("Dithering enabled (Bayer)\n");
+                break;
+            case 2:
+                debug_log("Dithering enabled (Floyd-Steinberg)\n");
+                break;
+            default:
+                m_dither_type = 0;
+                debug_log("Invalid dithering type %u\n", m_dither_type);
+                break;
         }
     }
 

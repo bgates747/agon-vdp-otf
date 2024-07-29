@@ -117,6 +117,24 @@ int renderObject(Mat4 object_transform, Renderer *r, Renderable ren) {
     Mat4 v = r->camera_view;
     Mat4 p = r->camera_projection;
 
+// DEBUG
+    // Print object's transform matrix
+    printMat4(&o->transform, "Object's Transform Matrix");
+
+    // Print object transform matrix
+    printMat4(&object_transform, "Object Transform Matrix");
+
+    // Print camera view matrix
+    printMat4(&r->camera_view, "Camera View Matrix");
+
+    // Print camera projection matrix
+    printMat4(&r->camera_projection, "Camera Projection Matrix");
+
+    // Wait for any key press
+    printf("Press any key to continue...\n");
+    getchar();  // Wait for a key press
+    // END DEBUG
+
     for (int i = 0; i < o->mesh->indexes_count; i += 3) {
         Vec3f * ver1 = &o->mesh->positions[o->mesh->pos_indices[i+0]];
         Vec3f * ver2 = &o->mesh->positions[o->mesh->pos_indices[i+1]];
@@ -144,6 +162,11 @@ int renderObject(Mat4 object_transform, Renderer *r, Renderable ren) {
         Vec3f na = vec3fsubV(*((Vec3f*)(&a)), *((Vec3f*)(&b)));
         Vec3f nb = vec3fsubV(*((Vec3f*)(&a)), *((Vec3f*)(&c)));
         Vec3f normal = vec3Normalize(vec3Cross(na, nb));
+
+        // // Use precomputed face normals
+        // Vec3f normal = o->mesh->normals[o->mesh->nor_indices[i]];
+
+        //Compute per vertex lighting
         Vec3f light = DIFFUSE_LIGHT;
         float diffuseLight = (1.0 + vec3Dot(normal, light)) *0.5;
         diffuseLight = MIN(1.0, MAX(diffuseLight, 0));

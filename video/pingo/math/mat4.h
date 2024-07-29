@@ -31,10 +31,12 @@ Mat4 mat4Inverse(Mat4 * mat);
 Mat4 mat4Scale(Vec3f s);
 
 Mat4 mat4Perspective(float near, float far, float aspect, float fov);
-Mat4 mat4Perspective(float near,  float far, float aspect, float fov );
+// Mat4 mat4Perspective(float near,  float far, float aspect, float fov );
 
 float mat4NearFromProjection(Mat4 mat);
 float mat4FarFromProjection(Mat4 mat);
+
+void printMat4(const Mat4* mat, const char* name);
 
 #ifdef __cplusplus
 }

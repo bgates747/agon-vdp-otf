@@ -5,6 +5,7 @@
 
 #include <math.h>
 #include <stdint.h>
+#include <stdio.h>
 
 Mat4 mat4Identity() {
     return (Mat4){{
@@ -315,4 +316,13 @@ float mat4FarFromProjection(Mat4 mat)
 }
 
 
-
+// Function to print a Mat4
+void printMat4(const Mat4* mat, const char* name) {
+    printf("%s:\n", name);
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            printf("%f ", mat->elements[i * 4 + j]);
+        }
+        printf("\n");
+    }
+}
