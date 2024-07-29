@@ -1030,8 +1030,8 @@ typedef struct tag_Pingo3dControl {
         }
         scene.transform = m_scene.m_transform;
 
-        // // Timing start
-        // int64_t start_ms = p3d::timeInMilliseconds();
+        // Timing start
+        int64_t start_ms = p3d::timeInMilliseconds();
 
         rendererRender(&renderer);
 
@@ -1051,11 +1051,6 @@ typedef struct tag_Pingo3dControl {
                 break;
         }
 
-        // Timing start
-        int64_t start_ms = p3d::timeInMilliseconds();
-
-        memcpy(dst_pix, m_frame, sizeof(p3d::Pixel) * m_width * m_height);
-
         // Timing end and reporting
         int64_t end_ms = p3d::timeInMilliseconds();
         long long frame_render_time = end_ms - start_ms;
@@ -1072,7 +1067,8 @@ typedef struct tag_Pingo3dControl {
             frameCount = 0;
         }
 
-        // memcpy(dst_pix, m_frame, sizeof(p3d::Pixel) * m_width * m_height);
+        memcpy(dst_pix, m_frame, sizeof(p3d::Pixel) * m_width * m_height);
+        printf("Free PSRAM: %u\n", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
     }
 
 
@@ -1176,76 +1172,6 @@ typedef struct tag_Pingo3dControl {
                 break;
         }
     }
-
-    // // VDU 23, 0, &A0, sid; &49, 38, bmid; :  Render To Bitmap
-    // void render_to_bitmap() {
-    //     auto bmid = m_proc->readWord_t();
-    //     if (bmid < 0) {
-    //         return;
-    //     }
-
-    //     p3d::Pixel* dst_pix = NULL;
-    //     auto old_bitmap = getBitmap(bmid);
-    //     if (old_bitmap) {
-    //         auto bitmap = old_bitmap.get();
-    //         if (bitmap && bitmap->width == m_width && bitmap->height == m_height) {
-    //             dst_pix = (p3d::Pixel*) bitmap->data;
-    //         }
-    //     }
-
-    //     if (!dst_pix) {
-    //         debug_log("render_to_bitmap: output bitmap %u not found or invalid\n", bmid);
-    //         return;
-    //     }
-
-    //     //auto start = millis();
-    //     auto size = p3d::Vec2i{(p3d::I_TYPE)m_width, (p3d::I_TYPE)m_height};
-    //     p3d::Renderer renderer;
-    //     rendererInit(&renderer, size, &m_backend );
-    //     rendererSetCamera(&renderer,(p3d::Vec4i){0,0,size.x,size.y});
-
-    //     p3d::Scene scene;
-    //     sceneInit(&scene);
-    //     p3d::rendererSetScene(&renderer, &scene);
-
-    //     for (auto object = m_objects->begin(); object != m_objects->end(); object++) {
-    //         object->second.bind();
-    //         if (object->second.m_modified) {
-    //             object->second.update_transformation_matrix();
-    //             //object->second.dump();
-    //         }
-    //         sceneAddRenderable(&scene, p3d::object_as_renderable(&object->second.m_object));
-    //     }
-
-    //     // Set the projection matrix
-    //     renderer.camera_projection =
-    //         p3d::mat4Perspective( 1, 2500.0, (p3d::F_TYPE)size.x / (p3d::F_TYPE)size.y, 0.6);
-
-    //     if (m_camera.m_modified) {
-    //         m_camera.compute_transformation_matrix();
-    //     }
-    //     //debug_log("Camera:\n");
-    //     //m_camera.dump();
-    //     renderer.camera_view = m_camera.m_transform;
-
-    //     if (m_scene.m_modified) {
-    //         m_scene.compute_transformation_matrix();
-    //     }
-    //     scene.transform = m_scene.m_transform;
-
-    //     //debug_log("Frame data:  %02hX %02hX %02hX %02hX\n", m_frame->r, m_frame->g, m_frame->b, m_frame->a);
-    //     //debug_log("Destination: %02hX %02hX %02hX %02hX\n", dst_pix->r, dst_pix->g, dst_pix->b, dst_pix->a);
-
-    //     rendererRender(&renderer);
-
-    //     memcpy(dst_pix, m_frame, sizeof(p3d::Pixel) * m_width * m_height);
-
-    //     //auto stop = millis();
-    //     //auto diff = stop - start;
-    //     //debug_log("Render to %ux%u took %u ms\n", m_width, m_height, diff);
-    //     //debug_log("Frame data:  %02hX %02hX %02hX %02hX\n", m_frame->r, m_frame->g, m_frame->b, m_frame->a);
-    //     //debug_log("Final data:  %02hX %02hX %02hX %02hX\n", dst_pix->r, dst_pix->g, dst_pix->b, dst_pix->a);
-    // }
 
 } Pingo3dControl;
 
