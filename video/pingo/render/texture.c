@@ -34,6 +34,11 @@ Pixel texture_readF(Texture *f, Vec2f pos)
     return value;
 }
 
+// TODO: Implement texture_as_renderable
+Renderable texture_as_renderable( Texture * s) {
+
+}
+
 
 
 

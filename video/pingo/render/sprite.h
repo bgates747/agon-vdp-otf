@@ -8,7 +8,7 @@
     extern "C" {
 #endif
 
-typedef struct Sprite {
+typedef struct tag_Sprite {
    Mat4 t;
    Texture frame;
 } Sprite;
