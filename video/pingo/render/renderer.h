@@ -5,10 +5,10 @@
 #include "pixel.h"
 #include "../math/vec4.h"
 
-typedef struct tag_Scene Scene;
-typedef struct tag_BackEnd BackEnd;
+typedef struct Scene Scene;
+typedef struct BackEnd BackEnd;
 
-typedef struct tag_Renderer{
+typedef struct Renderer{
     Vec4i camera;
     Scene * scene;
 
@@ -25,7 +25,7 @@ typedef struct tag_Renderer{
 
 extern int rendererRender(Renderer *);
 
-extern int rendererInit(Renderer *, Vec2i size, struct tag_BackEnd * backEnd);
+extern int rendererInit(Renderer *, Vec2i size, struct BackEnd * backEnd);
 
 extern int rendererSetScene(Renderer *r, Scene *s);
 
