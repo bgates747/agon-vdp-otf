@@ -97,12 +97,79 @@ void backendDrawPixel (Renderer * r, Texture * f, Vec2i pos, Pixel color, float 
 
 int renderObject(Mat4 object_transform, Renderer * r, Renderable ren) {
 
+    printf(" --------ENTERING renderObject-------- \n");
+    printf("Setting screen size\n");
     const Vec2i scrSize = r->frameBuffer.size;
+
+    printf("Getting object\n");
     Object * o = ren.impl;
-    Vec2f * tex_coords = o->textCoord;
-    if (!tex_coords) {
-        tex_coords = o->mesh->textCoord;
+
+    printf("Getting mesh\n");
+    Mesh * m_mesh = o->mesh;
+    printf("Getting indexes count\n");
+    int m_indexes_count = m_mesh->indexes_count;
+
+    printf("Getting vertex\n");
+    Vertex * m_vertex = m_mesh->vertices;
+    printf("Getting positions\n");
+    Vec3f * m_positions = m_vertex->positions;
+    printf("Getting position indices\n");
+    uint16_t * m_pos_indices = m_vertex->pos_indices;
+
+    printf("Getting UV\n");
+    UV * m_uv = m_mesh->uvs;
+    printf("Getting UV text coordinates\n");
+    Vec2f * tex_coords = m_uv->textCoord;
+    printf("Getting UV texture indices\n");
+    uint16_t * m_tex_indices = m_uv->tex_indices;
+
+    printf("Getting Normal\n");
+    Normal * m_normal = m_mesh->normals;
+    printf("Getting Normal indices\n");
+    uint16_t * m_nor_indices = m_normal->nor_indices;
+    printf("Getting Normals\n");
+    Vec3f * m_normals = m_normal->normals;
+    
+    printf(" --------Object variables set.-------- \n");
+
+    printf("Object: %p\n", o);
+    if (!o) {
+        printf("Object is NULL\n");
+        return -1; // Early exit if object is null
     }
+
+    printf("Mesh: %p\n", o->mesh);
+    if (!o->mesh) {
+        printf("Object Mesh is NULL\n");
+        return -1; // Early exit if mesh is null
+    }
+
+    printf("Mesh indexes count: %d\n", m_indexes_count);
+
+    printf("Vertex: %p\n", m_vertex);
+    if (m_vertex) {
+        printf("Vertex positions: %p\n", m_positions);
+        printf("Vertex position indices: %p\n", m_pos_indices);
+    } else {
+        printf("Vertex is NULL\n");
+    }
+
+    printf("UV: %p\n", m_uv);
+    if (m_uv) {
+        printf("UV text coordinates: %p\n", tex_coords);
+        printf("UV texture indices: %p\n", m_tex_indices);
+    } else {
+        printf("UV is NULL\n");
+    }
+
+    printf("Normal: %p\n", m_normals);
+    if (m_normals) {
+        printf("Normal indices: %p\n", m_nor_indices);
+        printf("Normals: %p\n", m_normals);
+    } else {
+        printf("Normal is NULL\n");
+    }
+
 
     // MODEL MATRIX
     Mat4 m = mat4MultiplyM( &o->transform, &object_transform  );
@@ -111,19 +178,19 @@ int renderObject(Mat4 object_transform, Renderer * r, Renderable ren) {
     Mat4 v = r->camera_view;
     Mat4 p = r->camera_projection;
 
-    for (int i = 0; i < o->mesh->indexes_count; i += 3) {
-        Vec3f * ver1 = &o->mesh->positions[o->mesh->pos_indices[i+0]];
-        Vec3f * ver2 = &o->mesh->positions[o->mesh->pos_indices[i+1]];
-        Vec3f * ver3 = &o->mesh->positions[o->mesh->pos_indices[i+2]];
+    for (int i = 0; i < m_indexes_count; i += 3) {
+        Vec3f * ver1 = &m_positions[m_pos_indices[i+0]];
+        Vec3f * ver2 = &m_positions[m_pos_indices[i+1]];
+        Vec3f * ver3 = &m_positions[m_pos_indices[i+2]];
 
         Vec2f tca = {0,0};
         Vec2f tcb = {0,0};
         Vec2f tcc = {0,0};
 
         if (o->material != 0) {
-            tca = tex_coords[o->mesh->tex_indices[i+0]];
-            tcb = tex_coords[o->mesh->tex_indices[i+1]];
-            tcc = tex_coords[o->mesh->tex_indices[i+2]];
+            tca = tex_coords[m_tex_indices[i+0]];
+            tcb = tex_coords[m_tex_indices[i+1]];
+            tcc = tex_coords[m_tex_indices[i+2]];
         }
 
         Vec4f a =  { ver1->x, ver1->y, ver1->z, 1 };
