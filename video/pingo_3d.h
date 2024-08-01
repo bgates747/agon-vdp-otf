@@ -203,8 +203,9 @@ typedef struct tag_Pingo3dControl {
             case 2: set_mesh_vertex_indexes(); break;
             case 3: define_mesh_texture_coordinates(); break;
             case 4: set_texture_coordinate_indexes(); break;
+            case 129: define_mesh_normals(); break;
+            case 130: set_normal_indexes(); break;
             case 5: create_object(); break;
-            case 40: define_object_texture_coordinates(); break;
             case 6: set_object_x_scale_factor(); break;
             case 7: set_object_y_scale_factor(); break;
             case 8: set_object_z_scale_factor(); break;
@@ -375,35 +376,6 @@ typedef struct tag_Pingo3dControl {
         }
     }
 
-    // VDU 23, 0, &A0, sid; &49, 40, oid; n; u0; v0; ... :  Define Object Texture Coordinates
-    void define_object_texture_coordinates() {
-        auto object = get_object();
-        if (object->m_object.textCoord) {
-            heap_caps_free(object->m_object.textCoord);
-            object->m_object.textCoord = NULL;
-        }
-        auto n = (uint32_t) m_proc->readWord_t();
-        if (n > 0) {
-            auto size = n*sizeof(p3d::Vec2f);
-            object->m_object.textCoord = (p3d::Vec2f*) heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
-            auto coord = object->m_object.textCoord;
-            if (!coord) {
-                debug_log("set_object_vertex_indexes: failed to allocate %u bytes\n", size);
-                show_free_ram();
-            }
-            debug_log("Reading %u texture coordinates\n", n);
-            for (uint32_t i = 0; i < n; i++) {
-                uint16_t u = m_proc->readWord_t();
-                uint16_t v = m_proc->readWord_t();
-                if (coord) {
-                    coord->x = convert_texture_coordinate_value(u);
-                    coord->y = convert_texture_coordinate_value(v);
-                    coord++;
-                }
-            }
-        }
-    }
-
     // VDU 23, 0, &A0, sid; &49, 4, mid; n; i0; ... :  Set Texture Coordinate Indexes
     void set_texture_coordinate_indexes() {
         auto mesh = get_mesh();
@@ -421,6 +393,66 @@ typedef struct tag_Pingo3dControl {
                 show_free_ram();
             }
             debug_log("Reading %u texture coordinate indexes\n", n);
+            for (uint32_t i = 0; i < n; i++) {
+                uint16_t index = m_proc->readWord_t();
+                if (idx && (i < mesh->indexes_count)) {
+                    *idx++ = index;
+                }
+                if (!(i & 0x1F)) debug_log("%u %hu\n", i, index);
+            }
+        }
+    }
+
+    // VDU 23, 0, &A0, sid; &49, 129, mid; n; x0; y0; z0; ... :  Define Mesh Normals
+    void define_mesh_normals() {
+        auto mesh = get_mesh();
+        if (mesh->normals) {
+            heap_caps_free(mesh->normals);
+            mesh->normals = NULL;
+        }
+        auto n = (uint32_t) m_proc->readWord_t();
+        if (n > 0) {
+            auto size = n*sizeof(p3d::Vec3f);
+            mesh->normals = (p3d::Vec3f*) heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
+            auto norm = mesh->normals;
+            if (!norm) {
+                debug_log("define_mesh_normals: failed to allocate %u bytes\n", size);
+                show_free_ram();
+            }
+            debug_log("Reading %u normals\n", n);
+            for (uint32_t i = 0; i < n; i++) {
+                uint16_t x = m_proc->readWord_t();
+                uint16_t y = m_proc->readWord_t();
+                uint16_t z = m_proc->readWord_t();
+                if (norm) {
+                    norm->x = convert_position_value(x);
+                    norm->y = convert_position_value(y);
+                    norm->z = convert_position_value(z);
+                    if (!(i & 0x1F)) debug_log("%u %f %f %f\n", i, norm->x, norm->y, norm->z);
+                    norm++;
+                }
+            }
+            debug_log("\n");
+        }
+    }
+
+    // VDU 23, 0, &A0, sid; &49, 130, mid; n; i0; ... :  Set Mesh Normals Indexes
+    void set_normal_indexes() {
+        auto mesh = get_mesh();
+        if (mesh->nor_indices) {
+            heap_caps_free(mesh->nor_indices);
+            mesh->nor_indices = NULL;
+        }
+        auto n = (uint32_t) m_proc->readWord_t();
+        if (n > 0) {
+            auto size = n*sizeof(uint16_t);
+            mesh->nor_indices = (uint16_t*) heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
+            auto idx = mesh->nor_indices;
+            if (!idx) {
+                debug_log("set_normal_indexes: failed to allocate %u bytes\n", size);
+                show_free_ram();
+            }
+            debug_log("Reading %u normals indexes\n", n);
             for (uint32_t i = 0; i < n; i++) {
                 uint16_t index = m_proc->readWord_t();
                 if (idx && (i < mesh->indexes_count)) {

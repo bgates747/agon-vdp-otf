@@ -99,10 +99,7 @@ int renderObject(Mat4 object_transform, Renderer * r, Renderable ren) {
 
     const Vec2i scrSize = r->frameBuffer.size;
     Object * o = ren.impl;
-    Vec2f * tex_coords = o->textCoord;
-    if (!tex_coords) {
-        tex_coords = o->mesh->textCoord;
-    }
+    Vec2f * tex_coords = o->mesh->textCoord;
 
     // MODEL MATRIX
     Mat4 m = mat4MultiplyM( &o->transform, &object_transform  );
