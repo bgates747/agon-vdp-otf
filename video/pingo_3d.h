@@ -804,11 +804,11 @@ typedef struct tag_Pingo3dControl {
         }
 
         if (!dst_pix) {
-            debug_log("render_to_bitmap: output bitmap %u not found or invalid\n", bmid);
+            printf("render_to_bitmap: output bitmap %u not found or invalid\n", bmid);
             return;
         }
 
-        //auto start = millis();
+        auto start = millis();
         auto size = p3d::Vec2i{(p3d::I_TYPE)m_width, (p3d::I_TYPE)m_height};
         p3d::Renderer renderer;
         rendererInit(&renderer, size, &m_backend );
@@ -834,7 +834,7 @@ typedef struct tag_Pingo3dControl {
         if (m_camera.m_modified) {
             m_camera.compute_transformation_matrix();
         }
-        //debug_log("Camera:\n");
+        //printf("Camera:\n");
         //m_camera.dump();
         renderer.camera_view = m_camera.m_transform;
 
@@ -843,18 +843,19 @@ typedef struct tag_Pingo3dControl {
         }
         scene.transform = m_scene.m_transform;
 
-        //debug_log("Frame data:  %02hX %02hX %02hX %02hX\n", m_frame->r, m_frame->g, m_frame->b, m_frame->a);
-        //debug_log("Destination: %02hX %02hX %02hX %02hX\n", dst_pix->r, dst_pix->g, dst_pix->b, dst_pix->a);
+        //printf("Frame data:  %02hX %02hX %02hX %02hX\n", m_frame->r, m_frame->g, m_frame->b, m_frame->a);
+        //printf("Destination: %02hX %02hX %02hX %02hX\n", dst_pix->r, dst_pix->g, dst_pix->b, dst_pix->a);
 
         rendererRender(&renderer);
 
         memcpy(dst_pix, m_frame, sizeof(p3d::Pixel) * m_width * m_height);
 
-        //auto stop = millis();
-        //auto diff = stop - start;
-        //debug_log("Render to %ux%u took %u ms\n", m_width, m_height, diff);
-        //debug_log("Frame data:  %02hX %02hX %02hX %02hX\n", m_frame->r, m_frame->g, m_frame->b, m_frame->a);
-        //debug_log("Final data:  %02hX %02hX %02hX %02hX\n", dst_pix->r, dst_pix->g, dst_pix->b, dst_pix->a);
+        auto stop = millis();
+        auto diff = stop - start;
+        float fps = 1000.0 / diff;
+        printf("Render to %ux%u took %u ms (%.2f FPS)\n", m_width, m_height, diff, fps);
+        //printf("Frame data:  %02hX %02hX %02hX %02hX\n", m_frame->r, m_frame->g, m_frame->b, m_frame->a);
+        //printf("Final data:  %02hX %02hX %02hX %02hX\n", dst_pix->r, dst_pix->g, dst_pix->b, dst_pix->a);
     }
 
 } Pingo3dControl;
