@@ -95,17 +95,20 @@ void backendDrawPixel (Renderer * r, Texture * f, Vec2i pos, Pixel color, float 
     }
 }
 
-int renderObject(Mat4 object_transform, Renderer * r, Renderable ren) {
+#define USE_NORMALS 1
 
+int renderObject(Mat4 object_transform, Renderer * r, Renderable ren) {
     const Vec2i scrSize = r->frameBuffer.size;
     Object * o = ren.impl;
     Vec2f * tex_coords = o->mesh->textCoord;
 
     // MODEL MATRIX
-    Mat4 m = mat4MultiplyM( &o->transform, &object_transform  );
+    Mat4 m = mat4MultiplyM(&o->transform, &object_transform);
 
     // VIEW MATRIX
     Mat4 v = r->camera_view;
+    
+    // PROJECTION MATRIX
     Mat4 p = r->camera_projection;
 
     for (int i = 0; i < o->mesh->indexes_count; i += 3) {
@@ -113,9 +116,9 @@ int renderObject(Mat4 object_transform, Renderer * r, Renderable ren) {
         Vec3f * ver2 = &o->mesh->positions[o->mesh->pos_indices[i+1]];
         Vec3f * ver3 = &o->mesh->positions[o->mesh->pos_indices[i+2]];
 
-        Vec2f tca = {0,0};
-        Vec2f tcb = {0,0};
-        Vec2f tcc = {0,0};
+        Vec2f tca = {0, 0};
+        Vec2f tcb = {0, 0};
+        Vec2f tcc = {0, 0};
 
         if (o->material != 0) {
             tca = tex_coords[o->mesh->tex_indices[i+0]];
@@ -123,20 +126,29 @@ int renderObject(Mat4 object_transform, Renderer * r, Renderable ren) {
             tcc = tex_coords[o->mesh->tex_indices[i+2]];
         }
 
-        Vec4f a =  { ver1->x, ver1->y, ver1->z, 1 };
-        Vec4f b =  { ver2->x, ver2->y, ver2->z, 1 };
-        Vec4f c =  { ver3->x, ver3->y, ver3->z, 1 };
+        Vec4f a = { ver1->x, ver1->y, ver1->z, 1 };
+        Vec4f b = { ver2->x, ver2->y, ver2->z, 1 };
+        Vec4f c = { ver3->x, ver3->y, ver3->z, 1 };
 
-        a = mat4MultiplyVec4( &a, &m);
-        b = mat4MultiplyVec4( &b, &m);
-        c = mat4MultiplyVec4( &c, &m);
+        a = mat4MultiplyVec4(&a, &m);
+        b = mat4MultiplyVec4(&b, &m);
+        c = mat4MultiplyVec4(&c, &m);
 
-        //Calc Face Normal
-        Vec3f na = vec3fsubV(*((Vec3f*)(&a)), *((Vec3f*)(&b)));
-        Vec3f nb = vec3fsubV(*((Vec3f*)(&a)), *((Vec3f*)(&c)));
-        Vec3f normal = vec3Normalize(vec3Cross(na, nb));
-        Vec3f light = vec3Normalize((Vec3f){-8,-5,5});
-        float diffuseLight = (1.0 + vec3Dot(normal, light)) *0.5;
+        #if USE_NORMALS
+            // Use precomputed normals
+            Vec3f * nor1 = &o->mesh->normals[o->mesh->nor_indices[i+0]];
+            Vec3f * nor2 = &o->mesh->normals[o->mesh->nor_indices[i+1]];
+            Vec3f * nor3 = &o->mesh->normals[o->mesh->nor_indices[i+2]];
+            Vec3f normal = vec3Normalize(vec3fsumV(vec3fsumV(*nor1, *nor2), *nor3));
+        #else
+            // Calculate normals
+            Vec3f na = vec3fsubV(*((Vec3f*)(&a)), *((Vec3f*)(&b)));
+            Vec3f nb = vec3fsubV(*((Vec3f*)(&a)), *((Vec3f*)(&c)));
+            Vec3f normal = vec3Normalize(vec3Cross(na, nb));
+        #endif
+
+        Vec3f light = vec3Normalize((Vec3f){-8, -5, 5});
+        float diffuseLight = (1.0 + vec3Dot(normal, light)) * 0.5;
         diffuseLight = MIN(1.0, MAX(diffuseLight, 0));
 
         a = mat4MultiplyVec4( &a, &v);
