@@ -29,14 +29,19 @@ namespace p3d {
 
 #define PINGO_3D_CONTROL_TAG    0x43443350 // "P3DC"
 
-class VDUStreamProcessor;
+#define PI2                    6.283185307179586476925286766559f
 
-typedef struct tag_Transformable {
+class VDUStreamProcessor;typedef struct tag_Transformable {
     p3d::Vec3f      m_scale;
     p3d::Vec3f      m_rotation;
     p3d::Vec3f      m_translation;
     p3d::Mat4       m_transform;
     bool            m_modified;
+
+    p3d::Vec3f      m_rotation_loc;
+    p3d::Vec3f      m_translation_loc;
+
+    bool            m_modified_loc;
 
     void initialize_scale() {
         m_scale.x = 1.0f;
@@ -71,13 +76,74 @@ typedef struct tag_Transformable {
         m_modified = false;
     }
 
-    void dump() {
-        for (int i = 0; i < 16; i++) {
-            debug_log("        [%i] %f\n", i, m_transform.elements[i]);
+    void compute_transformation_matrix_local() {
+        // Apply local rotations
+        m_rotation.x = fmod(m_rotation.x + m_rotation_loc.x, PI2);
+        m_rotation.y = fmod(m_rotation.y + m_rotation_loc.y, PI2);
+        m_rotation.z = fmod(m_rotation.z + m_rotation_loc.z, PI2);
+
+        // Compute the new rotation matrix
+        p3d::Mat4 rotateX = p3d::mat4RotateX(m_rotation_loc.x);
+        p3d::Mat4 rotateY = p3d::mat4RotateY(m_rotation_loc.y);
+        p3d::Mat4 rotateZ = p3d::mat4RotateZ(m_rotation_loc.z);
+
+        p3d::Mat4 new_rotation;
+        new_rotation = mat4MultiplyM(&rotateY, &rotateX);
+        new_rotation = mat4MultiplyM(&rotateZ, &new_rotation);
+
+        // Apply the new rotation to the current object rotation
+        p3d::Mat4 current_rotation = p3d::mat4Identity();
+        if (m_rotation.x) {
+            auto t = p3d::mat4RotateX(m_rotation.x);
+            current_rotation = mat4MultiplyM(&current_rotation, &t);
         }
-        debug_log("Scale: %f %f %f\n", m_scale.x, m_scale.y, m_scale.z);
-        debug_log("Rotation: %f %f %f\n", m_rotation.x, m_rotation.y, m_rotation.z);
-        debug_log("Translation: %f %f %f\n", m_translation.x, m_translation.y, m_translation.z);
+        if (m_rotation.y) {
+            auto t = p3d::mat4RotateY(m_rotation.y);
+            current_rotation = mat4MultiplyM(&current_rotation, &t);
+        }
+        if (m_rotation.z) {
+            auto t = p3d::mat4RotateZ(m_rotation.z);
+            current_rotation = mat4MultiplyM(&current_rotation, &t);
+        }
+
+        p3d::Mat4 object_rotation = mat4MultiplyM(&new_rotation, &current_rotation);
+
+        // Transform the local translations to world coordinates
+        p3d::Vec3f direction = m_translation_loc;
+        p3d::Vec3f delta_translation_world = p3d::mat4MultiplyVec3(&direction, &object_rotation);
+
+        // Apply the transformed delta translations to the global translation
+        m_translation = vec3fsumV(m_translation, delta_translation_world);
+
+        // Clear local transformation values
+        m_rotation_loc = {0.0f, 0.0f, 0.0f};
+        m_translation_loc = {0.0f, 0.0f, 0.0f};
+
+        // Apply the transform
+        compute_transformation_matrix();
+
+        // Clear the local modification flag
+        m_modified_loc = false;
+    }
+
+    void update_transformation() {
+        if (m_modified) {
+            compute_transformation_matrix();
+        }
+    }
+
+    // Helper function to print rotation in degrees
+    void print_rotation_degrees() {
+        printf("Rotation: %f %f %f\n", m_rotation.x * (180.0 / M_PI), m_rotation.y * (180.0 / M_PI), m_rotation.z * (180.0 / M_PI));
+    }
+
+    void dump() {
+        // for (int i = 0; i < 16; i++) {
+        //     printf("        [%i] %f\n", i, m_transform.elements[i]);
+        // }
+        // printf("Scale:       %f %f %f\n", m_scale.x, m_scale.y, m_scale.z);
+        printf("Rotation:    %f %f %f\n", m_rotation.x * (180.0 / M_PI), m_rotation.y * (180.0 / M_PI), m_rotation.z * (180.0 / M_PI));
+        printf("Translation: %f %f %f\n", m_translation.x, m_translation.y, m_translation.z);
     }
 } Transformable;
 
@@ -102,14 +168,19 @@ typedef struct tag_TexObject : public Transformable {
         m_object.transform = m_transform;
     }
 
+    void update_transformation_matrix_loc() {
+        compute_transformation_matrix_local();
+        m_object.transform = m_transform;
+    }
+
     void dump() {
         Transformable::dump();
-        debug_log("TObject: %p %u\n", this, m_oid);
-        debug_log("Object: %p %p %p %p\n", &m_object, m_object.material, m_object.mesh,
-                    m_object.transform.elements);
-        debug_log("Texture: %p %u %u %p\n", &m_texture, m_texture.size.x, m_texture.size.y, m_texture.frameBuffer);
-        debug_log("Material: %p %p %u %u %p\n", &m_material, m_material.texture, m_material.texture->size.x,
-                    m_material.texture->size.y, m_material.texture->frameBuffer);
+        // debug_log("TObject: %p %u\n", this, m_oid);
+        // debug_log("Object: %p %p %p %p\n", &m_object, m_object.material, m_object.mesh,
+        //             m_object.transform.elements);
+        // debug_log("Texture: %p %u %u %p\n", &m_texture, m_texture.size.x, m_texture.size.y, m_texture.frameBuffer);
+        // debug_log("Material: %p %p %u %u %p\n", &m_material, m_material.texture, m_material.texture->size.x,
+        //             m_material.texture->size.y, m_material.texture->frameBuffer);
     }
 } TexObject;
 
@@ -205,38 +276,51 @@ typedef struct tag_Pingo3dControl {
             case 4: set_texture_coordinate_indexes(); break;
             case 5: create_object(); break;
             case 40: define_object_texture_coordinates(); break;
+
             case 6: set_object_x_scale_factor(); break;
             case 7: set_object_y_scale_factor(); break;
             case 8: set_object_z_scale_factor(); break;
             case 9: set_object_xyz_scale_factors(); break;
+
             case 10: set_object_x_rotation_angle(); break;
             case 11: set_object_y_rotation_angle(); break;
             case 12: set_object_z_rotation_angle(); break;
             case 13: set_object_xyz_rotation_angles(); break;
+            case 141: set_object_xyz_rotation_angles_local(); break;
+
             case 14: set_object_x_translation_distance(); break;
             case 15: set_object_y_translation_distance(); break;
             case 16: set_object_z_translation_distance(); break;
             case 17: set_object_xyz_translation_distances(); break;
+            case 145: set_object_xyz_translation_distances_local(); break;
+
             case 18: set_camera_x_rotation_angle(); break;
             case 19: set_camera_y_rotation_angle(); break;
             case 20: set_camera_z_rotation_angle(); break;
             case 21: set_camera_xyz_rotation_angles(); break;
+            case 149: set_camera_xyz_rotation_angles_local(); break;
+
             case 22: set_camera_x_translation_distance(); break;
             case 23: set_camera_y_translation_distance(); break;
             case 24: set_camera_z_translation_distance(); break;
             case 25: set_camera_xyz_translation_distances(); break;
+            case 153: set_camera_xyz_translation_distances_local(); break;
+
             case 26: set_scene_x_scale_factor(); break;
             case 27: set_scene_y_scale_factor(); break;
             case 28: set_scene_z_scale_factor(); break;
             case 29: set_scene_xyz_scale_factors(); break;
+
             case 30: set_scene_x_rotation_angle(); break;
             case 31: set_scene_y_rotation_angle(); break;
             case 32: set_scene_z_rotation_angle(); break;
             case 33: set_scene_xyz_rotation_angles(); break;
+
             case 34: set_scene_x_translation_distance(); break;
             case 35: set_scene_y_translation_distance(); break;
             case 36: set_scene_z_translation_distance(); break;
             case 37: set_scene_xyz_translation_distances(); break;
+
             case 38: render_to_bitmap(); break;
         }
     }
@@ -575,6 +659,20 @@ typedef struct tag_Pingo3dControl {
         }
     }
 
+    // VDU 23, 0, &A0, sid; &49, 141, oid; anglex; angley; anglez; :  Set Object XYZ Rotation Angles Local
+    void set_object_xyz_rotation_angles_local() {
+        auto object = get_object();
+        auto valuex = m_proc->readWord_t();
+        auto valuey = m_proc->readWord_t();
+        auto valuez = m_proc->readWord_t();
+        if (object) {
+            object->m_rotation_loc.x = convert_rotation_value(valuex);
+            object->m_rotation_loc.y = convert_rotation_value(valuey);
+            object->m_rotation_loc.z = convert_rotation_value(valuez);
+            object->m_modified_loc = true;
+        }
+    }
+
     // VDU 23, 0, &A0, sid; &49, 14, oid; distx; :  Set Object X Translation Distance
     void set_object_x_translation_distance() {
         auto object = get_object();
@@ -619,6 +717,20 @@ typedef struct tag_Pingo3dControl {
         }
     }
 
+    // VDU 23, 0, &A0, sid; &49, 145, oid; distx; disty; distz :  Set Object XYZ Translation Distances Local
+    void set_object_xyz_translation_distances_local() {
+        auto object = get_object();
+        auto valuex = m_proc->readWord_t();
+        auto valuey = m_proc->readWord_t();
+        auto valuez = m_proc->readWord_t();
+        if (object) {
+            object->m_translation_loc.x = convert_translation_value(valuex);
+            object->m_translation_loc.y = convert_translation_value(valuey);
+            object->m_translation_loc.z = convert_translation_value(valuez);
+            object->m_modified_loc = true;
+        }
+    }
+
     // VDU 23, 0, &A0, sid; &49, 18, oid; anglex; :  Set Camera X Rotation Angle
     void set_camera_x_rotation_angle() {
         auto value = m_proc->readWord_t();
@@ -651,6 +763,17 @@ typedef struct tag_Pingo3dControl {
         m_camera.m_modified = true;
     }
 
+    // VDU 23, 0, &A0, sid; &49, 149, oid; anglex; angley; anglez; :  Set Camera XYZ Rotation Angles Local
+    void set_camera_xyz_rotation_angles_local() {
+        auto valuex = m_proc->readWord_t();
+        auto valuey = m_proc->readWord_t();
+        auto valuez = m_proc->readWord_t();
+        m_camera.m_rotation_loc.x = convert_rotation_value(valuex);
+        m_camera.m_rotation_loc.y = convert_rotation_value(valuey);
+        m_camera.m_rotation_loc.z = convert_rotation_value(valuez);
+        m_camera.m_modified_loc = true;
+    }
+
     // VDU 23, 0, &A0, sid; &49, 22, oid; distx; :  Set Camera X Translation Distance
     void set_camera_x_translation_distance() {
         auto value = m_proc->readWord_t();
@@ -681,6 +804,17 @@ typedef struct tag_Pingo3dControl {
         m_camera.m_translation.y = convert_translation_value(valuey);
         m_camera.m_translation.z = convert_translation_value(valuez);
         m_camera.m_modified = true;
+    }
+
+    // VDU 23, 0, &A0, sid; &49, 153, oid; distx; disty; distz :  Set Camera XYZ Translation Distances Local
+    void set_camera_xyz_translation_distances_local() {
+        auto valuex = m_proc->readWord_t();
+        auto valuey = m_proc->readWord_t();
+        auto valuez = m_proc->readWord_t();
+        m_camera.m_translation_loc.x = convert_translation_value(valuex);
+        m_camera.m_translation_loc.y = convert_translation_value(valuey);
+        m_camera.m_translation_loc.z = convert_translation_value(valuez);
+        m_camera.m_modified_loc = true;
     }
 
     // VDU 23, 0, &A0, sid; &49, 26, oid; scalex; :  Set Scene X Scale Factor
@@ -808,7 +942,7 @@ typedef struct tag_Pingo3dControl {
             return;
         }
 
-        auto start = millis();
+        // auto start = millis();
         auto size = p3d::Vec2i{(p3d::I_TYPE)m_width, (p3d::I_TYPE)m_height};
         p3d::Renderer renderer;
         rendererInit(&renderer, size, &m_backend );
@@ -824,6 +958,10 @@ typedef struct tag_Pingo3dControl {
                 object->second.update_transformation_matrix();
                 //object->second.dump();
             }
+            if (object->second.m_modified_loc) {
+                object->second.update_transformation_matrix_loc();
+                //object->second.dump();
+            }
             sceneAddRenderable(&scene, p3d::object_as_renderable(&object->second.m_object));
         }
 
@@ -834,8 +972,11 @@ typedef struct tag_Pingo3dControl {
         if (m_camera.m_modified) {
             m_camera.compute_transformation_matrix();
         }
+        if (m_camera.m_modified_loc) {
+            m_camera.compute_transformation_matrix_local();
+        }
         //printf("Camera:\n");
-        //m_camera.dump();
+        m_camera.dump();
         renderer.camera_view = m_camera.m_transform;
 
         if (m_scene.m_modified) {
@@ -850,10 +991,10 @@ typedef struct tag_Pingo3dControl {
 
         memcpy(dst_pix, m_frame, sizeof(p3d::Pixel) * m_width * m_height);
 
-        auto stop = millis();
-        auto diff = stop - start;
-        float fps = 1000.0 / diff;
-        printf("Render to %ux%u took %u ms (%.2f FPS)\n", m_width, m_height, diff, fps);
+        // auto stop = millis();
+        // auto diff = stop - start;
+        // float fps = 1000.0 / diff;
+        // printf("Render to %ux%u took %u ms (%.2f FPS)\n", m_width, m_height, diff, fps);
         //printf("Frame data:  %02hX %02hX %02hX %02hX\n", m_frame->r, m_frame->g, m_frame->b, m_frame->a);
         //printf("Final data:  %02hX %02hX %02hX %02hX\n", dst_pix->r, dst_pix->g, dst_pix->b, dst_pix->a);
     }

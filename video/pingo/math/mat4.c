@@ -147,9 +147,15 @@ Vec4f mat4MultiplyVec4in( Vec4f *v, Mat4 *t ) {
 //     return out;
 // }
 
+// Mat4 mat4MultiplyM(Mat4 *m1, Mat4 *m2) {
+//     Mat4 out;
+//     dspm_mult_f32(m1->elements, m2->elements, out.elements, 4, 4, 4);
+//     return out;
+// }
+
 Mat4 mat4MultiplyM(Mat4 *m1, Mat4 *m2) {
     Mat4 out;
-    dspm_mult_f32(m1->elements, m2->elements, out.elements, 4, 4, 4);
+    dspm_mult_f32(m2->elements, m1->elements, out.elements, 4, 4, 4);
     return out;
 }
 
