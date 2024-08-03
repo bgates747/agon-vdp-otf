@@ -79,22 +79,43 @@ class VDUStreamProcessor;typedef struct tag_Transformable {
 
     void compute_transformation_matrix() {
         m_transform = p3d::mat4Scale(m_scale);
-        if (m_rotation.x) {
-            auto t = p3d::mat4RotateX(m_rotation.x);
-            m_transform = mat4MultiplyM(&m_transform, &t);
+        if (m_is_camera) {
+            if (m_rotation.x) {
+                auto t = p3d::mat4RotateX(m_rotation.x);
+                m_transform = mat4MultiplyM(&m_transform, &t);
+            }
+            if (m_rotation.y) {
+                auto t = p3d::mat4RotateY(m_rotation.y);
+                m_transform = mat4MultiplyM(&m_transform, &t);
+            }
+            if (m_rotation.z) {
+                auto t = p3d::mat4RotateZ(m_rotation.z);
+                m_transform = mat4MultiplyM(&m_transform, &t);
+            }
+            if (m_translation.x || m_translation.y || m_translation.z) {
+                auto t = p3d::mat4Translate(m_translation);
+                m_transform = mat4MultiplyM(&m_transform, &t);
+            }
+
+        } else {
+            if (m_rotation.x) {
+                auto t = p3d::mat4RotateX(m_rotation.x);
+                m_transform = mat4MultiplyMRev(&m_transform, &t);
+            }
+            if (m_rotation.y) {
+                auto t = p3d::mat4RotateY(m_rotation.y);
+                m_transform = mat4MultiplyMRev(&m_transform, &t);
+            }
+            if (m_rotation.z) {
+                auto t = p3d::mat4RotateZ(m_rotation.z);
+                m_transform = mat4MultiplyMRev(&m_transform, &t);
+            }
+            if (m_translation.x || m_translation.y || m_translation.z) {
+                auto t = p3d::mat4Translate(m_translation);
+                m_transform = mat4MultiplyMRev(&m_transform, &t);
+            }
         }
-        if (m_rotation.y) {
-            auto t = p3d::mat4RotateY(m_rotation.y);
-            m_transform = mat4MultiplyM(&m_transform, &t);
-        }
-        if (m_rotation.z) {
-            auto t = p3d::mat4RotateZ(m_rotation.z);
-            m_transform = mat4MultiplyM(&m_transform, &t);
-        }
-        if (m_translation.x || m_translation.y || m_translation.z) {
-            auto t = p3d::mat4Translate(m_translation);
-            m_transform = mat4MultiplyM(&m_transform, &t);
-        }
+
         m_modified = false;
     }
 
@@ -802,16 +823,20 @@ typedef struct tag_Pingo3dControl {
         auto object = get_object();
         if (object) {
             // Calculate the direction vector from the camera to the object
+            // the negations in the y and z components are to account for the
+            // camera's mirroring of the Y axis and Z axis
             p3d::Vec3f direction_to_object = {
                 object->m_translation.x - m_camera.m_translation.x,
-                object->m_translation.y - m_camera.m_translation.y,
-                object->m_translation.z - m_camera.m_translation.z
+                -(object->m_translation.y - m_camera.m_translation.y),
+                object->m_translation.z - (-m_camera.m_translation.z)
             };
 
             // Normalize the direction vector
-            float length = sqrt(direction_to_object.x * direction_to_object.x +
-                                direction_to_object.y * direction_to_object.y +
-                                direction_to_object.z * direction_to_object.z);
+            float length = sqrt(
+                direction_to_object.x * direction_to_object.x +
+                direction_to_object.y * direction_to_object.y +
+                direction_to_object.z * direction_to_object.z
+            );
 
             if (length > 0) {
                 direction_to_object.x /= length;
@@ -821,34 +846,15 @@ typedef struct tag_Pingo3dControl {
 
             // Get the current forward direction of the camera
             p3d::Vec3f forward = m_camera.get_forward_direction();
-
-            // Calculate the angles needed to rotate from the forward direction to the direction to the object
-            // This can be done using the dot product and cross product to find the angle and axis of rotation
-
             // Calculate yaw (rotation around the Y axis)
             float yaw = atan2(direction_to_object.x, -direction_to_object.z);
             // Calculate pitch (rotation around the X axis)
             float pitch = atan2(direction_to_object.y, sqrt(direction_to_object.x * direction_to_object.x + direction_to_object.z * direction_to_object.z));
-            // Roll is typically zero for a camera tracking an object, unless you want to implement banking
 
-            // Apply the local rotation deltas
-            float delta_yaw = yaw - m_camera.m_rotation.y;
-            float delta_pitch = pitch - m_camera.m_rotation.x;
-            m_camera.m_rotation_loc.y = delta_yaw;
-            m_camera.m_rotation_loc.x = delta_pitch;
-            m_camera.m_rotation_loc.z = 0; // No roll adjustment
-
-            // Debug output
-            printf("obj: %u, cam_pos: (%.1f,%.1f,%.1f), obj_pos: (%.1f,%.1f,%.1f), dist: (%.1f,%.1f,%.1f), bearing: (%.1f,%.1f), delta: (%.1f,%.1f,%.1f)\n",
-                object->m_oid,
-                m_camera.m_translation.x, m_camera.m_translation.y, m_camera.m_translation.z,
-                object->m_translation.x, object->m_translation.y, object->m_translation.z,
-                direction_to_object.x * length, direction_to_object.y * length, direction_to_object.z * length,
-                yaw * RAD_TO_DEG, pitch * RAD_TO_DEG,
-                delta_yaw * RAD_TO_DEG, delta_pitch * RAD_TO_DEG, 0.0f);
-
-            // Mark the camera as modified locally
-            m_camera.m_modified_loc = true;
+            m_camera.m_rotation.y = yaw;
+            m_camera.m_rotation.x = pitch;
+            m_camera.m_rotation.z = 0; // No roll adjustment
+            m_camera.m_modified = true;
         }
     }
 
@@ -1034,6 +1040,7 @@ typedef struct tag_Pingo3dControl {
         for (auto object = m_objects->begin(); object != m_objects->end(); object++) {
             object->second.bind();
             if (object->second.m_modified) {
+                object->second.m_is_camera = false;
                 object->second.update_transformation_matrix();
                 //object->second.dump();
             }
@@ -1050,6 +1057,7 @@ typedef struct tag_Pingo3dControl {
             p3d::mat4Perspective( 1, 2500.0, (p3d::F_TYPE)size.x / (p3d::F_TYPE)size.y, 0.6);
 
         if (m_camera.m_modified) {
+            m_camera.m_is_camera = true;
             m_camera.compute_transformation_matrix();
         }
         if (m_camera.m_modified_loc) {
