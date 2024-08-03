@@ -7,6 +7,6 @@
 #define		VERSION_CANDIDATE	0			// Optional
 #define		VERSION_TYPE		"Release"	// RC, Alpha, Beta, etc.
 
-#define		VERSION_VARIANT		"Console8"
+#define		VERSION_VARIANT		"Pingo3D BG 0.0.1"
 
 #endif // VERSION_H
