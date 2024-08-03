@@ -77,52 +77,33 @@ class VDUStreamProcessor;typedef struct tag_Transformable {
     }
 
     void compute_transformation_matrix_local() {
-        // Apply local rotations
-        m_rotation.x = fmod(m_rotation.x + m_rotation_loc.x, PI2);
-        m_rotation.y = fmod(m_rotation.y + m_rotation_loc.y, PI2);
-        m_rotation.z = fmod(m_rotation.z + m_rotation_loc.z, PI2);
+        // Initialize the local transformation matrix
+        p3d::Mat4 m_transform_loc = p3d::mat4Scale(m_scale);
 
-        // Compute the new rotation matrix
-        p3d::Mat4 rotateX = p3d::mat4RotateX(m_rotation_loc.x);
-        p3d::Mat4 rotateY = p3d::mat4RotateY(m_rotation_loc.y);
-        p3d::Mat4 rotateZ = p3d::mat4RotateZ(m_rotation_loc.z);
-
-        p3d::Mat4 new_rotation;
-        new_rotation = mat4MultiplyM(&rotateY, &rotateX);
-        new_rotation = mat4MultiplyM(&rotateZ, &new_rotation);
-
-        // Apply the new rotation to the current object rotation
-        p3d::Mat4 current_rotation = p3d::mat4Identity();
-        if (m_rotation.x) {
-            auto t = p3d::mat4RotateX(m_rotation.x);
-            current_rotation = mat4MultiplyM(&current_rotation, &t);
+        if (m_rotation_loc.x) {
+            auto t = p3d::mat4RotateX(m_rotation_loc.x);
+            m_transform_loc = mat4MultiplyM(&m_transform_loc, &t);
         }
-        if (m_rotation.y) {
-            auto t = p3d::mat4RotateY(m_rotation.y);
-            current_rotation = mat4MultiplyM(&current_rotation, &t);
+        if (m_rotation_loc.y) {
+            auto t = p3d::mat4RotateY(m_rotation_loc.y);
+            m_transform_loc = mat4MultiplyM(&m_transform_loc, &t);
         }
-        if (m_rotation.z) {
-            auto t = p3d::mat4RotateZ(m_rotation.z);
-            current_rotation = mat4MultiplyM(&current_rotation, &t);
+        if (m_rotation_loc.z) {
+            auto t = p3d::mat4RotateZ(m_rotation_loc.z);
+            m_transform_loc = mat4MultiplyM(&m_transform_loc, &t);
+        }
+        if (m_translation_loc.x || m_translation_loc.y || m_translation_loc.z) {
+            auto t = p3d::mat4Translate(m_translation_loc);
+            m_transform_loc = mat4MultiplyM(&m_transform_loc, &t);
         }
 
-        p3d::Mat4 object_rotation = mat4MultiplyM(&new_rotation, &current_rotation);
-
-        // Transform the local translations to world coordinates
-        p3d::Vec3f direction = m_translation_loc;
-        p3d::Vec3f delta_translation_world = p3d::mat4MultiplyVec3(&direction, &object_rotation);
-
-        // Apply the transformed delta translations to the global translation
-        m_translation = vec3fsumV(m_translation, delta_translation_world);
+        // Apply the local transformation matrix to the initial transform
+        m_transform = mat4MultiplyM(&m_transform_loc, &m_transform);
 
         // Clear local transformation values
         m_rotation_loc = {0.0f, 0.0f, 0.0f};
         m_translation_loc = {0.0f, 0.0f, 0.0f};
 
-        // Apply the transform
-        compute_transformation_matrix();
-
-        // Clear the local modification flag
         m_modified_loc = false;
     }
 
@@ -132,18 +113,13 @@ class VDUStreamProcessor;typedef struct tag_Transformable {
         }
     }
 
-    // Helper function to print rotation in degrees
-    void print_rotation_degrees() {
-        printf("Rotation: %f %f %f\n", m_rotation.x * (180.0 / M_PI), m_rotation.y * (180.0 / M_PI), m_rotation.z * (180.0 / M_PI));
-    }
-
     void dump() {
-        // for (int i = 0; i < 16; i++) {
-        //     printf("        [%i] %f\n", i, m_transform.elements[i]);
-        // }
-        // printf("Scale:       %f %f %f\n", m_scale.x, m_scale.y, m_scale.z);
-        printf("Rotation:    %f %f %f\n", m_rotation.x * (180.0 / M_PI), m_rotation.y * (180.0 / M_PI), m_rotation.z * (180.0 / M_PI));
-        printf("Translation: %f %f %f\n", m_translation.x, m_translation.y, m_translation.z);
+        for (int i = 0; i < 16; i++) {
+            debug_log("        [%i] %f\n", i, m_transform.elements[i]);
+        }
+        debug_log("Scale:       %f %f %f\n", m_scale.x, m_scale.y, m_scale.z);
+        debug_log("Rotation:    %f %f %f\n", m_rotation.x * (180.0 / M_PI), m_rotation.y * (180.0 / M_PI), m_rotation.z * (180.0 / M_PI));
+        debug_log("Translation: %f %f %f\n", m_translation.x, m_translation.y, m_translation.z);
     }
 } Transformable;
 
@@ -175,12 +151,12 @@ typedef struct tag_TexObject : public Transformable {
 
     void dump() {
         Transformable::dump();
-        // debug_log("TObject: %p %u\n", this, m_oid);
-        // debug_log("Object: %p %p %p %p\n", &m_object, m_object.material, m_object.mesh,
-        //             m_object.transform.elements);
-        // debug_log("Texture: %p %u %u %p\n", &m_texture, m_texture.size.x, m_texture.size.y, m_texture.frameBuffer);
-        // debug_log("Material: %p %p %u %u %p\n", &m_material, m_material.texture, m_material.texture->size.x,
-        //             m_material.texture->size.y, m_material.texture->frameBuffer);
+        debug_log("TObject: %p %u\n", this, m_oid);
+        debug_log("Object: %p %p %p %p\n", &m_object, m_object.material, m_object.mesh,
+                    m_object.transform.elements);
+        debug_log("Texture: %p %u %u %p\n", &m_texture, m_texture.size.x, m_texture.size.y, m_texture.frameBuffer);
+        debug_log("Material: %p %p %u %u %p\n", &m_material, m_material.texture, m_material.texture->size.x,
+                    m_material.texture->size.y, m_material.texture->frameBuffer);
     }
 } TexObject;
 
@@ -267,7 +243,7 @@ typedef struct tag_Pingo3dControl {
     }
 
     void handle_subcommand(VDUStreamProcessor& processor, uint8_t subcmd) {
-        //debug_log("P3D: handle_subcommand(%hu)\n", subcmd);
+        debug_log("P3D: handle_subcommand(%hu)\n", subcmd);
         m_proc = &processor;
         switch (subcmd) {
             case 1: define_mesh_vertices(); break;
@@ -452,7 +428,7 @@ typedef struct tag_Pingo3dControl {
                 uint16_t v = m_proc->readWord_t();
                 if (coord) {
                     coord->x = convert_texture_coordinate_value(u);
-                    coord->y = convert_texture_coordinate_value(v);
+                    coord->y = 1-convert_texture_coordinate_value(v);
                     coord++;
                 }
             }
@@ -938,11 +914,11 @@ typedef struct tag_Pingo3dControl {
         }
 
         if (!dst_pix) {
-            printf("render_to_bitmap: output bitmap %u not found or invalid\n", bmid);
+            debug_log("render_to_bitmap: output bitmap %u not found or invalid\n", bmid);
             return;
         }
 
-        // auto start = millis();
+        auto start = millis();
         auto size = p3d::Vec2i{(p3d::I_TYPE)m_width, (p3d::I_TYPE)m_height};
         p3d::Renderer renderer;
         rendererInit(&renderer, size, &m_backend );
@@ -975,8 +951,8 @@ typedef struct tag_Pingo3dControl {
         if (m_camera.m_modified_loc) {
             m_camera.compute_transformation_matrix_local();
         }
-        //printf("Camera:\n");
-        m_camera.dump();
+        //debug_log("Camera:\n");
+        // m_camera.dump();
         renderer.camera_view = m_camera.m_transform;
 
         if (m_scene.m_modified) {
@@ -984,19 +960,19 @@ typedef struct tag_Pingo3dControl {
         }
         scene.transform = m_scene.m_transform;
 
-        //printf("Frame data:  %02hX %02hX %02hX %02hX\n", m_frame->r, m_frame->g, m_frame->b, m_frame->a);
-        //printf("Destination: %02hX %02hX %02hX %02hX\n", dst_pix->r, dst_pix->g, dst_pix->b, dst_pix->a);
+        //debug_log("Frame data:  %02hX %02hX %02hX %02hX\n", m_frame->r, m_frame->g, m_frame->b, m_frame->a);
+        //debug_log("Destination: %02hX %02hX %02hX %02hX\n", dst_pix->r, dst_pix->g, dst_pix->b, dst_pix->a);
 
         rendererRender(&renderer);
 
         memcpy(dst_pix, m_frame, sizeof(p3d::Pixel) * m_width * m_height);
 
-        // auto stop = millis();
-        // auto diff = stop - start;
-        // float fps = 1000.0 / diff;
-        // printf("Render to %ux%u took %u ms (%.2f FPS)\n", m_width, m_height, diff, fps);
-        //printf("Frame data:  %02hX %02hX %02hX %02hX\n", m_frame->r, m_frame->g, m_frame->b, m_frame->a);
-        //printf("Final data:  %02hX %02hX %02hX %02hX\n", dst_pix->r, dst_pix->g, dst_pix->b, dst_pix->a);
+        auto stop = millis();
+        auto diff = stop - start;
+        float fps = 1000.0 / diff;
+        printf("Render to %ux%u took %u ms (%.2f FPS)\n", m_width, m_height, diff, fps);
+        //debug_log("Frame data:  %02hX %02hX %02hX %02hX\n", m_frame->r, m_frame->g, m_frame->b, m_frame->a);
+        //debug_log("Final data:  %02hX %02hX %02hX %02hX\n", dst_pix->r, dst_pix->g, dst_pix->b, dst_pix->a);
     }
 
 } Pingo3dControl;

@@ -138,7 +138,7 @@ int renderObject(Mat4 object_transform, Renderer * r, Renderable ren) {
         Vec3f na = vec3fsubV(*((Vec3f*)(&a)), *((Vec3f*)(&b)));
         Vec3f nb = vec3fsubV(*((Vec3f*)(&a)), *((Vec3f*)(&c)));
         Vec3f normal = vec3Normalize(vec3Cross(na, nb));
-        Vec3f light = vec3Normalize((Vec3f){-8,-5,5});
+        Vec3f light = vec3Normalize((Vec3f){0,8,5});
         float diffuseLight = (1.0 + vec3Dot(normal, light)) *0.5;
         diffuseLight = MIN(1.0, MAX(diffuseLight, 0));
 
@@ -242,14 +242,14 @@ int renderObject(Mat4 object_transform, Renderer * r, Renderable ren) {
                     //show_pixel(textCoordx, textCoordy, text.a, text.b, text.g, text.r);
 #endif
 
-                    backendDrawPixel(r, &r->frameBuffer, (Vec2i){x,y}, text, diffuseLight);
+                    backendDrawPixel(r, &r->frameBuffer, (Vec2i){x,scrSize.y-y}, text, diffuseLight);
                 } else {
                     Pixel pixel;
                     pixel.a = 255;
                     pixel.b = 255;
                     pixel.g = 0;
                     pixel.r = 255;
-                    backendDrawPixel(r, &r->frameBuffer, (Vec2i){x,y}, pixel, diffuseLight);
+                    backendDrawPixel(r, &r->frameBuffer, (Vec2i){x,scrSize.y-y}, pixel, diffuseLight);
                 }
 
             }
