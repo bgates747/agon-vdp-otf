@@ -106,6 +106,14 @@ Mat4 mat4MultiplyM(Mat4 *m1, Mat4 *m2) {
     return out;
 }
 
+// 4x4 matrix multplication with arguments reversed
+// (for reasons unknown, this is what objects want for local transforms)
+Mat4 mat4MultiplyMRev(Mat4 *m1, Mat4 *m2) {
+    Mat4 out;
+    dspm_mult_f32(m2->elements, m1->elements, out.elements, 4, 4, 4);
+    return out;
+}
+
 F_TYPE mat4Determinant(Mat4 * mat)
 {
     F_TYPE * a = mat->elements;

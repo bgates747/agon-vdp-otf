@@ -27,6 +27,9 @@ Vec4f mat4MultiplyVec4(Vec4f *v, Mat4 *t);
 Vec4f mat4MultiplyVec4in( Vec4f *v, Mat4 *t );
 
 Mat4 mat4MultiplyM( Mat4 * m1, Mat4 * m2);
+// 4x4 matrix multplication with arguments reversed
+// (for reasons unknown, this is what objects want for local transforms)
+Mat4 mat4MultiplyMRev(Mat4 *m1, Mat4 *m2);
 Mat4 mat4Inverse(Mat4 * mat);
 Mat4 mat4Scale(Vec3f s);
 
