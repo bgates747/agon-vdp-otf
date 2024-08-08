@@ -268,6 +268,8 @@
 #define BUFFERED_COMPRESS				0x40	// Compress blocks from multiple buffers into one buffer
 #define BUFFERED_DECOMPRESS				0x41	// Decompress blocks from multiple buffers into one buffer
 #define BUFFERED_EXPAND_BITMAP			0x48	// Expand a bitmap buffer
+// 0x49 placeholder for Pingo3d
+#define BUFFERED_MODLETS                0x50    // Modular firmware extenstions which can be loaded into VDP at runtime
 
 #define BUFFERED_DEBUG_INFO				0x80	// Get debug info about a buffer
 

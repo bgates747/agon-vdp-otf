@@ -20,6 +20,7 @@
 #include "test_flags.h"
 #include "types.h"
 #include "vdu_stream_processor.h"
+#include "modlets/modlets.h"
 
 // VDU 23, 0, &A0, bufferId; command: Buffered command support
 //
@@ -212,6 +213,9 @@ void IRAM_ATTR VDUStreamProcessor::vdu_sys_buffered() {
 			if (sourceBufferId == -1) return;
 			bufferExpandBitmap(bufferId, options, sourceBufferId);
 		}	break;
+		case BUFFERED_MODLETS: {
+			bufferUseModlet(bufferId);
+        }   break;
 		case BUFFERED_DEBUG_INFO: {
 			// force_debug_log("vdu_sys_buffered: debug info stack highwater %d\n\r",uxTaskGetStackHighWaterMark(nullptr));
 			debug_log("vdu_sys_buffered: buffer %d, %d streams stored\n\r", bufferId, buffers[bufferId].size());
@@ -2204,6 +2208,20 @@ void VDUStreamProcessor::bufferExpandBitmap(uint16_t bufferId, uint8_t options, 
 		free(mapValues);
 	}
 	debug_log("bufferExpandBitmap: expanded %d bytes into buffer %d\n\r", outputSize, bufferId);
+}
+
+// VDU 23, 0, &A0, <various>; &50, subcommand, <args> : Generic structure for a Modlet command
+// RESERVED MODLET COMMANDS:
+// -------------------------
+// VDU 23, 0, &A0, bufferId; &50,   0 :  Load Modlet code to a buffer and initialize it in IRAM
+// VDU 23, 0, &A0, bufferId; &50, 255 :  Overwite the Modlet code in IRAM with default inactive code
+void VDUStreamProcessor::bufferUseModlet(uint16_t bufferId) {
+    auto subcmd = readByte_t();
+    if (subcmd == 0) {
+		// Load Modlet code to a buffer and initialize it in IRAM
+	} else if (subcmd == 255) {
+		// Overwrite the Modlet code in IRAM with default inactive code
+    }
 }
 
 #endif // VDU_BUFFERED_H
