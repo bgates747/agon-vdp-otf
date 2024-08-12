@@ -1,0 +1,123 @@
+#ifndef WOLF_3D_H
+#define WOLF_3D_H
+
+#include <stdint.h>
+#include <string.h>
+#include <agon.h>
+#include <map>
+#include "esp_heap_caps.h"
+#include "sprites.h"
+#include "vdu_stream_processor.h"
+
+#include "wolf/camera.h"
+#include "wolf/fixed.h"
+#include "wolf/map.h"
+
+class VDUStreamProcessor;
+typedef struct Wolf3dControl Wolf3dControl;
+#define WOLF_3D_CONTROL_TAG    0x43336457 // "W3DC"
+
+void VDUStreamProcessor::bufferUseWolf3D(uint16_t bufferId) {
+    auto subcmd = readByte_t();
+    if (subcmd == 0) {
+		// Create the buffer if necessary
+		// Initialize the control structure
+		auto w = readWord_t();
+		if (w > 0) {
+			auto h = readWord_t();
+			if (h > 0) {
+				auto buffer = bufferCreate(bufferId, sizeof(Wolf3dControl));
+				if (buffer) {
+					auto ctrl = (Wolf3dControl*) buffer->getBuffer();
+					ctrl->initialize(*this, (uint16_t)w, (uint16_t)h);
+				}
+			} else {
+				debug_log("bufferUseWolf3D: buffer %d missing height\n\r", bufferId);
+			}
+		} else {
+			debug_log("bufferUseWolf3D: buffer %d missing width\n\r", bufferId);
+		}
+	} else if (subcmd == 39) {
+		// Deinitialize the control structure
+		// Delete the buffer
+		auto bufferIter = buffers.find(bufferId);
+		if (bufferIter != buffers.end()) {
+			auto &buffer = bufferIter->second;
+			auto ctrl = (Wolf3dControl*) buffer.begin()->get()->getBuffer();
+			if (ctrl->validate()) {
+				ctrl->deinitialize(*this);
+				buffers.erase(bufferIter);
+			} else {
+				debug_log("bufferUseWolf3D: buffer %d is invalid\n\r", bufferId);
+			}
+		} else {
+			debug_log("bufferUseWolf3D: buffer %d not found\n\r", bufferId);
+		}            
+    } else {
+        auto bufferIter = buffers.find(bufferId);
+        if (bufferIter != buffers.end()) {
+			auto &buffer = bufferIter->second;
+			auto ctrl = (Wolf3dControl*) buffer.begin()->get()->getBuffer();
+            if (ctrl->validate()) {
+                ctrl->handle_subcommand(*this, subcmd);
+            } else {
+           		debug_log("bufferUseWolf3D: buffer %d is invalid\n\r", bufferId);
+            }
+        } else {
+    		debug_log("bufferUseWolf3D: buffer %d not found\n\r", bufferId);
+        }
+    }
+}
+
+typedef struct Wolf3dControl {
+    VDUStreamProcessor*     vdusp;
+    Camera                  camera;
+    Map                     map;
+    ZBuffer                 zbuffer;
+    uint16_t                bufferId;
+    uint16_t                width;
+    uint16_t                height;
+
+
+    // VDU 23, 0, &A0, sid; &49, 0, 1 :  Initialize Control Structure
+    void initialize(VDUStreamProcessor& processor, uint16_t width, uint16_t height) {
+        debug_log("initialize: pingo creating control structure for %ux%u scene\n", width, height);
+        memset(this, 0, sizeof(tag_Pingo3dControl));
+        m_tag = PINGO_3D_CONTROL_TAG;
+        m_size = sizeof(tag_Pingo3dControl);
+        m_width = width;
+        m_height = height;
+        m_camera.initialize_scale();
+        m_scene.initialize_scale();
+
+        auto frame_size = (uint32_t) width * (uint32_t) height;
+
+        auto size = sizeof(p3d::Pixel) * frame_size;
+        m_frame = (p3d::Pixel*) heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
+        if (!m_frame) {
+            debug_log("initialize: failed to allocate %u bytes for frame\n", size);
+            show_free_ram();
+        }
+
+        size = sizeof(p3d::PingoDepth) * frame_size;
+        m_zeta = (p3d::PingoDepth*) heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
+        if (!m_zeta) {
+            debug_log("initialize: failed to allocate %u bytes for zeta\n", size);
+            show_free_ram();
+        }
+
+        m_backend.init = &static_init;
+        m_backend.beforeRender = &static_before_render;
+        m_backend.afterRender = &static_after_render;
+        m_backend.getFrameBuffer = &static_get_frame_buffer;
+        m_backend.getZetaBuffer = &static_get_zeta_buffer;
+        m_backend.drawPixel = NULL;
+        m_backend.clientCustomData = (void*) this;
+
+        m_meshes = new std::map<uint16_t, p3d::Mesh>;
+        m_objects = new std::map<uint16_t, TexObject>;
+    }
+
+} Wolf3dControl;
+
+#endif // WOLF_3D_H

@@ -20,7 +20,6 @@
 #include "test_flags.h"
 #include "types.h"
 #include "vdu_stream_processor.h"
-// #include "pingo_3d.h" // placeholder
 #include "wolf_3d.h"
 
 // VDU 23, 0, &A0, bufferId; command: Buffered command support
@@ -214,9 +213,6 @@ void IRAM_ATTR VDUStreamProcessor::vdu_sys_buffered() {
 			if (sourceBufferId == -1) return;
 			bufferExpandBitmap(bufferId, options, sourceBufferId);
 		}	break;
-        // case BUFFERED_PINGO_3D: {
-		// 	bufferUsePingo3D(bufferId);
-        // }   break;
         case BUFFERED_WOLF_3D: {
 			bufferUseWolf3D(bufferId);
         }   break;

@@ -1,0 +1,90 @@
+#ifndef WOLF_3D_H
+#define WOLF_3D_H
+
+#include <stdint.h>
+#include <string.h>
+#include <agon.h>
+#include <map>
+#include "esp_heap_caps.h"
+#include "sprites.h"
+#include "vdu_stream_processor.h"
+#include "vdu_buffered.h"
+
+namespace w3d {
+
+    #include "wolf/camera.h"
+    #include "wolf/fixed.h"
+    #include "wolf/map.h"
+
+    extern "C" {
+
+    } // extern "C"
+
+} // namespace w3d
+
+#define WOLF_3D_CONTROL_TAG    0x43336457 // "w3dC"
+
+class VDUStreamProcessor;
+
+typedef struct Wolf3dControl {
+    uint32_t            m_tag;              // Used to verify the existence of this structure
+    uint32_t            m_size;             // Used to verify the existence of this structure
+    VDUStreamProcessor* m_proc;             // Used by subcommands to obtain more data
+    w3d::Camera         m_camera;           // Camera object
+
+    void show_free_ram() {
+        debug_log("Free PSRAM: %u\n", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+    }
+
+    // VDU 23,0, &A0, sid; &50, 0, width; height; : Create Control Structure
+    void initialize(VDUStreamProcessor& processor, uint16_t width, uint16_t height) {
+        printf("initialize: wolf creating control structure for %ux%u scene\n", width, height);
+
+        // Initialize the control structure
+        memset(this, 0, sizeof(Wolf3dControl));
+        m_tag = WOLF_3D_CONTROL_TAG;
+        m_size = sizeof(Wolf3dControl);
+
+        // Debug output
+        printf("Debug: Control structure initialized.\n");
+        printf("Debug: m_tag = 0x%X\n", m_tag);
+        printf("Debug: m_size = %u\n", m_size);
+
+        // Additional debug output if there are more members to initialize
+        // printf("Debug: member_name = value\n");
+    }
+
+    // VDU 23, 0, &A0, sid; &50, 255 : Deinitialize Control Structure
+    void deinitialize(VDUStreamProcessor& processor) {
+    }
+
+    bool validate() {
+        return (m_tag == WOLF_3D_CONTROL_TAG &&
+                m_size == sizeof(Wolf3dControl));
+    }
+
+    void handle_subcommand(VDUStreamProcessor& processor, uint8_t subcmd) {
+        //debug_log("w3d: handle_subcommand(%hu)\n", subcmd);
+        m_proc = &processor;
+        switch (subcmd) {
+            case 1: do_map(); break;
+        }
+    }
+
+    // VDU 23, 0, &A0, sid; &50, 0, 1, function : Map Functions
+    void do_map() {
+        printf("w3d: do_map()\n");
+        auto function = m_proc->readByte();
+        switch (function) {
+            case 0: map_init(); break;
+        }
+    }
+    // VDU 23, 0, &A0, sid; &50, 0, 1, 0, BUFFERED_WRITE, bufferID; length; : Initialize Map
+    void map_init() {
+        printf("w3d: map_init()\n");
+        // vdu_sys_buffered();
+    }
+
+} Wolf3dControl;
+
+#endif // WOLF_3D_H
