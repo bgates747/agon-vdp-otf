@@ -9,7 +9,7 @@
 #include "sprites.h"
 #include "vdu_stream_processor.h"
 
-namespace p3d {
+namespace w3d {
 
     extern "C" {
 
@@ -25,18 +25,24 @@ namespace p3d {
 
     } // extern "C"
 
-} // namespace p3d
+} // namespace w3d
 
-#define WOLF_3D_CONTROL_TAG    0x43443350 // "P3DC"
+#define WOLF_3D_CONTROL_TAG    0x43443350 // "W3DC"
 
-class VDUStreamProcessor;
+#define PI2                    6.283185307179586476925286766559f
 
-typedef struct tag_Transformable {
-    p3d::Vec3f      m_scale;
-    p3d::Vec3f      m_rotation;
-    p3d::Vec3f      m_translation;
-    p3d::Mat4       m_transform;
+class VDUStreamProcessor;typedef struct tag_Transformable {
+    w3d::Vec3f      m_scale;
+    w3d::Vec3f      m_rotation;
+    w3d::Vec3f      m_translation;
+    w3d::Mat4       m_transform;
     bool            m_modified;
+
+    w3d::Vec3f      m_rotation_loc;
+    w3d::Vec3f      m_translation_loc;
+
+    bool            m_modified_loc;
+    bool            m_is_camera;
 
     void initialize_scale() {
         m_scale.x = 1.0f;
@@ -50,41 +56,142 @@ typedef struct tag_Transformable {
         initialize_scale();
     }
 
-    void compute_transformation_matrix() {
-        m_transform = p3d::mat4Scale(m_scale);
+    // Helper function to get the forward direction of the transformable
+    w3d::Vec3f get_forward_direction() const {
+        w3d::Mat4 rotation_matrix = w3d::mat4Identity();
         if (m_rotation.x) {
-            auto t = p3d::mat4RotateX(m_rotation.x);
-            m_transform = mat4MultiplyM(&m_transform, &t);
+            auto t = w3d::mat4RotateX(m_rotation.x);
+            rotation_matrix = mat4MultiplyM(&rotation_matrix, &t);
         }
         if (m_rotation.y) {
-            auto t = p3d::mat4RotateY(m_rotation.y);
-            m_transform = mat4MultiplyM(&m_transform, &t);
+            auto t = w3d::mat4RotateY(m_rotation.y);
+            rotation_matrix = mat4MultiplyM(&rotation_matrix, &t);
         }
         if (m_rotation.z) {
-            auto t = p3d::mat4RotateZ(m_rotation.z);
-            m_transform = mat4MultiplyM(&m_transform, &t);
+            auto t = w3d::mat4RotateZ(m_rotation.z);
+            rotation_matrix = mat4MultiplyM(&rotation_matrix, &t);
         }
-        if (m_translation.x || m_translation.y || m_translation.z) {
-            auto t = p3d::mat4Translate(m_translation);
-            m_transform = mat4MultiplyM(&m_transform, &t);
+
+        // Forward direction is typically -Z in a right-handed coordinate system
+        w3d::Vec3f forward = {0.0f, 0.0f, -1.0f};
+        return w3d::mat4MultiplyVec3(&forward, &rotation_matrix);
+    }
+
+    void compute_transformation_matrix() {
+        m_transform = w3d::mat4Scale(m_scale);
+        if (m_is_camera) {
+            if (m_rotation.x) {
+                auto t = w3d::mat4RotateX(m_rotation.x);
+                m_transform = mat4MultiplyM(&t, &m_transform); // arguments reversed
+            }
+            if (m_rotation.y) {
+                auto t = w3d::mat4RotateY(m_rotation.y);
+                m_transform = mat4MultiplyM(&t, &m_transform); // arguments reversed
+            }
+            if (m_rotation.z) {
+                auto t = w3d::mat4RotateZ(m_rotation.z);
+                m_transform = mat4MultiplyM(&t, &m_transform); // arguments reversed
+            }
+            if (m_translation.x || m_translation.y || m_translation.z) {
+                auto t = w3d::mat4Translate(m_translation);
+                m_transform = mat4MultiplyM(&t, &m_transform); // arguments reversed
+            }
+
+        } else {
+            if (m_rotation.x) {
+                auto t = w3d::mat4RotateX(m_rotation.x);
+                m_transform = mat4MultiplyM(&m_transform, &t);
+            }
+            if (m_rotation.y) {
+                auto t = w3d::mat4RotateY(m_rotation.y);
+                m_transform = mat4MultiplyM(&m_transform, &t);
+            }
+            if (m_rotation.z) {
+                auto t = w3d::mat4RotateZ(m_rotation.z);
+                m_transform = mat4MultiplyM(&m_transform, &t);
+            }
+            if (m_translation.x || m_translation.y || m_translation.z) {
+                auto t = w3d::mat4Translate(m_translation);
+                m_transform = mat4MultiplyM(&m_transform, &t);
+            }
         }
+
         m_modified = false;
+    }
+
+    void compute_transformation_matrix_local() {
+        // Initialize the local transformation matrix
+        w3d::Mat4 m_transform_loc = w3d::mat4Scale(m_scale);
+
+        if (m_is_camera) {
+            if (m_rotation_loc.x) {
+                auto t = w3d::mat4RotateX(m_rotation_loc.x);
+                m_transform_loc = mat4MultiplyM(&t, &m_transform_loc); // arguments reversed
+            }
+            if (m_rotation_loc.y) {
+                auto t = w3d::mat4RotateY(m_rotation_loc.y);
+                m_transform_loc = mat4MultiplyM(&t, &m_transform_loc); // arguments reversed
+            }
+            if (m_rotation_loc.z) {
+                auto t = w3d::mat4RotateZ(m_rotation_loc.z);
+                m_transform_loc = mat4MultiplyM(&t, &m_transform_loc); // arguments reversed
+            }
+            if (m_translation_loc.x || m_translation_loc.y || m_translation_loc.z) {
+                auto t = w3d::mat4Translate(m_translation_loc);
+                m_transform_loc = mat4MultiplyM(&t, &m_transform_loc); // arguments reversed
+            }
+            // Apply the local transformation matrix to the initial transform
+            m_transform = mat4MultiplyM(&m_transform, &m_transform_loc); // arguments reversed
+
+        } else {
+            if (m_rotation_loc.x) {
+                auto t = w3d::mat4RotateX(m_rotation_loc.x);
+                m_transform_loc = mat4MultiplyM(&m_transform_loc, &t);
+            }
+            if (m_rotation_loc.y) {
+                auto t = w3d::mat4RotateY(m_rotation_loc.y);
+                m_transform_loc = mat4MultiplyM(&m_transform_loc, &t);
+            }
+            if (m_rotation_loc.z) {
+                auto t = w3d::mat4RotateZ(m_rotation_loc.z);
+                m_transform_loc = mat4MultiplyM(&m_transform_loc, &t);
+            }
+            if (m_translation_loc.x || m_translation_loc.y || m_translation_loc.z) {
+                auto t = w3d::mat4Translate(m_translation_loc);
+                m_transform_loc = mat4MultiplyM(&m_transform_loc, &t);
+            }
+            // Apply the local transformation matrix to the initial transform
+            m_transform = mat4MultiplyM(&m_transform_loc, &m_transform);
+
+        }
+
+        // Clear local transformation values
+        m_rotation_loc = {0.0f, 0.0f, 0.0f};
+        m_translation_loc = {0.0f, 0.0f, 0.0f};
+
+        m_modified_loc = false;
+    }
+
+    void update_transformation() {
+        if (m_modified) {
+            compute_transformation_matrix();
+        }
     }
 
     void dump() {
         for (int i = 0; i < 16; i++) {
             debug_log("        [%i] %f\n", i, m_transform.elements[i]);
         }
-        debug_log("Scale: %f %f %f\n", m_scale.x, m_scale.y, m_scale.z);
-        debug_log("Rotation: %f %f %f\n", m_rotation.x, m_rotation.y, m_rotation.z);
+        debug_log("Scale:       %f %f %f\n", m_scale.x, m_scale.y, m_scale.z);
+        debug_log("Rotation:    %f %f %f\n", m_rotation.x * (180.0 / M_PI), m_rotation.y * (180.0 / M_PI), m_rotation.z * (180.0 / M_PI));
         debug_log("Translation: %f %f %f\n", m_translation.x, m_translation.y, m_translation.z);
     }
 } Transformable;
 
 typedef struct tag_TexObject : public Transformable {
-    p3d::Object     m_object;
-    p3d::Texture    m_texture;
-    p3d::Material   m_material;
+    w3d::Object     m_object;
+    w3d::Texture    m_texture;
+    w3d::Material   m_material;
     uint16_t        m_oid;
 
     void bind() {
@@ -99,6 +206,11 @@ typedef struct tag_TexObject : public Transformable {
 
     void update_transformation_matrix() {
         compute_transformation_matrix();
+        m_object.transform = m_transform;
+    }
+
+    void update_transformation_matrix_loc() {
+        compute_transformation_matrix_local();
         m_object.transform = m_transform;
     }
 
@@ -117,15 +229,15 @@ struct Wolf3dControl;
 
 extern "C" {
 
-    void static_init(p3d::Renderer* ren, p3d::BackEnd* backEnd, p3d::Vec4i _rect);
+    void static_init(w3d::Renderer* ren, w3d::BackEnd* backEnd, w3d::Vec4i _rect);
 
-    void static_before_render(p3d::Renderer* ren, p3d::BackEnd* backEnd);
+    void static_before_render(w3d::Renderer* ren, w3d::BackEnd* backEnd);
 
-    void static_after_render(p3d::Renderer* ren, p3d::BackEnd* backEnd);
+    void static_after_render(w3d::Renderer* ren, w3d::BackEnd* backEnd);
 
-    p3d::Pixel* static_get_frame_buffer(p3d::Renderer* ren, p3d::BackEnd* backEnd);
+    w3d::Pixel* static_get_frame_buffer(w3d::Renderer* ren, w3d::BackEnd* backEnd);
 
-    p3d::WolfDepth* static_get_zeta_buffer(p3d::Renderer* ren, p3d::BackEnd* backEnd);
+    w3d::WolfDepth* static_get_zeta_buffer(w3d::Renderer* ren, w3d::BackEnd* backEnd);
 
 } // extern "C"
 
@@ -133,15 +245,16 @@ typedef struct Wolf3dControl {
     uint32_t            m_tag;              // Used to verify the existence of this structure
     uint32_t            m_size;             // Used to verify the existence of this structure
     VDUStreamProcessor* m_proc;             // Used by subcommands to obtain more data
-    p3d::BackEnd        m_backend;          // Used by the renderer
-    p3d::Pixel*         m_frame;            // Frame buffer for rendered pixels
-    p3d::WolfDepth*    m_zeta;             // Zeta buffer for depth information
+    w3d::BackEnd        m_backend;          // Used by the renderer
+    w3d::Pixel*         m_frame;            // Frame buffer for rendered pixels
+    w3d::WolfDepth*    m_zeta;             // Zeta buffer for depth information
     uint16_t            m_width;            // Width of final render in pixels
     uint16_t            m_height;           // Height of final render in pixels
     Transformable       m_camera;           // Camera transformation settings
     Transformable       m_scene;            // Scene transformation settings
-    std::map<uint16_t, p3d::Mesh>* m_meshes;    // Map of meshes for use by objects
+    std::map<uint16_t, w3d::Mesh>* m_meshes;    // Map of meshes for use by objects
     std::map<uint16_t, TexObject>* m_objects;   // Map of textured objects that use meshes and have transforms
+    uint8_t             m_dither_type;      // Dithering type and options to be applied to rendered bitmap
 
     void show_free_ram() {
         debug_log("Free PSRAM: %u\n", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
@@ -160,15 +273,15 @@ typedef struct Wolf3dControl {
 
         auto frame_size = (uint32_t) width * (uint32_t) height;
 
-        auto size = sizeof(p3d::Pixel) * frame_size;
-        m_frame = (p3d::Pixel*) heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
+        auto size = sizeof(w3d::Pixel) * frame_size;
+        m_frame = (w3d::Pixel*) heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
         if (!m_frame) {
             debug_log("initialize: failed to allocate %u bytes for frame\n", size);
             show_free_ram();
         }
 
-        size = sizeof(p3d::WolfDepth) * frame_size;
-        m_zeta = (p3d::WolfDepth*) heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
+        size = sizeof(w3d::WolfDepth) * frame_size;
+        m_zeta = (w3d::WolfDepth*) heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
         if (!m_zeta) {
             debug_log("initialize: failed to allocate %u bytes for zeta\n", size);
             show_free_ram();
@@ -182,7 +295,7 @@ typedef struct Wolf3dControl {
         m_backend.drawPixel = NULL;
         m_backend.clientCustomData = (void*) this;
 
-        m_meshes = new std::map<uint16_t, p3d::Mesh>;
+        m_meshes = new std::map<uint16_t, w3d::Mesh>;
         m_objects = new std::map<uint16_t, TexObject>;
     }
 
@@ -196,7 +309,7 @@ typedef struct Wolf3dControl {
     }
 
     void handle_subcommand(VDUStreamProcessor& processor, uint8_t subcmd) {
-        //debug_log("P3D: handle_subcommand(%hu)\n", subcmd);
+        debug_log("W3D: handle_subcommand(%hu)\n", subcmd);
         m_proc = &processor;
         switch (subcmd) {
             case 1: define_mesh_vertices(); break;
@@ -205,55 +318,70 @@ typedef struct Wolf3dControl {
             case 4: set_texture_coordinate_indexes(); break;
             case 5: create_object(); break;
             case 40: define_object_texture_coordinates(); break;
+
             case 6: set_object_x_scale_factor(); break;
             case 7: set_object_y_scale_factor(); break;
             case 8: set_object_z_scale_factor(); break;
             case 9: set_object_xyz_scale_factors(); break;
+
             case 10: set_object_x_rotation_angle(); break;
             case 11: set_object_y_rotation_angle(); break;
             case 12: set_object_z_rotation_angle(); break;
             case 13: set_object_xyz_rotation_angles(); break;
+            case 141: set_object_xyz_rotation_angles_local(); break;
+
             case 14: set_object_x_translation_distance(); break;
             case 15: set_object_y_translation_distance(); break;
             case 16: set_object_z_translation_distance(); break;
             case 17: set_object_xyz_translation_distances(); break;
+            case 145: set_object_xyz_translation_distances_local(); break;
+
             case 18: set_camera_x_rotation_angle(); break;
             case 19: set_camera_y_rotation_angle(); break;
             case 20: set_camera_z_rotation_angle(); break;
             case 21: set_camera_xyz_rotation_angles(); break;
+            case 149: set_camera_xyz_rotation_angles_local(); break;
+            case 42: camera_track_object(); break;
+
             case 22: set_camera_x_translation_distance(); break;
             case 23: set_camera_y_translation_distance(); break;
             case 24: set_camera_z_translation_distance(); break;
             case 25: set_camera_xyz_translation_distances(); break;
+            case 153: set_camera_xyz_translation_distances_local(); break;
+
             case 26: set_scene_x_scale_factor(); break;
             case 27: set_scene_y_scale_factor(); break;
             case 28: set_scene_z_scale_factor(); break;
             case 29: set_scene_xyz_scale_factors(); break;
+
             case 30: set_scene_x_rotation_angle(); break;
             case 31: set_scene_y_rotation_angle(); break;
             case 32: set_scene_z_rotation_angle(); break;
             case 33: set_scene_xyz_rotation_angles(); break;
+
             case 34: set_scene_x_translation_distance(); break;
             case 35: set_scene_y_translation_distance(); break;
             case 36: set_scene_z_translation_distance(); break;
             case 37: set_scene_xyz_translation_distances(); break;
+
             case 38: render_to_bitmap(); break;
+            case 41: set_rendering_dither_type(); break;
         }
     }
 
-    p3d::Mesh* establish_mesh(uint16_t mid) {
+    w3d::Mesh* establish_mesh(uint16_t mid) {
         auto mesh_iter = m_meshes->find(mid);
         if (mesh_iter == m_meshes->end()) {
-            p3d::Mesh mesh;
+            w3d::Mesh mesh;
             memset(&mesh, 0, sizeof(mesh));
-            (*m_meshes).insert(std::pair<uint16_t, p3d::Mesh>(mid, mesh));
+            (*m_meshes).insert(std::pair<uint16_t, w3d::Mesh>(mid, mesh));
             return &m_meshes->find(mid)->second;
         } else {
             return &mesh_iter->second;
         }
     }
 
-    p3d::Mesh* get_mesh() {
+    w3d::Mesh* get_mesh() {
         auto mid = m_proc->readWord_t();
         if (mid >= 0) {
             return establish_mesh(mid);
@@ -292,8 +420,8 @@ typedef struct Wolf3dControl {
         }
         auto n = (uint32_t) m_proc->readWord_t();
         if (n > 0) {
-            auto size = n*sizeof(p3d::Vec3f);
-            mesh->positions = (p3d::Vec3f*) heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
+            auto size = n*sizeof(w3d::Vec3f);
+            mesh->positions = (w3d::Vec3f*) heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
             auto pos = mesh->positions;
             if (!pos) {
                 debug_log("define_mesh_vertices: failed to allocate %u bytes\n", size);
@@ -355,8 +483,8 @@ typedef struct Wolf3dControl {
         }
         auto n = (uint32_t) m_proc->readWord_t();
         if (n > 0) {
-            auto size = n*sizeof(p3d::Vec2f);
-            mesh->textCoord = (p3d::Vec2f*) heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
+            auto size = n*sizeof(w3d::Vec2f);
+            mesh->textCoord = (w3d::Vec2f*) heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
             auto coord = mesh->textCoord;
             if (!coord) {
                 debug_log("set_mesh_vertex_indexes: failed to allocate %u bytes\n", size);
@@ -368,7 +496,7 @@ typedef struct Wolf3dControl {
                 uint16_t v = m_proc->readWord_t();
                 if (coord) {
                     coord->x = convert_texture_coordinate_value(u);
-                    coord->y = convert_texture_coordinate_value(v);
+                    coord->y = 1-convert_texture_coordinate_value(v);
                     coord++;
                 }
             }
@@ -384,8 +512,8 @@ typedef struct Wolf3dControl {
         }
         auto n = (uint32_t) m_proc->readWord_t();
         if (n > 0) {
-            auto size = n*sizeof(p3d::Vec2f);
-            object->m_object.textCoord = (p3d::Vec2f*) heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
+            auto size = n*sizeof(w3d::Vec2f);
+            object->m_object.textCoord = (w3d::Vec2f*) heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
             auto coord = object->m_object.textCoord;
             if (!coord) {
                 debug_log("set_object_vertex_indexes: failed to allocate %u bytes\n", size);
@@ -442,8 +570,8 @@ typedef struct Wolf3dControl {
             if (stored_bitmap) {
                 auto bitmap = stored_bitmap.get();
                 if (bitmap) {
-                    auto size = p3d::Vec2i{(p3d::I_TYPE)bitmap->width, (p3d::I_TYPE)bitmap->height};
-                    auto pix = (p3d::Pixel*) bitmap->data;
+                    auto size = w3d::Vec2i{(w3d::I_TYPE)bitmap->width, (w3d::I_TYPE)bitmap->height};
+                    auto pix = (w3d::Pixel*) bitmap->data;
                     object->bind();
                     texture_init(&object->m_texture, size, pix);
                     object->m_object.mesh = mesh;
@@ -453,38 +581,38 @@ typedef struct Wolf3dControl {
         }
     }
 
-    p3d::F_TYPE convert_scale_value(int32_t value) {
-        static const p3d::F_TYPE factor = 1.0f / 256.0f;
-        return ((p3d::F_TYPE) value) * factor;
+    w3d::F_TYPE convert_scale_value(int32_t value) {
+        static const w3d::F_TYPE factor = 1.0f / 256.0f;
+        return ((w3d::F_TYPE) value) * factor;
     }
 
-    p3d::F_TYPE convert_rotation_value(int32_t value) {
+    w3d::F_TYPE convert_rotation_value(int32_t value) {
         if (value & 0x8000) {
             value = (int32_t)(int16_t)(uint16_t) value;
         }
-        static const p3d::F_TYPE factor = (2.0f * 3.1415926f) / 32767.0f;
-        return ((p3d::F_TYPE) value) * factor;
+        static const w3d::F_TYPE factor = (2.0f * 3.1415926f) / 32767.0f;
+        return ((w3d::F_TYPE) value) * factor;
     }
 
-    p3d::F_TYPE convert_translation_value(int32_t value) {
+    w3d::F_TYPE convert_translation_value(int32_t value) {
         if (value & 0x8000) {
             value = (int32_t)(int16_t)(uint16_t) value;
         }
-        static const p3d::F_TYPE factor = 256.0f / 32767.0f;
-        return ((p3d::F_TYPE) value) * factor;
+        static const w3d::F_TYPE factor = 256.0f / 32767.0f;
+        return ((w3d::F_TYPE) value) * factor;
     }
 
-    p3d::F_TYPE convert_position_value(int32_t value) {
+    w3d::F_TYPE convert_position_value(int32_t value) {
         if (value & 0x8000) {
             value = (int32_t)(int16_t)(uint16_t) value;
         }
-        static const p3d::F_TYPE factor = 1.0f / 32767.0f;
-        return ((p3d::F_TYPE) value) * factor;
+        static const w3d::F_TYPE factor = 1.0f / 32767.0f;
+        return ((w3d::F_TYPE) value) * factor;
     }
 
-    p3d::F_TYPE convert_texture_coordinate_value(int32_t value) {
-        static const p3d::F_TYPE factor = 1.0f / 65535.0f;
-        return ((p3d::F_TYPE) value) * factor;
+    w3d::F_TYPE convert_texture_coordinate_value(int32_t value) {
+        static const w3d::F_TYPE factor = 1.0f / 65535.0f;
+        return ((w3d::F_TYPE) value) * factor;
     }
 
     // VDU 23, 0, &A0, sid; &49, 6, oid; scalex; :  Set Object X Scale Factor
@@ -575,6 +703,20 @@ typedef struct Wolf3dControl {
         }
     }
 
+    // VDU 23, 0, &A0, sid; &49, 141, oid; anglex; angley; anglez; :  Set Object XYZ Rotation Angles Local
+    void set_object_xyz_rotation_angles_local() {
+        auto object = get_object();
+        auto valuex = m_proc->readWord_t();
+        auto valuey = m_proc->readWord_t();
+        auto valuez = m_proc->readWord_t();
+        if (object) {
+            object->m_rotation_loc.x = convert_rotation_value(valuex);
+            object->m_rotation_loc.y = convert_rotation_value(valuey);
+            object->m_rotation_loc.z = convert_rotation_value(valuez);
+            object->m_modified_loc = true;
+        }
+    }
+
     // VDU 23, 0, &A0, sid; &49, 14, oid; distx; :  Set Object X Translation Distance
     void set_object_x_translation_distance() {
         auto object = get_object();
@@ -619,28 +761,42 @@ typedef struct Wolf3dControl {
         }
     }
 
-    // VDU 23, 0, &A0, sid; &49, 18, oid; anglex; :  Set Camera X Rotation Angle
+    // VDU 23, 0, &A0, sid; &49, 145, oid; distx; disty; distz :  Set Object XYZ Translation Distances Local
+    void set_object_xyz_translation_distances_local() {
+        auto object = get_object();
+        auto valuex = m_proc->readWord_t();
+        auto valuey = m_proc->readWord_t();
+        auto valuez = m_proc->readWord_t();
+        if (object) {
+            object->m_translation_loc.x = convert_translation_value(valuex);
+            object->m_translation_loc.y = convert_translation_value(valuey);
+            object->m_translation_loc.z = convert_translation_value(valuez);
+            object->m_modified_loc = true;
+        }
+    }
+
+    // VDU 23, 0, &A0, sid; &49, 18, anglex; :  Set Camera X Rotation Angle
     void set_camera_x_rotation_angle() {
         auto value = m_proc->readWord_t();
         m_camera.m_rotation.x = convert_rotation_value(value);
         m_camera.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &49, 19, oid; angley; :  Set Camera Y Rotation Angle
+    // VDU 23, 0, &A0, sid; &49, 19, angley; :  Set Camera Y Rotation Angle
     void set_camera_y_rotation_angle() {
         auto value = m_proc->readWord_t();
         m_camera.m_rotation.y = convert_rotation_value(value);
         m_camera.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &49, 20, oid; anglez; :  Set Camera Z Rotation Angle
+    // VDU 23, 0, &A0, sid; &49, 20, anglez; :  Set Camera Z Rotation Angle
     void set_camera_z_rotation_angle() {
         auto value = m_proc->readWord_t();
         m_camera.m_rotation.z = convert_rotation_value(value);
         m_camera.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &49, 21, oid; anglex; angley; anglez; :  Set Camera XYZ Rotation Angles
+    // VDU 23, 0, &A0, sid; &49, 21, anglex; angley; anglez; :  Set Camera XYZ Rotation Angles
     void set_camera_xyz_rotation_angles() {
         auto valuex = m_proc->readWord_t();
         auto valuey = m_proc->readWord_t();
@@ -651,28 +807,81 @@ typedef struct Wolf3dControl {
         m_camera.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &49, 22, oid; distx; :  Set Camera X Translation Distance
+    // VDU 23, 0, &A0, sid; &49, 149, anglex; angley; anglez; :  Set Camera XYZ Rotation Angles Local
+    void set_camera_xyz_rotation_angles_local() {
+        auto valuex = m_proc->readWord_t();
+        auto valuey = m_proc->readWord_t();
+        auto valuez = m_proc->readWord_t();
+        m_camera.m_rotation_loc.x = convert_rotation_value(valuex);
+        m_camera.m_rotation_loc.y = convert_rotation_value(valuey);
+        m_camera.m_rotation_loc.z = convert_rotation_value(valuez);
+        m_camera.m_modified_loc = true;
+    }
+
+    // VDU 23, 0, &A0, sid; &49, 42, oid; : Rotate Camera Locally to track a specified object
+    void camera_track_object() {
+        auto object = get_object();
+        return; // TODO: Not ready for prime time
+        if (object) {
+            // Calculate the direction vector from the camera to the object
+            // the negations in the y and z components are to account for the
+            // camera's mirroring of the Y axis and Z axis
+            w3d::Vec3f direction_to_object = {
+                object->m_translation.x - m_camera.m_translation.x,
+                -(object->m_translation.y - m_camera.m_translation.y),
+                object->m_translation.z - (-m_camera.m_translation.z)
+            };
+
+            // Normalize the direction vector
+            float length = sqrt(
+                direction_to_object.x * direction_to_object.x +
+                direction_to_object.y * direction_to_object.y +
+                direction_to_object.z * direction_to_object.z
+            );
+
+            if (length > 0) {
+                direction_to_object.x /= length;
+                direction_to_object.y /= length;
+                direction_to_object.z /= length;
+            }
+
+            // Get the current forward direction of the camera
+            w3d::Vec3f forward = m_camera.get_forward_direction();
+            // Calculate yaw (rotation around the Y axis)
+            float yaw = atan2(direction_to_object.x, -direction_to_object.z);
+            // Calculate pitch (rotation around the X axis)
+            float pitch = atan2(direction_to_object.y, sqrt(direction_to_object.x * direction_to_object.x + direction_to_object.z * direction_to_object.z));
+
+            m_camera.m_rotation.y = yaw;
+            m_camera.m_rotation.x = pitch;
+            m_camera.m_rotation.z = 0; // No roll adjustment
+            m_camera.m_modified = true;
+        }
+    }
+
+
+    // VDU 23, 0, &A0, sid; &49, 22, distx; :  Set Camera X Translation Distance
     void set_camera_x_translation_distance() {
         auto value = m_proc->readWord_t();
         m_camera.m_translation.x = convert_translation_value(value);
         m_camera.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &49, 23, oid; disty; :  Set Camera Y Translation Distance
+    // VDU 23, 0, &A0, sid; &49, 23, disty; :  Set Camera Y Translation Distance
     void set_camera_y_translation_distance() {
         auto value = m_proc->readWord_t();
         m_camera.m_translation.y = convert_translation_value(value);
         m_camera.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &49, 24, oid; distz; :  Set Camera Z Translation Distance
+    // VDU 23, 0, &A0, sid; &49, 24, distz; :  Set Camera Z Translation Distance
     void set_camera_z_translation_distance() {
         auto value = m_proc->readWord_t();
         m_camera.m_translation.z = convert_translation_value(value);
         m_camera.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &49, 25, oid; distx; disty; distz :  Set Camera XYZ Translation Distances
+    // VDU 23, 0, &A0, sid; &49, 25, distx; disty; distz :  Set Camera XYZ Translation Distances
     void set_camera_xyz_translation_distances() {
         auto valuex = m_proc->readWord_t();
         auto valuey = m_proc->readWord_t();
@@ -683,7 +892,18 @@ typedef struct Wolf3dControl {
         m_camera.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &49, 26, oid; scalex; :  Set Scene X Scale Factor
+    // VDU 23, 0, &A0, sid; &49, 153, distx; disty; distz :  Set Camera XYZ Translation Distances Local
+    void set_camera_xyz_translation_distances_local() {
+        auto valuex = m_proc->readWord_t();
+        auto valuey = m_proc->readWord_t();
+        auto valuez = m_proc->readWord_t();
+        m_camera.m_translation_loc.x = convert_translation_value(valuex);
+        m_camera.m_translation_loc.y = convert_translation_value(valuey);
+        m_camera.m_translation_loc.z = convert_translation_value(valuez);
+        m_camera.m_modified_loc = true;
+    }
+
+    // VDU 23, 0, &A0, sid; &49, 26, scalex; :  Set Scene X Scale Factor
     void set_scene_x_scale_factor() {
         auto value = m_proc->readWord_t();
         if (value >= 0) {
@@ -692,7 +912,7 @@ typedef struct Wolf3dControl {
         }
     }
 
-    // VDU 23, 0, &A0, sid; &49, 27, oid; scaley; :  Set Scene Y Scale Factor
+    // VDU 23, 0, &A0, sid; &49, 27, scaley; :  Set Scene Y Scale Factor
     void set_scene_y_scale_factor() {
         auto value = m_proc->readWord_t();
         if (value >= 0) {
@@ -701,7 +921,7 @@ typedef struct Wolf3dControl {
         }
     }
 
-    // VDU 23, 0, &A0, sid; &49, 28, oid; scalez; :  Set Scene Z Scale Factor
+    // VDU 23, 0, &A0, sid; &49, 28, scalez; :  Set Scene Z Scale Factor
     void set_scene_z_scale_factor() {
         auto value = m_proc->readWord_t();
         if (value >= 0) {
@@ -710,7 +930,7 @@ typedef struct Wolf3dControl {
         }
     }
 
-    // VDU 23, 0, &A0, sid; &49, 29, oid; scalex; scaley; scalez :  Set Scene XYZ Scale Factors
+    // VDU 23, 0, &A0, sid; &49, 29, scalex; scaley; scalez :  Set Scene XYZ Scale Factors
     void set_scene_xyz_scale_factors() {
         auto valuex = m_proc->readWord_t();
         auto valuey = m_proc->readWord_t();
@@ -723,28 +943,28 @@ typedef struct Wolf3dControl {
         }
     }
 
-    // VDU 23, 0, &A0, sid; &49, 30, oid; anglex; :  Set Scene X Rotation Angle
+    // VDU 23, 0, &A0, sid; &49, 30, anglex; :  Set Scene X Rotation Angle
     void set_scene_x_rotation_angle() {
         auto value = m_proc->readWord_t();
         m_scene.m_rotation.x = convert_rotation_value(value);
         m_scene.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &49, 31, oid; angley; :  Set Scene Y Rotation Angle
+    // VDU 23, 0, &A0, sid; &49, 31, angley; :  Set Scene Y Rotation Angle
     void set_scene_y_rotation_angle() {
         auto value = m_proc->readWord_t();
         m_scene.m_rotation.y = convert_rotation_value(value);
         m_scene.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &49, 32, oid; anglez; :  Set Scene Z Rotation Angle
+    // VDU 23, 0, &A0, sid; &49, 32, anglez; :  Set Scene Z Rotation Angle
     void set_scene_z_rotation_angle() {
         auto value = m_proc->readWord_t();
         m_scene.m_rotation.z = convert_rotation_value(value);
         m_scene.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &49, 33, oid; anglex; angley; anglez; :  Set Scene XYZ Rotation Angles
+    // VDU 23, 0, &A0, sid; &49, 33, anglex; angley; anglez; :  Set Scene XYZ Rotation Angles
     void set_scene_xyz_rotation_angles() {
         auto valuex = m_proc->readWord_t();
         auto valuey = m_proc->readWord_t();
@@ -755,28 +975,28 @@ typedef struct Wolf3dControl {
         m_scene.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &49, 34, oid; distx; :  Set Scene X Translation Distance
+    // VDU 23, 0, &A0, sid; &49, 34, distx; :  Set Scene X Translation Distance
     void set_scene_x_translation_distance() {
         auto value = m_proc->readWord_t();
         m_scene.m_translation.x = convert_translation_value(value);
         m_scene.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &49, 35, oid; disty; :  Set Scene Y Translation Distance
+    // VDU 23, 0, &A0, sid; &49, 35, disty; :  Set Scene Y Translation Distance
     void set_scene_y_translation_distance() {
         auto value = m_proc->readWord_t();
         m_scene.m_translation.y = convert_translation_value(value);
         m_scene.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &49, 36, oid; distz; :  Set Scene Z Translation Distance
+    // VDU 23, 0, &A0, sid; &49, 36, distz; :  Set Scene Z Translation Distance
     void set_scene_z_translation_distance() {
         auto value = m_proc->readWord_t();
         m_scene.m_translation.z = convert_translation_value(value);
         m_scene.m_modified = true;
     }
 
-    // VDU 23, 0, &A0, sid; &49, 37, oid; distx; disty; distz :  Set Scene XYZ Translation Distances
+    // VDU 23, 0, &A0, sid; &49, 37, distx; disty; distz :  Set Scene XYZ Translation Distances
     void set_scene_xyz_translation_distances() {
         auto valuex = m_proc->readWord_t();
         auto valuey = m_proc->readWord_t();
@@ -787,6 +1007,27 @@ typedef struct Wolf3dControl {
         m_scene.m_modified = true;
     }
 
+    // VDU 23, 0, &A0, sid; &49, 41, type : Set Rendering Dither Type
+    void set_rendering_dither_type() {
+        auto type = m_proc->readByte_t();
+        m_dither_type = type & 0x03; // Mask the first two bits
+        switch (m_dither_type) {
+            case 0:
+                debug_log("Dithering disabled\n");
+                break;
+            case 1:
+                debug_log("Dithering enabled (Bayer)\n");
+                break;
+            case 2:
+                debug_log("Dithering enabled (Floyd-Steinberg)\n");
+                break;
+            default:
+                m_dither_type = 0;
+                debug_log("Invalid dithering type %u\n", m_dither_type);
+                break;
+        }
+    }
+
     // VDU 23, 0, &A0, sid; &49, 38, bmid; :  Render To Bitmap
     void render_to_bitmap() {
         auto bmid = m_proc->readWord_t();
@@ -794,12 +1035,12 @@ typedef struct Wolf3dControl {
             return;
         }
 
-        p3d::Pixel* dst_pix = NULL;
+        w3d::Pixel* dst_pix = NULL;
         auto old_bitmap = getBitmap(bmid);
         if (old_bitmap) {
             auto bitmap = old_bitmap.get();
             if (bitmap && bitmap->width == m_width && bitmap->height == m_height) {
-                dst_pix = (p3d::Pixel*) bitmap->data;
+                dst_pix = (w3d::Pixel*) bitmap->data;
             }
         }
 
@@ -808,34 +1049,45 @@ typedef struct Wolf3dControl {
             return;
         }
 
-        //auto start = millis();
-        auto size = p3d::Vec2i{(p3d::I_TYPE)m_width, (p3d::I_TYPE)m_height};
-        p3d::Renderer renderer;
+        auto start = millis();
+        auto size = w3d::Vec2i{(w3d::I_TYPE)m_width, (w3d::I_TYPE)m_height};
+        w3d::Renderer renderer;
         rendererInit(&renderer, size, &m_backend );
-        rendererSetCamera(&renderer,(p3d::Vec4i){0,0,size.x,size.y});
+        rendererSetCamera(&renderer,(w3d::Vec4i){0,0,size.x,size.y});
 
-        p3d::Scene scene;
+        w3d::Scene scene;
         sceneInit(&scene);
-        p3d::rendererSetScene(&renderer, &scene);
+        w3d::rendererSetScene(&renderer, &scene);
 
         for (auto object = m_objects->begin(); object != m_objects->end(); object++) {
             object->second.bind();
             if (object->second.m_modified) {
+                object->second.m_is_camera = false;
                 object->second.update_transformation_matrix();
                 //object->second.dump();
             }
-            sceneAddRenderable(&scene, p3d::object_as_renderable(&object->second.m_object));
+            if (object->second.m_modified_loc) {
+                object->second.m_is_camera = false;
+                object->second.update_transformation_matrix_loc();
+                //object->second.dump();
+            }
+            sceneAddRenderable(&scene, w3d::object_as_renderable(&object->second.m_object));
         }
 
         // Set the projection matrix
         renderer.camera_projection =
-            p3d::mat4Perspective( 1, 2500.0, (p3d::F_TYPE)size.x / (p3d::F_TYPE)size.y, 0.6);
+            w3d::mat4Perspective( 1, 2500.0, (w3d::F_TYPE)size.x / (w3d::F_TYPE)size.y, 0.5);
 
         if (m_camera.m_modified) {
+            m_camera.m_is_camera = true;
             m_camera.compute_transformation_matrix();
         }
+        if (m_camera.m_modified_loc) {
+            m_camera.m_is_camera = true;
+            m_camera.compute_transformation_matrix_local();
+        }
         //debug_log("Camera:\n");
-        //m_camera.dump();
+        // m_camera.dump();
         renderer.camera_view = m_camera.m_transform;
 
         if (m_scene.m_modified) {
@@ -846,37 +1098,137 @@ typedef struct Wolf3dControl {
         //debug_log("Frame data:  %02hX %02hX %02hX %02hX\n", m_frame->r, m_frame->g, m_frame->b, m_frame->a);
         //debug_log("Destination: %02hX %02hX %02hX %02hX\n", dst_pix->r, dst_pix->g, dst_pix->b, dst_pix->a);
 
+        renderer.clear = 1; // 0 = don't clear, non-0 = clear before rendering
+
         rendererRender(&renderer);
 
-        memcpy(dst_pix, m_frame, sizeof(p3d::Pixel) * m_width * m_height);
+        // Apply dithering to the rendered image before copying to the destination bitmap
+        switch (m_dither_type) {
+            case 0:
+                break; // no dithering applied
+            case 1:
+                dither_bayer((uint8_t*)m_frame, m_width, m_height);
+                break;
+            case 2:
+                dither_floyd_steinberg((uint8_t*)m_frame, m_width, m_height);
+                break;
+            default:
+                m_dither_type = 0; // no dithering applied
+                debug_log("Invalid dithering type %u\n", m_dither_type);
+                break;
+        }
 
-        //auto stop = millis();
-        //auto diff = stop - start;
-        //debug_log("Render to %ux%u took %u ms\n", m_width, m_height, diff);
+        memcpy(dst_pix, m_frame, sizeof(w3d::Pixel) * m_width * m_height);
+
+        auto stop = millis();
+        auto diff = stop - start;
+        float fps = 1000.0 / diff;
+        // printf("Render to %ux%u took %u ms (%.2f FPS)\n", m_width, m_height, diff, fps);
         //debug_log("Frame data:  %02hX %02hX %02hX %02hX\n", m_frame->r, m_frame->g, m_frame->b, m_frame->a);
         //debug_log("Final data:  %02hX %02hX %02hX %02hX\n", dst_pix->r, dst_pix->g, dst_pix->b, dst_pix->a);
+    }
+
+
+    void dither_bayer(uint8_t* rgba, int width, int height) {
+        static const uint8_t bayer[4][4] = {
+            { 15, 135,  45, 165},
+            {195,  75, 225, 105},
+            { 60, 180,  30, 150},
+            {240, 120, 210,  90}
+        };
+        
+        static const uint8_t quant_levels[4] = {0, 85, 170, 255};
+
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                uint8_t* pixel = &rgba[(y * width + x) * 4];
+                if (pixel[3] < 255) {
+                    // Skip dithering for pixels with alpha channel value < 255
+                    continue;
+                }
+                for (int color = 0; color < 3; color++) { // Only process R, G, B channels
+                    uint8_t normalized_pixel_value = pixel[color];
+                    uint8_t threshold = bayer[x % 4][y % 4];
+                    
+                    // Determine the quantization level
+                    int level_index = (normalized_pixel_value * 3) / 255;
+                    
+                    if (normalized_pixel_value > threshold) {
+                        level_index = (level_index < 3) ? level_index + 1 : 3;
+                    }
+
+                    pixel[color] = quant_levels[level_index];
+                }
+            }
+        }
+    }
+
+    // Clamp function to ensure pixel values stay within the valid range
+    uint8_t clamp(int value) {
+        if (value < 0) return 0;
+        if (value > 255) return 255;
+        return (uint8_t)value;
+    }
+
+    // Find the closest color value (0, 85, 170, 255)
+    uint8_t closest_color(uint8_t value) {
+        if (value < 43) return 0;
+        if (value < 128) return 85;
+        if (value < 213) return 170;
+        return 255;
+    }
+
+    void dither_floyd_steinberg(uint8_t* rgba, int width, int height) {
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                uint8_t* pixel = &rgba[(y * width + x) * 4];
+                if (pixel[3] < 255) {
+                    // Skip dithering for pixels with alpha channel value < 255
+                    continue;
+                }
+                for (int color = 0; color < 3; color++) {
+                    int old_pixel = pixel[color];
+                    int new_pixel = closest_color(old_pixel);
+                    pixel[color] = new_pixel;
+                    int error = old_pixel - new_pixel;
+
+                    if (x + 1 < width) {
+                        rgba[(y * width + (x + 1)) * 4 + color] = clamp(rgba[(y * width + (x + 1)) * 4 + color] + (error * 7 / 16));
+                    }
+                    if (y + 1 < height) {
+                        if (x > 0) {
+                            rgba[((y + 1) * width + (x - 1)) * 4 + color] = clamp(rgba[((y + 1) * width + (x - 1)) * 4 + color] + (error * 3 / 16));
+                        }
+                        rgba[((y + 1) * width + x) * 4 + color] = clamp(rgba[((y + 1) * width + x) * 4 + color] + (error * 5 / 16));
+                        if (x + 1 < width) {
+                            rgba[((y + 1) * width + (x + 1)) * 4 + color] = clamp(rgba[((y + 1) * width + (x + 1)) * 4 + color] + (error * 1 / 16));
+                        }
+                    }
+                }
+            }
+        }
     }
 
 } Wolf3dControl;
 
 extern "C" {
 
-    void static_init(p3d::Renderer* ren, p3d::BackEnd* backEnd, p3d::Vec4i _rect) {
+    void static_init(w3d::Renderer* ren, w3d::BackEnd* backEnd, w3d::Vec4i _rect) {
         //rect = _rect;
     }
 
-    void static_before_render(p3d::Renderer* ren, p3d::BackEnd* backEnd) {
+    void static_before_render(w3d::Renderer* ren, w3d::BackEnd* backEnd) {
     }
 
-    void static_after_render(p3d::Renderer* ren, p3d::BackEnd* backEnd) {
+    void static_after_render(w3d::Renderer* ren, w3d::BackEnd* backEnd) {
     }
 
-    p3d::Pixel* static_get_frame_buffer(p3d::Renderer* ren, p3d::BackEnd* backEnd) {
+    w3d::Pixel* static_get_frame_buffer(w3d::Renderer* ren, w3d::BackEnd* backEnd) {
         auto p_this = (struct Wolf3dControl*) backEnd->clientCustomData;
         return p_this->m_frame;
     }
 
-    p3d::WolfDepth* static_get_zeta_buffer(p3d::Renderer* ren, p3d::BackEnd* backEnd) {
+    w3d::WolfDepth* static_get_zeta_buffer(w3d::Renderer* ren, w3d::BackEnd* backEnd) {
         auto p_this = (struct Wolf3dControl*) backEnd->clientCustomData;
         return p_this->m_zeta;
     }
