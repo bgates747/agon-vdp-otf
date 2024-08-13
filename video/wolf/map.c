@@ -2,40 +2,71 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <stdio.h>
 
 void initLookupTable(TexPanelLookupTable *lookupTable) {
-    for (int i = 0; i < MAP_SIZE_X * MAP_SIZE_Y; i++) {
-        lookupTable->panels[i] = NULL;
+    lookupTable->size = 0;
+    lookupTable->capacity = 16; // Initial capacity
+    lookupTable->panels = (TexPanel **) malloc(lookupTable->capacity * sizeof(TexPanel *));
+    if (!lookupTable->panels) {
+        // Handle allocation failure
+        printf("initLookupTable: failed to allocate memory for lookup table\n");
+        return;
     }
 }
 
 void insertTexPanel(TexPanelLookupTable *lookupTable, uint8_t img_idx, uint16_t texture_id, uint16_t width, uint16_t height) {
-    TexPanel *newPanel = (TexPanel *)malloc(sizeof(TexPanel));
-    newPanel->img_idx = img_idx;
-    newPanel->texture_id = texture_id;
-    newPanel->width = width;
-    newPanel->height = height;
-    lookupTable->panels[img_idx] = newPanel;
+    if (lookupTable->size >= lookupTable->capacity) {
+        // Resize the array if necessary
+        lookupTable->capacity *= 2;
+        TexPanel **newPanels = (TexPanel **) realloc(lookupTable->panels, lookupTable->capacity * sizeof(TexPanel *));
+        if (!newPanels) {
+            // Handle allocation failure
+            printf("insertTexPanel: failed to allocate memory for lookup table resize\n");
+            return;
+        }
+        lookupTable->panels = newPanels;
+    }
+
+    // Create a new TexPanel
+    TexPanel *panel = (TexPanel *) malloc(sizeof(TexPanel));
+    if (!panel) {
+        // Handle allocation failure
+        printf("insertTexPanel: failed to allocate memory for TexPanel\n");
+        return;
+    }
+    panel->img_idx = img_idx;
+    panel->texture_id = texture_id;
+    panel->width = width;
+    panel->height = height;
+
+    // Insert the TexPanel into the lookup table
+    lookupTable->panels[lookupTable->size++] = panel;
 }
 
 TexPanel* lookupTexPanel(TexPanelLookupTable *lookupTable, uint8_t img_idx) {
-    return lookupTable->panels[img_idx];
+    for (size_t i = 0; i < lookupTable->size; i++) {
+        if (lookupTable->panels[i]->img_idx == img_idx) {
+            return lookupTable->panels[i];
+        }
+    }
+    return NULL; // Not found
 }
 
 // Function to check if a cell is empty
 bool isCellEmpty(const Map* map, int x, int y) {
-    if (x < 0 || x >= MAP_SIZE_X || y < 0 || y >= MAP_SIZE_Y) {
+    if (x < 0 || x >= map->width || y < 0 || y >= map->height) {
         return true; // Out of bounds cells are considered empty
     }
-    Cell* cell = map->cells[x][y];
+    Cell* cell = &map->cells[y * map->width + x];
     return (cell == NULL || (cell->map_type_status & (CELL_IS_WALL | CELL_IS_DOOR)) == 0);
 }
 
 // Function to initialize Panels based on the Map
 void initializePanels(Map* map, TexPanelLookupTable* lookupTable) {
-    for (int x = 0; x < MAP_SIZE_X; x++) {
-        for (int y = 0; y < MAP_SIZE_Y; y++) {
-            Cell* cell = map->cells[x][y];
+    for (uint16_t y = 0; y < map->height; y++) {
+        for (uint16_t x = 0; x < map->width; x++) {
+            Cell* cell = &map->cells[y * map->width + x];
             if (cell == NULL || !(cell->map_type_status & (CELL_IS_WALL | CELL_IS_DOOR))) {
                 continue;
             }
@@ -46,7 +77,7 @@ void initializePanels(Map* map, TexPanelLookupTable* lookupTable) {
             }
 
             if (isCellEmpty(map, x, y - 1)) {
-                Panel* panel = malloc(sizeof(Panel)); // Allocate memory for the panel
+                Panel* panel = (Panel *)malloc(sizeof(Panel)); // Allocate memory for the panel
                 panel->texture_id = texPanel->texture_id;
                 panel->parent = cell;
                 panel->x0 = INT_TO_FIXED8_8(x);
@@ -56,7 +87,7 @@ void initializePanels(Map* map, TexPanelLookupTable* lookupTable) {
                 cell->panels[0] = panel; // North
             }
             if (isCellEmpty(map, x, y + 1)) {
-                Panel* panel = malloc(sizeof(Panel)); // Allocate memory for the panel
+                Panel* panel = (Panel *)malloc(sizeof(Panel)); // Allocate memory for the panel
                 panel->texture_id = texPanel->texture_id;
                 panel->parent = cell;
                 panel->x0 = INT_TO_FIXED8_8(x);
@@ -66,7 +97,7 @@ void initializePanels(Map* map, TexPanelLookupTable* lookupTable) {
                 cell->panels[2] = panel; // South
             }
             if (isCellEmpty(map, x + 1, y)) {
-                Panel* panel = malloc(sizeof(Panel)); // Allocate memory for the panel
+                Panel* panel = (Panel *)malloc(sizeof(Panel)); // Allocate memory for the panel
                 panel->texture_id = texPanel->texture_id;
                 panel->parent = cell;
                 panel->x0 = INT_TO_FIXED8_8(x + 1);
@@ -76,7 +107,7 @@ void initializePanels(Map* map, TexPanelLookupTable* lookupTable) {
                 cell->panels[1] = panel; // East
             }
             if (isCellEmpty(map, x - 1, y)) {
-                Panel* panel = malloc(sizeof(Panel)); // Allocate memory for the panel
+                Panel* panel = (Panel *)malloc(sizeof(Panel)); // Allocate memory for the panel
                 panel->texture_id = texPanel->texture_id;
                 panel->parent = cell;
                 panel->x0 = INT_TO_FIXED8_8(x);
@@ -169,9 +200,9 @@ void updatePanelsAndZBuffer(Map* map, ZBuffer* zbuffer, Camera* camera) {
     float cam_theta_rad = FIXED8_8_TO_FLOAT(camera->theta) * (M_PI / 128.0); // Convert to radians
     float half_fov = camera->fov / 2.0;
 
-    for (int x = 0; x < MAP_SIZE_X; x++) {
-        for (int y = 0; y < MAP_SIZE_Y; y++) {
-            Cell* cell = map->cells[x][y];
+    for (uint16_t x = 0; x < map->width; x++) {
+        for (uint16_t y = 0; y < map->height; y++) {
+            Cell* cell = &map->cells[y * map->width + x];
             if (cell == NULL) {
                 continue;
             }

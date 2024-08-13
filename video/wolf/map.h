@@ -8,9 +8,6 @@
 #ifndef MAP_H
 #define MAP_H
 
-#define MAP_SIZE_X 16  
-#define MAP_SIZE_Y 16  
-
 // Bitmask values for map_type_status
 #define CELL_IS_DOOR      0x80  // Bit 7: door flag
 #define CELL_IS_WALL      0x40  // Bit 6: wall flag
@@ -26,7 +23,9 @@ typedef struct ZBuffer ZBuffer;
 typedef struct Camera Camera;
 
 typedef struct Map {
-    Cell *cells[MAP_SIZE_X][MAP_SIZE_Y];
+    Cell *cells; // Single pointer for dynamic allocation
+    uint16_t width;  // Store map width
+    uint16_t height; // Store map height
 } Map;
 
 typedef struct Cell {
@@ -70,7 +69,9 @@ typedef struct TexPanel {
 } TexPanel;
 
 typedef struct {
-    TexPanel *panels[MAP_SIZE_X * MAP_SIZE_Y];
+    TexPanel **panels;         // Dynamic array of pointers to TexPanel
+    uint8_t size;               // Current number of elements in the lookup table
+    uint8_t capacity;           // Capacity of the lookup table
 } TexPanelLookupTable;
 
 // Function prototypes

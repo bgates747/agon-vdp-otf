@@ -13,8 +13,6 @@ namespace w3d {
 
     extern "C" {
 
-        #include "wolf/assets/teapot.h"
-
         #include "wolf/render/mesh.h"
         #include "wolf/render/object.h"
         #include "wolf/render/pixel.h"
@@ -22,6 +20,8 @@ namespace w3d {
         #include "wolf/render/scene.h"
         #include "wolf/render/backend.h"
         #include "wolf/render/depth.h"
+
+        #include "wolf/map.h"
 
     } // extern "C"
 
@@ -254,6 +254,7 @@ typedef struct Wolf3dControl {
     Transformable       m_scene;            // Scene transformation settings
     std::map<uint16_t, w3d::Mesh>* m_meshes;    // Map of meshes for use by objects
     std::map<uint16_t, TexObject>* m_objects;   // Map of textured objects that use meshes and have transforms
+    std::map<uint16_t, w3d::Map>*  m_maps;   // Map of maps
     uint8_t             m_dither_type;      // Dithering type and options to be applied to rendered bitmap
 
     void show_free_ram() {
@@ -297,6 +298,7 @@ typedef struct Wolf3dControl {
 
         m_meshes = new std::map<uint16_t, w3d::Mesh>;
         m_objects = new std::map<uint16_t, TexObject>;
+        m_maps = new std::map<uint16_t, w3d::Map>;
     }
 
     // VDU 23, 0, &A0, sid; &49, 0, 0 :  Deinitialize Control Structure
@@ -366,6 +368,111 @@ typedef struct Wolf3dControl {
 
             case 38: render_to_bitmap(); break;
             case 41: set_rendering_dither_type(); break;
+
+            case 128: wolf_maps(); break; // wolf3d map commands
+        }
+    }
+
+    w3d::Map* establish_map(uint16_t map_id) {
+        // printf("establish_map(%u)\n", map_id);
+        auto map_iter = m_maps->find(map_id);
+        // printf("establish_map(%u) map_iter=%p\n", map_id, map_iter);
+        if (map_iter == m_maps->end()) {
+            // printf("establish_map(%u) not found\n", map_id);
+            w3d::Map map;
+            memset(&map, 0, sizeof(map));
+            (*m_maps).insert(std::pair<uint16_t, w3d::Map>(map_id, map));
+            // printf("establish_map(%u) inserted\n", map_id);
+            return &m_maps->find(map_id)->second;
+        } else {
+            // printf("establish_map(%u) found\n", map_id);
+            return &map_iter->second;
+        }
+    }
+
+    w3d::Map* get_map() {
+        // printf("get_map()\n");
+        auto map_id = m_proc->readWord_t();
+        // printf("get_map() map_id=%u\n", map_id);
+        if (map_id >= 0) {
+            return establish_map(map_id);
+        }
+        return NULL;
+    }
+
+    void wolf_maps() {
+        uint8_t wolf_cmd = m_proc->readByte_t();
+        switch (wolf_cmd) {
+            case 0: wolf_map_load(); break;
+        }
+    }
+
+    // VDU 23, 0, &A0, sid; &49, 128, 0, map_id; width; height; <cells> :  Load Wolf3D Map Cells
+    void wolf_map_load() {
+        // printf("wolf_map_load get_map()\n");
+        auto map = get_map();
+        // printf("wolf_map_load map=%p\n", map);
+        if (map) {
+            auto map_width = m_proc->readWord_t();
+            auto map_height = m_proc->readWord_t();
+            auto map_size = map_width * map_height;
+            // printf("wolf_map_load map=%p %u %u %u\n", map, map_width, map_height, map_size);
+            map->width = map_width;
+            map->height = map_height;
+            // printf("Reading %u map cells\n", map_size);
+            if (map_size > 0) {
+                // printf("Allocating %u bytes for map cells\n", map_size*sizeof(w3d::Cell));
+                auto size = map_size*sizeof(w3d::Cell);
+                // printf("Allocating %u bytes for map cells\n", size);
+                w3d::Cell* cells = (w3d::Cell*) heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
+                // printf("Allocated %u bytes for map cells\n", size);
+                map->cells = cells;
+                if (!map->cells) {
+                    // printf("wolf_map_load: failed to allocate %u bytes for map cells\n", size);
+                    show_free_ram();
+                }
+                // printf("Reading %u map cells\n", map_size);
+                for (uint32_t i = 0; i < map_size; i++) {
+                    uint8_t obj_id = m_proc->readByte_t();
+                    uint8_t img_idx = m_proc->readByte_t();
+                    uint8_t map_type_status = m_proc->readByte_t();
+                    uint8_t sprite_id = m_proc->readByte_t();
+                    if (map->cells) {
+                        map->cells[i].obj_id = obj_id;
+                        map->cells[i].img_idx = img_idx;
+                        map->cells[i].map_type_status = map_type_status;
+                        map->cells[i].sprite_id = sprite_id;
+                        // printf("%u %u %u %u\n", obj_id, img_idx, map_type_status, sprite_id);
+                    }
+                }
+
+                // Debug information block
+                uint32_t sprite_count = 0;
+                int start_cell_x = -1;
+                int start_cell_y = -1;
+
+                for (uint32_t i = 0; i < map_size; i++) {
+                    if (map->cells[i].sprite_id != 255) {
+                        sprite_count++;
+                    }
+                    if (map->cells[i].map_type_status & CELL_IS_START) {
+                        start_cell_x = i % map_width;
+                        start_cell_y = i / map_width;
+                    }
+                }
+                // Print summary information about the map
+                printf("Map loaded successfully:\n");
+                printf("Width: %u, Height: %u, Total Cells: %u\n", map_width, map_height, map_size);
+                printf("Memory allocated: %u bytes\n", size);
+                printf("Number of sprites: %u\n", sprite_count);
+                if (start_cell_x != -1 && start_cell_y != -1) {
+                    printf("Starting cell coordinates: (%d, %d)\n", start_cell_x, start_cell_y);
+                } else {
+                    printf("Starting cell not found\n");
+                }
+                // End of debug information block
+                
+            }
         }
     }
 
@@ -1123,7 +1230,7 @@ typedef struct Wolf3dControl {
         auto stop = millis();
         auto diff = stop - start;
         float fps = 1000.0 / diff;
-        // printf("Render to %ux%u took %u ms (%.2f FPS)\n", m_width, m_height, diff, fps);
+        // // printf("Render to %ux%u took %u ms (%.2f FPS)\n", m_width, m_height, diff, fps);
         //debug_log("Frame data:  %02hX %02hX %02hX %02hX\n", m_frame->r, m_frame->g, m_frame->b, m_frame->a);
         //debug_log("Final data:  %02hX %02hX %02hX %02hX\n", dst_pix->r, dst_pix->g, dst_pix->b, dst_pix->a);
     }
