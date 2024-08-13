@@ -4,55 +4,6 @@
 #include <math.h>
 #include <stdio.h>
 
-void initLookupTable(TexPanelLookupTable *lookupTable) {
-    lookupTable->size = 0;
-    lookupTable->capacity = 16; // Initial capacity
-    lookupTable->panels = (TexPanel **) malloc(lookupTable->capacity * sizeof(TexPanel *));
-    if (!lookupTable->panels) {
-        // Handle allocation failure
-        printf("initLookupTable: failed to allocate memory for lookup table\n");
-        return;
-    }
-}
-
-void insertTexPanel(TexPanelLookupTable *lookupTable, uint8_t img_idx, uint16_t texture_id, uint16_t width, uint16_t height) {
-    if (lookupTable->size >= lookupTable->capacity) {
-        // Resize the array if necessary
-        lookupTable->capacity *= 2;
-        TexPanel **newPanels = (TexPanel **) realloc(lookupTable->panels, lookupTable->capacity * sizeof(TexPanel *));
-        if (!newPanels) {
-            // Handle allocation failure
-            printf("insertTexPanel: failed to allocate memory for lookup table resize\n");
-            return;
-        }
-        lookupTable->panels = newPanels;
-    }
-
-    // Create a new TexPanel
-    TexPanel *panel = (TexPanel *) malloc(sizeof(TexPanel));
-    if (!panel) {
-        // Handle allocation failure
-        printf("insertTexPanel: failed to allocate memory for TexPanel\n");
-        return;
-    }
-    panel->img_idx = img_idx;
-    panel->texture_id = texture_id;
-    panel->width = width;
-    panel->height = height;
-
-    // Insert the TexPanel into the lookup table
-    lookupTable->panels[lookupTable->size++] = panel;
-}
-
-TexPanel* lookupTexPanel(TexPanelLookupTable *lookupTable, uint8_t img_idx) {
-    for (size_t i = 0; i < lookupTable->size; i++) {
-        if (lookupTable->panels[i]->img_idx == img_idx) {
-            return lookupTable->panels[i];
-        }
-    }
-    return NULL; // Not found
-}
-
 // Function to check if a cell is empty
 bool isCellEmpty(const Map* map, int x, int y) {
     if (x < 0 || x >= map->width || y < 0 || y >= map->height) {
@@ -62,8 +13,18 @@ bool isCellEmpty(const Map* map, int x, int y) {
     return (cell == NULL || (cell->map_type_status & (CELL_IS_WALL | CELL_IS_DOOR)) == 0);
 }
 
+// Function to look up a texture panel based on the image index
+TexPanel* lookupTexPanel(TexPanelLut* lookupTable, uint8_t img_idx) {
+    for (int i = 0; i < lookupTable->num_panels; i++) {
+        if (lookupTable->panels[i]->img_idx == img_idx) {
+            return lookupTable->panels[i];
+        }
+    }
+    return NULL; // Texture panel not found
+}
+
 // Function to initialize Panels based on the Map
-void initializePanels(Map* map, TexPanelLookupTable* lookupTable) {
+void initializePanels(Map* map, TexPanelLut* lookupTable) {
     for (uint16_t y = 0; y < map->height; y++) {
         for (uint16_t x = 0; x < map->width; x++) {
             Cell* cell = &map->cells[y * map->width + x];

@@ -254,8 +254,9 @@ typedef struct Wolf3dControl {
     Transformable       m_scene;            // Scene transformation settings
     std::map<uint16_t, w3d::Mesh>* m_meshes;    // Map of meshes for use by objects
     std::map<uint16_t, TexObject>* m_objects;   // Map of textured objects that use meshes and have transforms
-    std::map<uint16_t, w3d::Map>*  m_maps;   // Map of maps
     uint8_t             m_dither_type;      // Dithering type and options to be applied to rendered bitmap
+    // new wolf3d members
+    std::map<uint16_t, w3d::Map>*  m_maps;   // Map of maps
 
     void show_free_ram() {
         debug_log("Free PSRAM: %u\n", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
@@ -403,12 +404,66 @@ typedef struct Wolf3dControl {
     void wolf_maps() {
         uint8_t wolf_cmd = m_proc->readByte_t();
         switch (wolf_cmd) {
-            case 0: wolf_map_load(); break;
+            case 0: wolf_map_load_cells(); break;
+            case 1: wolf_map_load_tex_lut(); break;
         }
     }
 
+    // VDU 23, 0, &A0, sid; &49, 128, 1, map_id; num_panels; <texture_id; width; height;> :  Load Wolf3D Map Texture Panel Lookup Table
+    void wolf_map_load_tex_lut() {
+        printf("wolf_map_load_tex_lut\n");
+        auto map = get_map();
+        if (map) {
+            printf("map=%p\n", map);
+            auto num_panels = m_proc->readWord_t();
+            if (num_panels > 0) {
+                printf("num_panels=%u\n", num_panels);
+                map->tex_lut = (w3d::TexPanelLut*) heap_caps_malloc(sizeof(w3d::TexPanelLut), MALLOC_CAP_SPIRAM);
+                printf("map->tex_lut=%p\n", map->tex_lut);
+                if (!map->tex_lut) {
+                    printf("wolf_map_load_tex_lut: failed to allocate %u bytes for TexPanelLut\n", sizeof(w3d::TexPanelLut));
+                    show_free_ram();
+                    return;
+                }
+
+                map->tex_lut->panels = (w3d::TexPanel**) heap_caps_malloc(num_panels * sizeof(w3d::TexPanel*), MALLOC_CAP_SPIRAM);
+                printf("map->tex_lut->panels=%p\n", map->tex_lut->panels);
+                if (!map->tex_lut->panels) {
+                    printf("wolf_map_load_tex_lut: failed to allocate %u bytes for TexPanel* array\n", num_panels * sizeof(w3d::TexPanel*));
+                    show_free_ram();
+                    return;
+                }
+                map->tex_lut->num_panels = num_panels;
+
+                for (uint8_t i = 0; i < num_panels; i++) {
+                    auto img_idx = i;
+                    auto texture_id = m_proc->readWord_t();
+                    auto width = m_proc->readWord_t();
+                    auto height = m_proc->readWord_t();
+                    // printf("panel %u: %u %u %u\n", i, texture_id, width, height);
+
+                    w3d::TexPanel* panel = (w3d::TexPanel*) heap_caps_malloc(sizeof(w3d::TexPanel), MALLOC_CAP_SPIRAM);
+                    printf("panel=%p\n", panel);
+                    if (!panel) {
+                        printf("wolf_map_load_tex_lut: failed to allocate %u bytes for TexPanel\n", sizeof(w3d::TexPanel));
+                        show_free_ram();
+                        return;
+                    }
+
+                    panel->img_idx = img_idx;
+                    panel->texture_id = texture_id;
+                    panel->width = width;
+                    panel->height = height;
+                    map->tex_lut->panels[i] = panel;
+                    printf("panel %u: %u %u %u\n", i, panel->texture_id, panel->width, panel->height);
+                }
+            }
+        }
+    }
+
+
     // VDU 23, 0, &A0, sid; &49, 128, 0, map_id; width; height; <cells> :  Load Wolf3D Map Cells
-    void wolf_map_load() {
+    void wolf_map_load_cells() {
         auto map = get_map();
         if (map) {
             auto map_width = m_proc->readWord_t();
@@ -421,7 +476,7 @@ typedef struct Wolf3dControl {
                 w3d::Cell* cells = (w3d::Cell*) heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
                 map->cells = cells;
                 if (!map->cells) {
-                    printf("wolf_map_load: failed to allocate %u bytes for map cells\n", size);
+                    printf("wolf_map_load_cells: failed to allocate %u bytes for map cells\n", size);
                     show_free_ram();
                 }
                 for (uint32_t i = 0; i < map_size; i++) {

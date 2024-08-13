@@ -21,9 +21,12 @@ typedef struct Cell Cell;
 typedef struct Panel Panel;
 typedef struct ZBuffer ZBuffer;
 typedef struct Camera Camera;
+typedef struct TexPanel TexPanel;
+typedef struct TexPanelLut TexPanelLut;
 
 typedef struct Map {
     Cell *cells; // Single pointer for dynamic allocation
+    TexPanelLut *tex_lut; // Pointer to lookup table
     uint16_t width;  // Store map width
     uint16_t height; // Store map height
 } Map;
@@ -68,18 +71,15 @@ typedef struct TexPanel {
     uint16_t height;           // Texture height
 } TexPanel;
 
-typedef struct {
+typedef struct TexPanelLut {
     TexPanel **panels;         // Dynamic array of pointers to TexPanel
-    uint8_t size;               // Current number of elements in the lookup table
-    uint8_t capacity;           // Capacity of the lookup table
-} TexPanelLookupTable;
+    uint8_t num_panels;        // number of elements in the lookup table
+} TexPanelLut;
 
 // Function prototypes
-void initLookupTable(TexPanelLookupTable *lookupTable);
-void insertTexPanel(TexPanelLookupTable *lookupTable, uint8_t img_idx, uint16_t texture_id, uint16_t width, uint16_t height);
-TexPanel* lookupTexPanel(TexPanelLookupTable *lookupTable, uint8_t img_idx);
+TexPanel* lookupTexPanel(TexPanelLut* lookupTable, uint8_t img_idx);
 bool isCellEmpty(const Map* map, int x, int y);
-void initializePanels(Map* map, TexPanelLookupTable* lookupTable);
+void initializePanels(Map* map, TexPanelLut* lookupTable);
 ZBuffer* initZBuffer(const Camera* camera);
 void destroyZBuffer(ZBuffer* zbuffer);
 void updatePanelsAndZBuffer(Map* map, ZBuffer* zbuffer, Camera* camera);
