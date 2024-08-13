@@ -9,7 +9,7 @@
 
 typedef struct tag_Renderer Renderer;
 typedef struct tag_Pixel Pixel;
-typedef struct tag_WolfDepth WolfDepth;
+typedef struct tag_PingoDepth PingoDepth;
 
 typedef struct tag_BackEnd {
     //Called on initialization and re-initialization
@@ -28,7 +28,7 @@ typedef struct tag_BackEnd {
     void (*drawPixel)(Texture * f, Vec2i pos, Pixel color, float illumination);
 
     //Should return the address of the buffer (height*width*sizeof(Pixel))
-    WolfDepth * (*getZetaBuffer)(Renderer *, struct tag_BackEnd * );
+    PingoDepth * (*getZetaBuffer)(Renderer *, struct tag_BackEnd * );
 
     //Allows for referencing client-custom data structure
     void* clientCustomData;

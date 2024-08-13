@@ -237,7 +237,7 @@ extern "C" {
 
     w3d::Pixel* static_get_frame_buffer(w3d::Renderer* ren, w3d::BackEnd* backEnd);
 
-    w3d::WolfDepth* static_get_zeta_buffer(w3d::Renderer* ren, w3d::BackEnd* backEnd);
+    w3d::PingoDepth* static_get_zeta_buffer(w3d::Renderer* ren, w3d::BackEnd* backEnd);
 
 } // extern "C"
 
@@ -247,7 +247,7 @@ typedef struct Wolf3dControl {
     VDUStreamProcessor* m_proc;             // Used by subcommands to obtain more data
     w3d::BackEnd        m_backend;          // Used by the renderer
     w3d::Pixel*         m_frame;            // Frame buffer for rendered pixels
-    w3d::WolfDepth*    m_zeta;             // Zeta buffer for depth information
+    w3d::PingoDepth*    m_zeta;             // Zeta buffer for depth information
     uint16_t            m_width;            // Width of final render in pixels
     uint16_t            m_height;           // Height of final render in pixels
     Transformable       m_camera;           // Camera transformation settings
@@ -281,8 +281,8 @@ typedef struct Wolf3dControl {
             show_free_ram();
         }
 
-        size = sizeof(w3d::WolfDepth) * frame_size;
-        m_zeta = (w3d::WolfDepth*) heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
+        size = sizeof(w3d::PingoDepth) * frame_size;
+        m_zeta = (w3d::PingoDepth*) heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
         if (!m_zeta) {
             debug_log("initialize: failed to allocate %u bytes for zeta\n", size);
             show_free_ram();
@@ -409,29 +409,21 @@ typedef struct Wolf3dControl {
 
     // VDU 23, 0, &A0, sid; &49, 128, 0, map_id; width; height; <cells> :  Load Wolf3D Map Cells
     void wolf_map_load() {
-        // printf("wolf_map_load get_map()\n");
         auto map = get_map();
-        // printf("wolf_map_load map=%p\n", map);
         if (map) {
             auto map_width = m_proc->readWord_t();
             auto map_height = m_proc->readWord_t();
             auto map_size = map_width * map_height;
-            // printf("wolf_map_load map=%p %u %u %u\n", map, map_width, map_height, map_size);
             map->width = map_width;
             map->height = map_height;
-            // printf("Reading %u map cells\n", map_size);
             if (map_size > 0) {
-                // printf("Allocating %u bytes for map cells\n", map_size*sizeof(w3d::Cell));
                 auto size = map_size*sizeof(w3d::Cell);
-                // printf("Allocating %u bytes for map cells\n", size);
                 w3d::Cell* cells = (w3d::Cell*) heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
-                // printf("Allocated %u bytes for map cells\n", size);
                 map->cells = cells;
                 if (!map->cells) {
-                    // printf("wolf_map_load: failed to allocate %u bytes for map cells\n", size);
+                    printf("wolf_map_load: failed to allocate %u bytes for map cells\n", size);
                     show_free_ram();
                 }
-                // printf("Reading %u map cells\n", map_size);
                 for (uint32_t i = 0; i < map_size; i++) {
                     uint8_t obj_id = m_proc->readByte_t();
                     uint8_t img_idx = m_proc->readByte_t();
@@ -471,7 +463,7 @@ typedef struct Wolf3dControl {
                     printf("Starting cell not found\n");
                 }
                 // End of debug information block
-                
+
             }
         }
     }
@@ -1335,7 +1327,7 @@ extern "C" {
         return p_this->m_frame;
     }
 
-    w3d::WolfDepth* static_get_zeta_buffer(w3d::Renderer* ren, w3d::BackEnd* backEnd) {
+    w3d::PingoDepth* static_get_zeta_buffer(w3d::Renderer* ren, w3d::BackEnd* backEnd) {
         auto p_this = (struct Wolf3dControl*) backEnd->clientCustomData;
         return p_this->m_zeta;
     }

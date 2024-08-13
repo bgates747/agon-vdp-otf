@@ -275,7 +275,7 @@ int rendererInit(Renderer * r, Vec2i size, BackEnd * backEnd) {
 int rendererRender(Renderer * r) {
 
     int pixels = r->frameBuffer.size.x * r->frameBuffer.size.y;
-    memset(r->backEnd->getZetaBuffer(r,r->backEnd), 0, pixels * sizeof (WolfDepth));
+    memset(r->backEnd->getZetaBuffer(r,r->backEnd), 0, pixels * sizeof (PingoDepth));
 
     r->backEnd->beforeRender(r, r->backEnd);
 
