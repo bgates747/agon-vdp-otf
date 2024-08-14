@@ -22,6 +22,7 @@ namespace w3d {
         #include "wolf/render/depth.h"
 
         #include "wolf/map.h"
+        #include "wolf/fixed.h"
 
     } // extern "C"
 
@@ -30,6 +31,23 @@ namespace w3d {
 #define WOLF_3D_CONTROL_TAG    0x43443350 // "W3DC"
 
 #define PI2                    6.283185307179586476925286766559f
+
+// Convert from integer to 8.8 fixed-point
+#define INT_TO_FIXED8_8(x) ((fixed8_8)((x) << 8))
+// Convert from 8.8 fixed-point to integer (truncating the fractional part)
+#define FIXED8_8_TO_INT(x) ((int16_t)((x) >> 8))
+// Convert from floating-point to 8.8 fixed-point
+#define FLOAT_TO_FIXED8_8(x) ((fixed8_8)((x) * 256.0f))
+// Convert from 8.8 fixed-point to floating-point
+#define FIXED8_8_TO_FLOAT(x) ((float)(x) / 256.0f)
+// Add two 8.8 fixed-point numbers
+#define FIXED8_8_ADD(x, y) ((x) + (y))
+// Subtract two 8.8 fixed-point numbers
+#define FIXED8_8_SUB(x, y) ((x) - (y))
+// Multiply two 8.8 fixed-point numbers
+#define FIXED8_8_MUL(x, y) ((fixed8_8)(((int32_t)(x) * (y)) >> 8))
+// Divide two 8.8 fixed-point numbers
+#define FIXED8_8_DIV(x, y) ((fixed8_8)(((int32_t)(x) << 8) / (y)))
 
 class VDUStreamProcessor;typedef struct tag_Transformable {
     w3d::Vec3f      m_scale;
@@ -257,6 +275,7 @@ typedef struct Wolf3dControl {
     uint8_t             m_dither_type;      // Dithering type and options to be applied to rendered bitmap
     // new wolf3d members
     std::map<uint16_t, w3d::Map>*  m_maps;   // Map of maps
+    w3d::Camera         m_wolf_camera;      // Camera for wolf3d
 
     void show_free_ram() {
         debug_log("Free PSRAM: %u\n", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
@@ -371,6 +390,7 @@ typedef struct Wolf3dControl {
             case 41: set_rendering_dither_type(); break;
 
             case 128: wolf_maps(); break; // wolf3d map commands
+            case 129: wolf_cam(); break; // wolf3d camera commands
         }
     }
 
@@ -408,6 +428,47 @@ typedef struct Wolf3dControl {
             case 1: wolf_map_load_tex_lut(); break;
         }
     }
+
+    void wolf_cam() {
+        uint8_t wolf_cmd = m_proc->readByte_t();
+        switch (wolf_cmd) {
+            case 0: create_wolf_camera(); break;
+        }
+    }
+
+    // VDU 23, 0, &A0, sid; &49, 129, 0, x; y; theta; fov; screen_width; screen_height; screen_dist; :  Create Wolf3D Camera
+    void create_wolf_camera() {
+        printf("create_wolf_camera\n");
+
+        // Read and convert camera properties
+        m_wolf_camera.x = m_proc->readWord_t();
+        m_wolf_camera.y = m_proc->readWord_t();
+        m_wolf_camera.theta = m_proc->readWord_t();
+        m_wolf_camera.fov = m_proc->readWord_t();
+        m_wolf_camera.screen_width = m_proc->readWord_t();
+        m_wolf_camera.screen_height = m_proc->readWord_t();
+        m_wolf_camera.screen_dist = m_proc->readWord_t();
+
+        // Convert theta to decimal degrees
+        float theta_degrees = FIXED8_8_TO_FLOAT(m_wolf_camera.theta) * (360.0f / 256.0f);
+        
+        // Convert fov to decimal degrees
+        float fov_degrees = FIXED8_8_TO_FLOAT(m_wolf_camera.fov) * (360.0f / 256.0f);
+
+        // Convert screen_dist from fixed8_8 to float
+        float screen_dist_float = FIXED8_8_TO_FLOAT(m_wolf_camera.screen_dist);
+
+        // Print camera properties for debugging
+        printf("Camera: x: %f, y: %f, theta: %f (degrees), fov: %f (degrees), screen_width: %d, screen_height: %d, screen_dist: %f\n",
+            FIXED8_8_TO_FLOAT(m_wolf_camera.x), 
+            FIXED8_8_TO_FLOAT(m_wolf_camera.y), 
+            theta_degrees,
+            fov_degrees,
+            m_wolf_camera.screen_width, 
+            m_wolf_camera.screen_height, 
+            screen_dist_float);
+    }
+
 
     // VDU 23, 0, &A0, sid; &49, 128, 1, map_id; num_panels; <texture_id; width; height;> :  Load Wolf3D Map Texture Panel Lookup Table
     void wolf_map_load_tex_lut() {
@@ -457,6 +518,8 @@ typedef struct Wolf3dControl {
                     map->tex_lut->panels[i] = panel;
                     printf("panel %u: %u %u %u\n", i, panel->texture_id, panel->width, panel->height);
                 }
+                w3d::initializePanels(map, map->tex_lut);
+                printf("TexPanelLut loaded successfully\n");
             }
         }
     }

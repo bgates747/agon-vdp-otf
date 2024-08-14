@@ -57,11 +57,11 @@ typedef struct ZBuffer {
 typedef struct Camera {
     fixed8_8 x;                // Camera x position in the map
     fixed8_8 y;                // Camera y position in the map
-    fixed8_8 theta;            // Camera angle (bearing) in 256-degree format
-    float fov;                 // Field of view in radians
-    int screen_width;          // Screen width in pixels
-    int screen_height;         // Screen height in pixels
-    float screen_dist;         // Distance from camera to screen
+    fixed8_8 theta;            // Camera angle (heading) in 256-degree format
+    fixed8_8 fov;              // Field of view in 256-degree format
+    uint16_t screen_width;     // Screen width in pixels
+    uint16_t screen_height;    // Screen height in pixels
+    fixed8_8 screen_dist;      // Distance from camera to screen
 } Camera;
 
 typedef struct TexPanel {
