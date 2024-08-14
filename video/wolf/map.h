@@ -4,6 +4,8 @@
 #include <stdbool.h>
 
 #include "fixed.h"
+#include "camera.h"
+#include "zbuffer.h"
 
 #ifndef MAP_H
 #define MAP_H
@@ -19,8 +21,6 @@
 typedef struct Map Map;
 typedef struct Cell Cell;
 typedef struct Panel Panel;
-typedef struct ZBuffer ZBuffer;
-typedef struct Camera Camera;
 typedef struct TexPanel TexPanel;
 typedef struct TexPanelLut TexPanelLut;
 
@@ -46,24 +46,6 @@ typedef struct Panel {
     Cell* parent;              // Pointer to parent Cell
 } Panel;
 
-typedef struct ZBuffer {
-    fixed8_8 *depths;          // Array of depth values for each ray
-    uint16_t *texture_id;      // Texture ID for the texture
-    float *u;                  // U component of texture UV coordinates
-    fixed8_8 *strip_height;    // Height of the texture strip at the distance of the intersection
-    int screen_width;          // Screen width in pixels (to know the size of arrays)
-} ZBuffer;
-
-typedef struct Camera {
-    fixed8_8 x;                // Camera x position in the map
-    fixed8_8 y;                // Camera y position in the map
-    fixed8_8 theta;            // Camera angle (heading) in 256-degree format
-    fixed8_8 fov;              // Field of view in 256-degree format
-    uint16_t screen_width;     // Screen width in pixels
-    uint16_t screen_height;    // Screen height in pixels
-    fixed8_8 screen_dist;      // Distance from camera to screen
-} Camera;
-
 typedef struct TexPanel {
     uint8_t img_idx;           // Image Index
     uint16_t texture_id;       // Texture ID for the panel
@@ -77,15 +59,8 @@ typedef struct TexPanelLut {
 } TexPanelLut;
 
 // Function prototypes
-TexPanel* lookupTexPanel(TexPanelLut* lookupTable, uint8_t img_idx);
 bool isCellEmpty(const Map* map, int x, int y);
+TexPanel* lookupTexPanel(TexPanelLut* lookupTable, uint8_t img_idx);
 void initializePanels(Map* map, TexPanelLut* lookupTable);
-ZBuffer* initZBuffer(const Camera* camera);
-void destroyZBuffer(ZBuffer* zbuffer);
-void updatePanelsAndZBuffer(Map* map, ZBuffer* zbuffer, Camera* camera);
-int angleToRayIndex(float angle, float cam_theta_rad, float fov, int max_rays);
-float correct_fisheye(float distance, float angle_diff);
-float calculate_u(fixed8_8 intersection, fixed8_8 panel_start);
-fixed8_8 calculate_strip_height(float distance, float screen_dist, int screen_height);
 
 #endif // MAP_H
