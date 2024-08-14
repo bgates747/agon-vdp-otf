@@ -16,6 +16,11 @@
 #define CELL_IS_BLOCKING  0x10  // Bit 4: blocking flag
 #define CELL_IS_START     0x08  // Bit 3: start flag (DEPRECATED)
 #define CELL_IS_TO_ROOM   0x04  // Bit 2: to room flag
+// bits 1 and 0 are the render_type mask
+#define RENDER_TYPE_CUBE   0x00  // 0
+#define RENDER_TYPE_FLOOR  0x01  // 1
+#define RENDER_TYPE_NULL   0x02  // 2
+#define RENDER_TYPE_SPRITE 0x03  // 3
 
 typedef struct Map Map;
 typedef struct Cell Cell;
@@ -35,14 +40,16 @@ typedef struct Cell {
     uint8_t img_idx;           // Image Index
     uint8_t map_type_status;   // Map Type and Status Bit Mask
     uint8_t sprite_id;         // Sprite ID
-    Panel* panels[4];          // Pointers to panels (0 = north, 1 = east, 2 = south, 3 = west)
+    uint8_t num_panels;        // Number of panels
+    Panel** panels;            // Dynamic array of pointers to panels
 } Cell;
 
 typedef struct Panel {
     float x0, y0;           // Map position of the left edge
     float x1, y1;           // Map position of the right edge
-    uint16_t texture_id;       // Texture ID for the panel
-    Cell* parent;              // Pointer to parent Cell
+    float orientation;      // Orientation of the panel in radians
+    uint16_t texture_id;    // Texture ID for the panel
+    Cell* parent;           // Pointer to parent Cell
 } Panel;
 
 typedef struct TexPanel {
@@ -61,5 +68,6 @@ typedef struct TexPanelLut {
 bool isCellEmpty(const Map* map, int x, int y);
 TexPanel* lookupTexPanel(TexPanelLut* lookupTable, uint8_t img_idx);
 void initializePanels(Map* map, TexPanelLut* lookupTable);
+void updatePanelsAndZBuffer(Map* map, ZBuffer* zbuffer, Camera* camera);
 
 #endif // MAP_H

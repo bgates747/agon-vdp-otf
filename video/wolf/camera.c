@@ -5,19 +5,20 @@
 #include "camera.h"
 
 ZBuffer* create_zbuffer(Camera* camera) {
+    printf("create_zbuffer: Creating ZBuffer\n");
     if (!camera) {
         printf("create_zbuffer: camera is NULL\n");
         return NULL;
     }
 
-    printf("create_zbuffer: Allocating memory for ZBuffer\n");
+    // printf("create_zbuffer: Allocating memory for ZBuffer\n");
     ZBuffer* zbuffer = (ZBuffer*)malloc(sizeof(ZBuffer));
     if (!zbuffer) {
         printf("create_zbuffer: Failed to allocate memory for ZBuffer struct\n");
         return NULL;
     }
 
-    printf("create_zbuffer: Allocating memory for depths array\n");
+    // printf("create_zbuffer: Allocating memory for depths array\n");
     zbuffer->depths = (float*)malloc(camera->screen_width * sizeof(float));
     if (!zbuffer->depths) {
         printf("create_zbuffer: Failed to allocate memory for depths array\n");
@@ -25,7 +26,7 @@ ZBuffer* create_zbuffer(Camera* camera) {
         return NULL;
     }
 
-    printf("create_zbuffer: Allocating memory for texture_id array\n");
+    // printf("create_zbuffer: Allocating memory for texture_id array\n");
     zbuffer->texture_id = (uint16_t*)malloc(camera->screen_width * sizeof(uint16_t));
     if (!zbuffer->texture_id) {
         printf("create_zbuffer: Failed to allocate memory for texture_id array\n");
@@ -34,7 +35,7 @@ ZBuffer* create_zbuffer(Camera* camera) {
         return NULL;
     }
 
-    printf("create_zbuffer: Allocating memory for u array\n");
+    // printf("create_zbuffer: Allocating memory for u array\n");
     zbuffer->u = (float*)malloc(camera->screen_width * sizeof(float));
     if (!zbuffer->u) {
         printf("create_zbuffer: Failed to allocate memory for u array\n");
@@ -44,7 +45,7 @@ ZBuffer* create_zbuffer(Camera* camera) {
         return NULL;
     }
 
-    printf("create_zbuffer: Allocating memory for strip_height array\n");
+    // printf("create_zbuffer: Allocating memory for strip_height array\n");
     zbuffer->strip_height = (float*)malloc(camera->screen_width * sizeof(float));
     if (!zbuffer->strip_height) {
         printf("create_zbuffer: Failed to allocate memory for strip_height array\n");
