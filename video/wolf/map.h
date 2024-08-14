@@ -5,7 +5,6 @@
 
 #include "fixed.h"
 #include "camera.h"
-#include "zbuffer.h"
 
 #ifndef MAP_H
 #define MAP_H

@@ -6,7 +6,6 @@
 #include "fixed.h"
 #include "map.h"
 #include "camera.h"
-#include "zbuffer.h"
 
 #ifndef RENDER_H
 #define RENDER_H

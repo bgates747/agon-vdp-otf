@@ -21,8 +21,10 @@ namespace w3d {
         #include "wolf/render/backend.h"
         #include "wolf/render/depth.h"
 
-        #include "wolf/map.h"
         #include "wolf/fixed.h"
+        #include "wolf/map.h"
+        #include "wolf/camera.h"
+        #include "wolf/render.h"
 
     } // extern "C"
 
@@ -391,6 +393,7 @@ typedef struct Wolf3dControl {
 
             case 128: wolf_maps(); break; // wolf3d map commands
             case 129: wolf_cam(); break; // wolf3d camera commands
+            case 130: wolf_render(); break; // wolf3d render commands
         }
     }
 
@@ -432,13 +435,31 @@ typedef struct Wolf3dControl {
     void wolf_cam() {
         uint8_t wolf_cmd = m_proc->readByte_t();
         switch (wolf_cmd) {
-            case 0: create_wolf_camera(); break;
+            case 0: wolf_cam_create(); break;
+        }
+    }
+
+    void wolf_render() {
+        uint8_t wolf_cmd = m_proc->readByte_t();
+        switch (wolf_cmd) {
+            case 0: wolf_render_update_zbuffer(); break;
+        }
+    }
+
+    // VDU 23, 0, &A0, sid; &49, 130, 0, map_id; : Update Wolf3D ZBuffer
+    void wolf_render_update_zbuffer() {
+        printf("wolf_render_update_zbuffer\n");
+        auto map = get_map();
+        if (map) {
+            printf("map=%p\n", map);
+            w3d::updatePanelsAndZBuffer(map, m_wolf_camera.zbuffer, &m_wolf_camera);
+            printf("ZBuffer updated successfully\n");
         }
     }
 
     // VDU 23, 0, &A0, sid; &49, 129, 0, x; y; theta; fov; screen_width; screen_height; screen_dist; :  Create Wolf3D Camera
-    void create_wolf_camera() {
-        printf("create_wolf_camera\n");
+    void wolf_cam_create() {
+        printf("wolf_cam_create\n");
 
         // Read and convert camera properties inline
         m_wolf_camera.x = FIXED8_8_TO_FLOAT(m_proc->readWord_t());
@@ -448,6 +469,16 @@ typedef struct Wolf3dControl {
         m_wolf_camera.screen_width = m_proc->readWord_t();
         m_wolf_camera.screen_height = m_proc->readWord_t();
         m_wolf_camera.screen_dist = FIXED8_8_TO_FLOAT(m_proc->readWord_t());
+
+        // Initialize the ZBuffer
+        printf("Creating ZBuffer\n");
+        m_wolf_camera.zbuffer = w3d::create_zbuffer(&m_wolf_camera);
+        if (!m_wolf_camera.zbuffer) {
+            printf("wolf_cam_create: failed to initialize ZBuffer\n");
+            show_free_ram();
+            return;
+        }
+        printf("ZBuffer created successfully. ZBuffer pointer: %p\n", m_wolf_camera.zbuffer);
 
         // Convert theta and fov to degrees for debugging output
         float theta_degrees = m_wolf_camera.theta * (180.0f / M_PI);
@@ -463,6 +494,7 @@ typedef struct Wolf3dControl {
             m_wolf_camera.screen_height, 
             m_wolf_camera.screen_dist);
     }
+
 
     // VDU 23, 0, &A0, sid; &49, 128, 1, map_id; num_panels; <texture_id; width; height;> :  Load Wolf3D Map Texture Panel Lookup Table
     void wolf_map_load_tex_lut() {
