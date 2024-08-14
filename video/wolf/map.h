@@ -40,8 +40,8 @@ typedef struct Cell {
 } Cell;
 
 typedef struct Panel {
-    fixed8_8 x0, y0;           // Map position of the left edge
-    fixed8_8 x1, y1;           // Map position of the right edge
+    float x0, y0;           // Map position of the left edge
+    float x1, y1;           // Map position of the right edge
     uint16_t texture_id;       // Texture ID for the panel
     Cell* parent;              // Pointer to parent Cell
 } Panel;

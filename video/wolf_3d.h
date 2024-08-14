@@ -440,35 +440,29 @@ typedef struct Wolf3dControl {
     void create_wolf_camera() {
         printf("create_wolf_camera\n");
 
-        // Read and convert camera properties
-        m_wolf_camera.x = m_proc->readWord_t();
-        m_wolf_camera.y = m_proc->readWord_t();
-        m_wolf_camera.theta = m_proc->readWord_t();
-        m_wolf_camera.fov = m_proc->readWord_t();
+        // Read and convert camera properties inline
+        m_wolf_camera.x = FIXED8_8_TO_FLOAT(m_proc->readWord_t());
+        m_wolf_camera.y = FIXED8_8_TO_FLOAT(m_proc->readWord_t());
+        m_wolf_camera.theta = FIXED8_8_TO_FLOAT(m_proc->readWord_t()) * (M_PI / 128.0); // Convert to radians
+        m_wolf_camera.fov = FIXED8_8_TO_FLOAT(m_proc->readWord_t()) * (M_PI / 128.0); // Convert to radians
         m_wolf_camera.screen_width = m_proc->readWord_t();
         m_wolf_camera.screen_height = m_proc->readWord_t();
-        m_wolf_camera.screen_dist = m_proc->readWord_t();
+        m_wolf_camera.screen_dist = FIXED8_8_TO_FLOAT(m_proc->readWord_t());
 
-        // Convert theta to decimal degrees
-        float theta_degrees = FIXED8_8_TO_FLOAT(m_wolf_camera.theta) * (360.0f / 256.0f);
-        
-        // Convert fov to decimal degrees
-        float fov_degrees = FIXED8_8_TO_FLOAT(m_wolf_camera.fov) * (360.0f / 256.0f);
-
-        // Convert screen_dist from fixed8_8 to float
-        float screen_dist_float = FIXED8_8_TO_FLOAT(m_wolf_camera.screen_dist);
+        // Convert theta and fov to degrees for debugging output
+        float theta_degrees = m_wolf_camera.theta * (180.0f / M_PI);
+        float fov_degrees = m_wolf_camera.fov * (180.0f / M_PI);
 
         // Print camera properties for debugging
         printf("Camera: x: %f, y: %f, theta: %f (degrees), fov: %f (degrees), screen_width: %d, screen_height: %d, screen_dist: %f\n",
-            FIXED8_8_TO_FLOAT(m_wolf_camera.x), 
-            FIXED8_8_TO_FLOAT(m_wolf_camera.y), 
+            m_wolf_camera.x, 
+            m_wolf_camera.y, 
             theta_degrees,
             fov_degrees,
             m_wolf_camera.screen_width, 
             m_wolf_camera.screen_height, 
-            screen_dist_float);
+            m_wolf_camera.screen_dist);
     }
-
 
     // VDU 23, 0, &A0, sid; &49, 128, 1, map_id; num_panels; <texture_id; width; height;> :  Load Wolf3D Map Texture Panel Lookup Table
     void wolf_map_load_tex_lut() {
