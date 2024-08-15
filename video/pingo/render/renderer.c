@@ -100,9 +100,11 @@ int renderObject(Mat4 object_transform, Renderer * r, Renderable ren) {
     const Vec2i scrSize = r->frameBuffer.size;
     Object * o = ren.impl;
     Vec2f * tex_coords = o->textCoord;
-    if (!tex_coords) {
-        tex_coords = o->mesh->textCoord;
-    }
+    // DEPRECATED since UVs are now defined in the Object object
+    // if (!tex_coords) {
+    //     tex_coords = o->mesh->textCoord;
+    // }
+    // END DEPRECATED
 
     // MODEL MATRIX
     Mat4 m = mat4MultiplyM( &o->transform, &object_transform  );
@@ -120,10 +122,18 @@ int renderObject(Mat4 object_transform, Renderer * r, Renderable ren) {
         Vec2f tcb = {0,0};
         Vec2f tcc = {0,0};
 
+        // DEPRECATED since UVs are now defined in the Object object
+        // if (o->material != 0) {
+        //     tca = tex_coords[o->mesh->tex_indices[i+0]];
+        //     tcb = tex_coords[o->mesh->tex_indices[i+1]];
+        //     tcc = tex_coords[o->mesh->tex_indices[i+2]];
+        // }
+        // END DEPRECATED
+
         if (o->material != 0) {
-            tca = tex_coords[o->mesh->tex_indices[i+0]];
-            tcb = tex_coords[o->mesh->tex_indices[i+1]];
-            tcc = tex_coords[o->mesh->tex_indices[i+2]];
+            tca = tex_coords[o->tex_indices[i+0]];
+            tcb = tex_coords[o->tex_indices[i+1]];
+            tcc = tex_coords[o->tex_indices[i+2]];
         }
 
         Vec4f a =  { ver1->x, ver1->y, ver1->z, 1 };
