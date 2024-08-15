@@ -8,7 +8,6 @@
 
 typedef struct Object {
     Mesh * mesh;
-    int indexes_count;
     Mat4 transform;
     Material * material;
     uint16_t * tex_indices;
