@@ -204,7 +204,6 @@ typedef struct tag_Pingo3dControl {
             case 3: define_object_texture_coordinates(); break;
             case 4: set_object_texture_coordinate_indexes(); break;
             case 5: create_object(); break;
-            case 40: define_object_texture_coordinates(); break;
             case 6: set_object_x_scale_factor(); break;
             case 7: set_object_y_scale_factor(); break;
             case 8: set_object_z_scale_factor(); break;
