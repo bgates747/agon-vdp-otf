@@ -33,6 +33,7 @@ float calculate_u(float intersection, float panel_start) {
 }
 
 // Calculate the height of the texture strip
+
 float calculate_strip_height(float distance, float screen_dist, int screen_height) {
     return (screen_dist / distance) * screen_height;
 }
@@ -145,8 +146,9 @@ void updatePanelsAndZBuffer(Map* map, ZBuffer* zbuffer, Camera* camera) {
 
     printf("updatePanelsAndZBuffer: Update completed\n");
     printf("Number of panels processed: %d\n", num_panels_processed);
-    printf("ZBuffer depths:\n");
+
+    printf("Ray\tDepth\tTexture ID\tU\tStrip Height\n");
     for (int i = 0; i < camera->screen_width; i++) {
-        printf("Depth[%d] = %f\n", i, zbuffer->depths[i]);
+        printf("%d\t%f\t%u\t%f\t%f\n", i, zbuffer->depths[i], zbuffer->texture_id[i], zbuffer->u[i], zbuffer->strip_height[i]);
     }
 }

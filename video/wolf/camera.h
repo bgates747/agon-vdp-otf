@@ -25,7 +25,6 @@ typedef struct ZBuffer {
     uint16_t *texture_id;      // Texture ID for the texture
     float *u;                  // U component of texture UV coordinates
     float *strip_height;    // Height of the texture strip at the distance of the intersection
-    // int screen_width;          // Screen width in pixels (to know the size of arrays)
 } ZBuffer;
 
 // Function prototypes
