@@ -367,7 +367,8 @@ typedef struct tag_Pingo3dControl {
                 uint16_t v = m_proc->readWord_t();
                 if (coord) {
                     coord->x = convert_texture_coordinate_value(u);
-                    coord->y = convert_texture_coordinate_value(v);
+                    // coord->y = convert_texture_coordinate_value(v);
+                    coord->y = 1 - convert_texture_coordinate_value(v); // uvs are normal cartesian in blender
                     coord++;
                 }
             }
