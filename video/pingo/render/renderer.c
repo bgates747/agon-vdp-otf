@@ -148,7 +148,10 @@ int renderObject(Mat4 object_transform, Renderer * r, Renderable ren) {
         Vec3f na = vec3fsubV(*((Vec3f*)(&a)), *((Vec3f*)(&b)));
         Vec3f nb = vec3fsubV(*((Vec3f*)(&a)), *((Vec3f*)(&c)));
         Vec3f normal = vec3Normalize(vec3Cross(na, nb));
-        Vec3f light = vec3Normalize((Vec3f){-8,-5,5});
+        // Vec3f light = vec3Normalize((Vec3f){-8,-5,5});
+        // y-axis correction means we can restore the y component sign to the original        
+        // unclear why the z-axis wants to be inverted now though
+        Vec3f light = vec3Normalize((Vec3f){-8,5,-5}); 
         float diffuseLight = (1.0 + vec3Dot(normal, light)) *0.5;
         diffuseLight = MIN(1.0, MAX(diffuseLight, 0));
 
@@ -159,7 +162,6 @@ int renderObject(Mat4 object_transform, Renderer * r, Renderable ren) {
         a = mat4MultiplyVec4( &a, &p);
         b = mat4MultiplyVec4( &b, &p);
         c = mat4MultiplyVec4( &c, &p);
-
 
         //Triangle is completely behind camera
         if (a.z > 0 && b.z > 0 && c.z > 0)
@@ -172,6 +174,13 @@ int renderObject(Mat4 object_transform, Renderer * r, Renderable ren) {
         a.x *= a.w; a.y *= a.w; a.z *= a.w;
         b.x *= b.w; b.y *= b.w; b.z *= b.w;
         c.x *= c.w; c.y *= c.w; c.z *= c.w;
+
+        // BEGIN y-axis inversion correction
+        // Flip Y-axis in NDC
+        a.y = -a.y;
+        b.y = -b.y;
+        c.y = -c.y;
+        // END y-axis inversion correction
 
         float clocking = isClockWise(a.x, a.y, b.x, b.y, c.x, c.y);
         if (clocking >= 0)
